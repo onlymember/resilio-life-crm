@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import {
-  getUsers, saveUsers, getActivityLog, getAdminNotifs, markNotifRead, markAllNotifsRead,
+  getUsers, getActivityLog, getAdminNotifs, markNotifRead, markAllNotifsRead,
   getSystemConfig, saveSystemConfig, approveUser, blockUser, unblockUser, updateUser,
   deleteUser, getRolePerms, logActivity, timeAgo, hashPwd, genId, SUPER_ADMIN_EMAIL
 } from '../../lib/auth.js'
@@ -318,7 +318,11 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
 
   useEffect(() => { setUsers(initialUsers) }, [initialUsers])
 
-  const refresh = () => { const u = getUsers(); setUsers(u); onRefresh(u) }
+  const refresh = async () => {
+    const u = await getUsers()
+    setUsers(u)
+    onRefresh(u)
+  }
 
   const filtered = users.filter(u => {
     const q = search.toLowerCase()
@@ -328,35 +332,39 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
     return mq && me && mr
   })
 
-  const handleApprove = () => {
-    approveUser(approveModal.id, approveRol)
+  const handleApprove = async () => {
+    await approveUser(approveModal.id, approveRol)
     logActivity({ userId:currentUser?.id||'admin', userName:currentUser?.nombre||'Admin', accion:'aprobar_usuario', detalle:`Aprobó a ${approveModal.nombre} con rol ${approveRol}`, seccion:'admin' })
-    setApproveModal(null); refresh()
+    setApproveModal(null)
+    refresh()
   }
 
-  const handleBlock = () => {
-    blockUser(blockModal.id, blockMotivo)
+  const handleBlock = async () => {
+    await blockUser(blockModal.id, blockMotivo)
     logActivity({ userId:currentUser?.id||'admin', userName:currentUser?.nombre||'Admin', accion:'bloquear_usuario', detalle:`Bloqueó a ${blockModal.nombre}`, seccion:'admin' })
-    setBlockModal(null); setBlockMotivo(''); refresh()
+    setBlockModal(null); setBlockMotivo('')
+    refresh()
   }
 
-  const handleUnblock = (u) => {
-    unblockUser(u.id)
+  const handleUnblock = async (u) => {
+    await unblockUser(u.id)
     logActivity({ userId:currentUser?.id||'admin', userName:currentUser?.nombre||'Admin', accion:'desbloquear_usuario', detalle:`Desbloqueó a ${u.nombre}`, seccion:'admin' })
     refresh()
   }
 
-  const handleEdit = (userId, changes) => {
-    updateUser(userId, changes)
+  const handleEdit = async (userId, changes) => {
+    await updateUser(userId, changes)
     logActivity({ userId:currentUser?.id||'admin', userName:currentUser?.nombre||'Admin', accion:'editar_usuario', detalle:`Editó perfil de ${editUser?.nombre}`, seccion:'admin' })
-    setEditUser(null); refresh()
+    setEditUser(null)
+    refresh()
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (delText !== 'ELIMINAR') return
-    const r = deleteUser(delConfirm.id)
-    if (!r.success) return
-    setDelConfirm(null); setDelText(''); refresh()
+    const r = await deleteUser(delConfirm.id)
+    if (!r?.success) return
+    setDelConfirm(null); setDelText('')
+    refresh()
   }
 
   const inpStyle = { padding:'8px 12px', background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.25)', borderRadius:8, color:'#F9FAFB', fontSize:13, outline:'none' }
@@ -550,12 +558,12 @@ const MatrizSection = ({ users: initialUsers, onRefresh }) => {
 
 // ─── Section: Actividad ────────────────────────────────────────
 const ActividadSection = ({ users }) => {
-  const [log,        setLog]        = useState(() => getActivityLog())
+  const [log,        setLog]        = useState([])
   const [filterUser, setFilterUser] = useState('all')
   const [filterAcc,  setFilterAcc]  = useState('all')
   const [filterDate, setFilterDate] = useState('all')
 
-  useEffect(() => { setLog(getActivityLog()) }, [])
+  useEffect(() => { getActivityLog().then(setLog).catch(() => {}) }, [])
 
   const now = Date.now()
   const filtered = log.filter(e => {
@@ -591,7 +599,7 @@ const ActividadSection = ({ users }) => {
           <option value="ayer">Ayer</option>
           <option value="semana">Última semana</option>
         </select>
-        <button onClick={() => setLog(getActivityLog())} style={{...inpStyle, cursor:'pointer'}}>🔄 Actualizar</button>
+        <button onClick={() => getActivityLog().then(setLog).catch(()=>{})} style={{...inpStyle, cursor:'pointer'}}>🔄 Actualizar</button>
       </div>
 
       <div style={{ fontSize:12, color:'rgba(196,181,253,0.5)', marginBottom:12 }}>{filtered.length} registros</div>
@@ -620,9 +628,10 @@ const ActividadSection = ({ users }) => {
 
 // ─── Section: Monitor ──────────────────────────────────────────
 const MonitorSection = ({ users }) => {
-  const [log, setLog] = useState(() => getActivityLog())
+  const [log, setLog] = useState([])
   useEffect(() => {
-    const t = setInterval(() => setLog(getActivityLog()), 10000)
+    getActivityLog().then(setLog).catch(() => {})
+    const t = setInterval(() => getActivityLog().then(setLog).catch(()=>{}), 10000)
     return () => clearInterval(t)
   }, [])
 
@@ -781,16 +790,23 @@ const NotificacionesSection = ({ onUpdateBadge }) => {
 
 export default function AdminPanel({ onClose, currentUser }) {
   const [section,   setSection]   = useState('dashboard')
-  const [users,     setUsers]     = useState(() => getUsers())
+  const [users,     setUsers]     = useState([])
+  const [log,       setLog]       = useState([])
   const [badgeNotif,setBadgeNotif]= useState(() => getAdminNotifs().filter(n=>!n.read).length)
-  const [badgePend, setBadgePend] = useState(() => getUsers().filter(u=>u.estado==='pendiente').length)
+  const [badgePend, setBadgePend] = useState(0)
   const [isMobile,  setIsMobile]  = useState(() => window.innerWidth < 768)
 
-  const refreshUsers = useCallback((u) => {
-    const list = u || getUsers()
+  const refreshUsers = useCallback(async (u) => {
+    const list = u || await getUsers().catch(() => [])
     setUsers(list)
     setBadgePend(list.filter(x=>x.estado==='pendiente').length)
   }, [])
+
+  // Load users and activity log on mount
+  useEffect(() => {
+    refreshUsers()
+    getActivityLog().then(setLog).catch(() => {})
+  }, [refreshUsers])
 
   // Resize listener for responsive layout
   useEffect(() => {
@@ -799,9 +815,9 @@ export default function AdminPanel({ onClose, currentUser }) {
     return () => window.removeEventListener('resize', h)
   }, [])
 
-  // BUG 1 FIX: Poll localStorage every 3s so new registrations appear without manual refresh
+  // Poll Supabase every 5s so new registrations appear
   useEffect(() => {
-    const interval = setInterval(refreshUsers, 3000)
+    const interval = setInterval(refreshUsers, 5000)
     return () => clearInterval(interval)
   }, [refreshUsers])
 
@@ -814,8 +830,6 @@ export default function AdminPanel({ onClose, currentUser }) {
     { id:'config',        icon:'⚙️', label:'Configuración',   badge:0 },
     { id:'notificaciones',icon:'🔔', label:'Notificaciones',  badge:badgeNotif },
   ]
-
-  const log = getActivityLog()
 
   const renderSection = () => {
     switch (section) {

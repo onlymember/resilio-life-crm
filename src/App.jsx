@@ -18,6 +18,11 @@ import {
   getSession, clearSession, logActivity, canDo, hasEcoAccess, isAdmin,
   getAdminNotifs, markNotifRead, markAllNotifsRead,
 } from './lib/auth.js'
+import {
+  dbGetBrands, dbSaveBrand, dbDeleteBrand,
+  dbGetLocations, dbSaveLocation, dbDeleteLocation,
+  dbGetInfluencers, dbSaveInfluencer, dbDeleteInfluencer,
+} from './lib/database.js'
 
 import {
   DEMO_BRANDS, DEMO_LOCATIONS, DEMO_INFLUENCERS, DEMO_BENEFITS,
@@ -1029,9 +1034,9 @@ export default function App() {
   const [theme,            setTheme]           = useLocalStorage('crm_theme', 'dark')
   const [currentView,      setCurrentView]      = useLocalStorage('crm_view', 'dashboard')
   const [sidebarCollapsed, setSidebarCollapsed] = useLocalStorage('crm_sidebar', false)
-  const [brands,      setBrands]      = useLocalStorage('crm_brands',      DEMO_BRANDS)
-  const [locations,   setLocations]   = useLocalStorage('crm_locations',   DEMO_LOCATIONS)
-  const [influencers, setInfluencers] = useLocalStorage('crm_influencers', DEMO_INFLUENCERS)
+  const [brands,      setBrands]      = useState(DEMO_BRANDS)
+  const [locations,   setLocations]   = useState(DEMO_LOCATIONS)
+  const [influencers, setInfluencers] = useState(DEMO_INFLUENCERS)
   const [benefits,    setBenefits]    = useLocalStorage('crm_benefits',    DEMO_BENEFITS)
   const [codes,       setCodes]       = useLocalStorage('crm_codes',       DEMO_CODES)
   const [codeUsages,  setCodeUsages]  = useLocalStorage('crm_usages',      DEMO_CODE_USAGES)
@@ -1069,6 +1074,13 @@ export default function App() {
     window.addEventListener('keydown',h); return()=>window.removeEventListener('keydown',h)
   }, [])
 
+  // Load shared CRM data from Supabase (fallback to demo data if empty)
+  useEffect(() => {
+    dbGetBrands().then(data => { if (data.length > 0) setBrands(data) }).catch(() => {})
+    dbGetLocations().then(data => { if (data.length > 0) setLocations(data) }).catch(() => {})
+    dbGetInfluencers().then(data => { if (data.length > 0) setInfluencers(data) }).catch(() => {})
+  }, [])
+
   const isMobile = windowWidth < 640
   const isTablet = windowWidth >= 640 && windowWidth < 1024
   const effectiveCollapsed = isTablet ? true : sidebarCollapsed
@@ -1076,13 +1088,36 @@ export default function App() {
   // ── CRUD Handlers ─────────────────────────────
   const upsert = (setter) => (item) => setter(prev => prev.find(x=>x.id===item.id) ? prev.map(x=>x.id===item.id?item:x) : [...prev,item])
 
-  const handleSaveBrand    = useCallback(upsert(setBrands),    [setBrands])
-  const handleDeleteBrand  = useCallback((id) => { setBrands(p=>p.filter(x=>x.id!==id)); setLocations(p=>p.filter(x=>x.brandId!==id)) }, [setBrands,setLocations])
-  const handleSaveLocation = useCallback(upsert(setLocations), [setLocations])
-  const handleDeleteLocation=useCallback((id)=>setLocations(p=>p.filter(x=>x.id!==id)),  [setLocations])
+  // Brands — Supabase + local state
+  const handleSaveBrand = useCallback((brand) => {
+    setBrands(prev => prev.find(x=>x.id===brand.id) ? prev.map(x=>x.id===brand.id?brand:x) : [...prev,brand])
+    dbSaveBrand(brand).catch(e => console.warn('saveBrand error:', e))
+  }, [])
+  const handleDeleteBrand = useCallback((id) => {
+    setBrands(p=>p.filter(x=>x.id!==id))
+    setLocations(p=>p.filter(x=>x.brandId!==id))
+    dbDeleteBrand(id).catch(e => console.warn('deleteBrand error:', e))
+  }, [])
 
-  const handleSaveInfluencer =useCallback(upsert(setInfluencers),[setInfluencers])
-  const handleDeleteInfluencer=useCallback((id)=>setInfluencers(p=>p.filter(x=>x.id!==id)),[setInfluencers])
+  // Locations — Supabase + local state
+  const handleSaveLocation = useCallback((loc) => {
+    setLocations(prev => prev.find(x=>x.id===loc.id) ? prev.map(x=>x.id===loc.id?loc:x) : [...prev,loc])
+    dbSaveLocation(loc).catch(e => console.warn('saveLocation error:', e))
+  }, [])
+  const handleDeleteLocation = useCallback((id) => {
+    setLocations(p=>p.filter(x=>x.id!==id))
+    dbDeleteLocation(id).catch(e => console.warn('deleteLocation error:', e))
+  }, [])
+
+  // Influencers — Supabase + local state
+  const handleSaveInfluencer = useCallback((inf) => {
+    setInfluencers(prev => prev.find(x=>x.id===inf.id) ? prev.map(x=>x.id===inf.id?inf:x) : [...prev,inf])
+    dbSaveInfluencer(inf).catch(e => console.warn('saveInfluencer error:', e))
+  }, [])
+  const handleDeleteInfluencer = useCallback((id) => {
+    setInfluencers(p=>p.filter(x=>x.id!==id))
+    dbDeleteInfluencer(id).catch(e => console.warn('deleteInfluencer error:', e))
+  }, [])
 
   const handleSaveBenefit  =useCallback(upsert(setBenefits),[setBenefits])
   const handleDeleteBenefit=useCallback((id)=>setBenefits(p=>p.filter(x=>x.id!==id)),[setBenefits])
@@ -1267,7 +1302,7 @@ export default function App() {
         )}
 
         {/* Main */}
-        <div style={{flex:1,display:'flex',flexDirection:'column',minWidth:0,paddingBottom:isMobile?72:0}}>
+        <div style={{flex:1,display:'flex',flexDirection:'column',minWidth:0}}>
           <Header
             currentView={currentView} theme={theme}
             onThemeToggle={()=>setTheme(t=>t==='dark'?'light':'dark')}
