@@ -122,9 +122,22 @@ export const login = (email, password) => {
 
 export const register = (nombre, email, password) => {
   const users = getUsers()
-  if (users.find(u => u.email.toLowerCase() === email.toLowerCase().trim()))
-    return { success:false, error:'Ya existe una cuenta con este email' }
   const isSA = email.toLowerCase().trim() === SUPER_ADMIN_EMAIL.toLowerCase()
+
+  // SA email: if account exists (auto-created), log in directly instead of erroring
+  if (isSA) {
+    const existingSA = users.find(u => u.email.toLowerCase() === email.toLowerCase().trim())
+    if (existingSA) {
+      const updated = { ...existingSA, nombre: nombre.trim() || existingSA.nombre }
+      saveUsers(users.map(u => u.id === existingSA.id ? updated : u))
+      saveSession(updated)
+      logActivity({ userId:updated.id, userName:updated.nombre, accion:'login', detalle:'Acceso Super Admin vía registro', seccion:'sistema' })
+      return { success:true, user:updated, directAccess:true }
+    }
+  }
+
+  if (!isSA && users.find(u => u.email.toLowerCase() === email.toLowerCase().trim()))
+    return { success:false, error:'Ya existe una cuenta con este email' }
   const av   = getAvatar(nombre)
   const newU = {
     id:genId(), email:email.toLowerCase().trim(), nombre:nombre.trim(), username:email.split('@')[0],
