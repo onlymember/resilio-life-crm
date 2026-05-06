@@ -8,8 +8,16 @@ import {
   User, Shield, Zap, Layers,
   AlertCircle, ChevronLeft, Save, Award,
   Building, CreditCard, Activity, Palette, FileText, Ticket,
-  Target, Radio, Crown, Megaphone, PhoneCall, Home, Map
+  Target, Radio, Crown, Megaphone, PhoneCall, Home, Map,
+  Settings, LogOut
 } from 'lucide-react'
+
+import LoginScreen from './components/Auth/LoginScreen.jsx'
+import AdminPanel  from './components/Admin/AdminPanel.jsx'
+import {
+  getSession, clearSession, logActivity, canDo, hasEcoAccess, isAdmin,
+  getAdminNotifs, markNotifRead, markAllNotifsRead,
+} from './lib/auth.js'
 
 import {
   DEMO_BRANDS, DEMO_LOCATIONS, DEMO_INFLUENCERS, DEMO_BENEFITS,
@@ -232,7 +240,7 @@ const CommandPalette = ({ isOpen, onClose, onNavigate }) => {
 // SIDEBAR
 // ═══════════════════════════════════════════════
 
-const Sidebar = ({ currentView, onNavigate, collapsed, onToggle }) => {
+const Sidebar = ({ currentView, onNavigate, collapsed, onToggle, currentUser }) => {
   const [resilioOpen,    setResilioOpen]    = useState(true)
   const [creativeOpen,   setCreativeOpen]   = useState(true)
   const [agencyOpen,     setAgencyOpen]     = useState(true)
@@ -402,15 +410,15 @@ const Sidebar = ({ currentView, onNavigate, collapsed, onToggle }) => {
       </nav>
 
       {/* User */}
-      {!collapsed&&(
+      {!collapsed&&currentUser&&(
         <div style={{ padding:'12px 16px',borderTop:'1px solid var(--border-violet)' }}>
           <div style={{ display:'flex',alignItems:'center',gap:10 }}>
-            <div style={{ width:34,height:34,borderRadius:'50%',flexShrink:0,background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:700 }}>A</div>
+            <div style={{ width:34,height:34,borderRadius:'50%',flexShrink:0,background:currentUser.avatarColor||'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,color:'white',border:'2px solid rgba(255,255,255,0.15)' }}>{currentUser.avatar||'?'}</div>
             <div style={{ flex:1,minWidth:0 }}>
-              <div style={{ fontSize:13,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>Admin</div>
-              <div style={{ fontSize:11,color:'var(--primary-violet-light)' }}>Super Admin</div>
+              <div style={{ fontSize:13,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{currentUser.sobrenombre||currentUser.nombre||'Usuario'}</div>
+              <div style={{ fontSize:11,color:'var(--primary-violet-light)',textTransform:'capitalize' }}>{currentUser.rol?.replace('_',' ')||'viewer'}</div>
             </div>
-            <Shield size={14} color="var(--primary-violet-light)"/>
+            {isAdmin(currentUser)&&<Shield size={14} color="var(--primary-violet-light)"/>}
           </div>
         </div>
       )}
@@ -422,30 +430,51 @@ const Sidebar = ({ currentView, onNavigate, collapsed, onToggle }) => {
 // HEADER
 // ═══════════════════════════════════════════════
 
-const Header = ({ currentView, theme, onThemeToggle, onCommandPalette, onMobileMenu, notifications, onMarkRead, onMarkAllRead, onHub }) => {
-  const [notifOpen, setNotifOpen] = useState(false)
-  const labels = { dashboard:'Dashboard General',rl_dashboard:'Resilio Life · Dashboard',brands:'Marcas',locations:'Locales',influencers:'Influencers',benefits:'Beneficios',codes:'Códigos',memberships:'Membresías',users:'Usuarios',unregistered:'Usuarios No Registrados',tracking:'Tracking Real-Time',analytics:'Analytics',reports:'Reportes',creative:'Agencia Creativa',creative_projects:'Proyectos',creative_clients:'Clientes Creativos',creative_equipo:'Equipo Creativo',inf_dashboard:'Agencia Influencers · Dashboard',inf_campaigns:'Campañas',inf_crm:'Influencers CRM',inf_collabs:'Colaboraciones',prod_dashboard:'Productora · Dashboard',events:'Eventos',tickets:'Tickets',only_members:'⭐ Only Members',rrpp:'Relaciones Públicas',elevare:'💎 Elevare · Dashboard',elevare_bienes:'💎 Elevare · Bienes',elevare_leads:'💎 Elevare · Leads',elevare_contratos:'💎 Elevare · Contratos',elevare_contenido:'💎 Elevare · Contenido',elevare_hosp:'💎 Elevare · Hospitality',missions:'🎯 Misiones',team:'Team Management',advanced:'Features Avanzadas',cap_pipeline:'📞 Captación · Pipeline',cap_busqueda:'📞 Captación · Búsqueda',cap_speeches:'📞 Captación · Speeches',cap_provincias:'📞 Captación · Expansión',cap_seguimiento:'📞 Captación · Seguimiento',cap_contactos:'📞 Captación · Contactos' }
+const Header = ({ currentView, theme, onThemeToggle, onCommandPalette, onMobileMenu, notifications, onMarkRead, onMarkAllRead, onHub, currentUser, onLogout, onAdmin, adminNotifCount }) => {
+  const [notifOpen,   setNotifOpen]   = useState(false)
+  const [avatarOpen,  setAvatarOpen]  = useState(false)
+  const labels = { dashboard:'Dashboard General',rl_dashboard:'Resilio Life · Dashboard',brands:'Marcas',locations:'Locales',influencers:'Influencers',benefits:'Beneficios',codes:'Códigos',memberships:'Membresías',users:'Usuarios',unregistered:'Usuarios No Registrados',tracking:'Tracking Real-Time',analytics:'Analytics',reports:'Reportes',creative:'Agencia Creativa',creative_projects:'Proyectos',creative_clients:'Clientes Creativos',creative_equipo:'Equipo Creativo',inf_dashboard:'Agencia Influencers · Dashboard',inf_campaigns:'Campañas',inf_crm:'Influencers CRM',inf_collabs:'Colaboraciones',prod_dashboard:'Productora · Dashboard',events:'Eventos',tickets:'Tickets',only_members:'⭐ Only Members',rrpp:'Relaciones Públicas',elevare:'💎 Elevare · Dashboard',elevare_bienes:'💎 Elevare · Bienes',elevare_leads:'💎 Elevare · Leads',elevare_contratos:'💎 Elevare · Contratos',elevare_contenido:'💎 Elevare · Contenido',elevare_hosp:'💎 Elevare · Hospitality',missions:'🎯 Misiones',team:'Team Management',advanced:'Features Avanzadas',cap_pipeline:'📞 Captación · Pipeline',cap_busqueda:'📞 Captación · Búsqueda',cap_speeches:'📞 Captación · Speeches',cap_provincias:'📞 Captación · Expansión',cap_seguimiento:'📞 Captación · Seguimiento',cap_contactos:'📞 Captación · Contactos',hub:'Hub Central' }
   const unread = (notifications||[]).filter(n=>!n.read).length
   const notifTypeColor = { mission:'var(--primary-violet)', elevare:'#FCD34D', creative:'#EC4899', campaign:'#06B6D4' }
   const notifTypeIcon  = { mission:'🎯', elevare:'💎', creative:'🎨', campaign:'⚡' }
+  const displayName = currentUser?.sobrenombre || currentUser?.nombre || 'Usuario'
+  const roleLabel = { super_admin:'Super Admin', admin:'Admin', editor:'Editor', viewer:'Viewer', custom:'Custom' }
+
   return (
-    <header style={{ height:64,background:'var(--glass-bg)',backdropFilter:'blur(40px)',borderBottom:'1px solid var(--border-violet)',display:'flex',alignItems:'center',padding:'0 20px',gap:16,position:'sticky',top:0,zIndex:100 }}>
+    <header style={{ height:64,background:'var(--glass-bg)',backdropFilter:'blur(40px)',borderBottom:'1px solid var(--border-violet)',display:'flex',alignItems:'center',padding:'0 20px',gap:12,position:'sticky',top:0,zIndex:100 }}>
       <button className="show-mobile-only" onClick={onMobileMenu} style={{ color:'var(--text-secondary)',padding:6,borderRadius:8 }}><Menu size={20}/></button>
       <div>
         <h1 style={{ fontSize:16,fontWeight:700 }}>{labels[currentView]||currentView}</h1>
         <p style={{ fontSize:11,color:'var(--text-secondary)' }}>Resilio Life CRM · v5.0</p>
       </div>
       <div style={{ flex:1 }}/>
+
+      {/* Hub button */}
       <button onClick={onHub} title="Volver al Hub" style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 14px',borderRadius:10,fontSize:12,fontWeight:600,background:currentView==='hub'?'rgba(139,92,246,0.25)':'rgba(139,92,246,0.08)',border:`1px solid ${currentView==='hub'?'var(--primary-violet)':'var(--border-violet)'}`,color:currentView==='hub'?'var(--primary-violet-light)':'var(--text-secondary)',transition:'all 0.2s' }} onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--primary-violet)';e.currentTarget.style.background='rgba(139,92,246,0.2)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor=currentView==='hub'?'var(--primary-violet)':'var(--border-violet)';e.currentTarget.style.background=currentView==='hub'?'rgba(139,92,246,0.25)':'rgba(139,92,246,0.08)'}}>
         ⚡ Hub
       </button>
-      <button onClick={onCommandPalette} className="hide-mobile" style={{ display:'flex',alignItems:'center',gap:10,background:'rgba(139,92,246,0.08)',border:'1px solid var(--border-violet)',borderRadius:10,padding:'8px 14px',color:'var(--text-secondary)',fontSize:13,transition:'all 0.2s',minWidth:200 }} onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--primary-violet)';e.currentTarget.style.background='rgba(139,92,246,0.15)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border-violet)';e.currentTarget.style.background='rgba(139,92,246,0.08)'}}>
+
+      {/* Admin button — only for admin/super_admin */}
+      {isAdmin(currentUser) && (
+        <div style={{ position:'relative' }}>
+          <button onClick={onAdmin} style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 14px',borderRadius:10,fontSize:12,fontWeight:600,background:'rgba(245,158,11,0.1)',border:'1px solid rgba(245,158,11,0.3)',color:'#F59E0B',transition:'all 0.2s',position:'relative' }}
+            onMouseEnter={e=>{e.currentTarget.style.background='rgba(245,158,11,0.2)'}}
+            onMouseLeave={e=>{e.currentTarget.style.background='rgba(245,158,11,0.1)'}}>
+            <Settings size={13}/><span className="hide-mobile">Admin</span>
+            {adminNotifCount > 0 && <span style={{ position:'absolute',top:-4,right:-4,minWidth:16,height:16,background:'#E879F9',borderRadius:8,fontSize:9,fontWeight:700,color:'white',display:'flex',alignItems:'center',justifyContent:'center',padding:'0 3px' }}>{adminNotifCount}</span>}
+          </button>
+        </div>
+      )}
+
+      {/* Search */}
+      <button onClick={onCommandPalette} className="hide-mobile" style={{ display:'flex',alignItems:'center',gap:10,background:'rgba(139,92,246,0.08)',border:'1px solid var(--border-violet)',borderRadius:10,padding:'8px 14px',color:'var(--text-secondary)',fontSize:13,transition:'all 0.2s',minWidth:180 }} onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--primary-violet)';e.currentTarget.style.background='rgba(139,92,246,0.15)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border-violet)';e.currentTarget.style.background='rgba(139,92,246,0.08)'}}>
         <Search size={14}/><span>Buscar...</span>
         <kbd style={{ marginLeft:'auto',padding:'1px 6px',background:'rgba(139,92,246,0.2)',border:'1px solid var(--border-violet)',borderRadius:5,fontSize:10 }}>⌘K</kbd>
       </button>
+
       {/* Notification bell */}
       <div style={{ position:'relative' }}>
-        <button onClick={()=>setNotifOpen(p=>!p)} style={{ width:38,height:38,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',background: notifOpen ? 'rgba(139,92,246,0.2)' : 'rgba(139,92,246,0.08)',border:`1px solid ${notifOpen?'var(--primary-violet)':'var(--border-violet)'}`,color: notifOpen ? 'var(--primary-violet-light)' : 'var(--text-secondary)',position:'relative',transition:'all 0.2s' }}>
+        <button onClick={()=>{setNotifOpen(p=>!p);setAvatarOpen(false)}} style={{ width:38,height:38,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',background: notifOpen ? 'rgba(139,92,246,0.2)' : 'rgba(139,92,246,0.08)',border:`1px solid ${notifOpen?'var(--primary-violet)':'var(--border-violet)'}`,color: notifOpen ? 'var(--primary-violet-light)' : 'var(--text-secondary)',position:'relative',transition:'all 0.2s' }}>
           <Bell size={16}/>
           {unread > 0 && <span style={{ position:'absolute',top:6,right:6,minWidth:16,height:16,background:'var(--accent-magenta)',borderRadius:8,fontSize:9,fontWeight:700,color:'white',display:'flex',alignItems:'center',justifyContent:'center',padding:'0 3px',boxShadow:'0 0 8px var(--accent-magenta)' }}>{unread}</span>}
         </button>
@@ -467,7 +496,7 @@ const Header = ({ currentView, theme, onThemeToggle, onCommandPalette, onMobileM
                     <div style={{ flex:1,minWidth:0 }}>
                       <div style={{ fontSize:12,fontWeight:n.read?500:700,marginBottom:2 }}>{n.title}</div>
                       <div style={{ fontSize:11,color:'var(--text-secondary)',lineHeight:1.4,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{n.body}</div>
-                      <div style={{ fontSize:10,color:'var(--text-secondary)',opacity:0.6,marginTop:3 }}>{new Date(n.createdAt).toLocaleString('es-AR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+                      <div style={{ fontSize:10,color:'var(--text-secondary)',opacity:0.6,marginTop:3 }}>{new Date(n.createdAt||n.timestamp).toLocaleString('es-AR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
                     </div>
                     {!n.read&&<div style={{ width:7,height:7,borderRadius:'50%',background:'var(--accent-magenta)',flexShrink:0,marginTop:4 }}/>}
                   </div>
@@ -477,9 +506,39 @@ const Header = ({ currentView, theme, onThemeToggle, onCommandPalette, onMobileM
           </>
         )}
       </div>
+
+      {/* Theme toggle */}
       <button onClick={onThemeToggle} style={{ width:38,height:38,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(139,92,246,0.08)',border:'1px solid var(--border-violet)',color:'var(--text-secondary)',transition:'all 0.2s' }} onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--primary-violet)';e.currentTarget.style.color='var(--primary-violet-light)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border-violet)';e.currentTarget.style.color='var(--text-secondary)'}}>
         {theme==='dark'?<Sun size={16}/>:<Moon size={16}/>}
       </button>
+
+      {/* User Avatar + dropdown */}
+      {currentUser && (
+        <div style={{ position:'relative' }}>
+          <button onClick={()=>{setAvatarOpen(p=>!p);setNotifOpen(false)}} style={{ width:38,height:38,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:currentUser.avatarColor||'var(--primary-violet)',border:'2px solid rgba(255,255,255,0.2)',color:'white',fontWeight:700,fontSize:13,cursor:'pointer',transition:'all 0.2s',boxShadow:avatarOpen?'0 0 0 3px rgba(139,92,246,0.5)':'none' }}>
+            {currentUser.avatar||'?'}
+          </button>
+          {avatarOpen && (
+            <>
+              <div style={{ position:'fixed',inset:0,zIndex:200 }} onClick={()=>setAvatarOpen(false)}/>
+              <div className="glass" style={{ position:'absolute',top:'calc(100% + 8px)',right:0,width:220,borderRadius:14,overflow:'hidden',zIndex:201,boxShadow:'var(--glow-violet),0 20px 40px rgba(0,0,0,0.5)',animation:'notifSlide 0.2s ease' }}>
+                <div style={{ padding:'14px 16px',borderBottom:'1px solid var(--border-violet)' }}>
+                  <div style={{ fontSize:13,fontWeight:700,color:'var(--text-primary)' }}>Hola, {displayName} 👋</div>
+                  <div style={{ fontSize:11,color:'var(--text-secondary)',marginTop:2 }}>{currentUser.email}</div>
+                  <div style={{ marginTop:6,display:'inline-flex',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700,background:`${({super_admin:'#F59E0B',admin:'#8B5CF6',editor:'#3B82F6',viewer:'#6B7280',custom:'#EC4899'}[currentUser.rol])||'#6B7280'}22`,color:({super_admin:'#F59E0B',admin:'#8B5CF6',editor:'#3B82F6',viewer:'#6B7280',custom:'#EC4899'}[currentUser.rol])||'#6B7280',textTransform:'uppercase',letterSpacing:0.5 }}>{roleLabel[currentUser.rol]||currentUser.rol}</div>
+                </div>
+                <div style={{ padding:'6px 8px' }}>
+                  <button onClick={()=>{setAvatarOpen(false); onLogout()}} style={{ width:'100%',display:'flex',alignItems:'center',gap:10,padding:'10px 12px',borderRadius:8,color:'#F87171',fontSize:13,background:'transparent',border:'none',cursor:'pointer',transition:'all 0.15s',textAlign:'left' }}
+                    onMouseEnter={e=>e.currentTarget.style.background='rgba(239,68,68,0.1)'}
+                    onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                    <LogOut size={14}/> Cerrar sesión
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </header>
   )
 }
@@ -946,6 +1005,27 @@ const RoccoChat = ({ show, onClose }) => {
 // ═══════════════════════════════════════════════
 
 export default function App() {
+  // ── Auth state ──────────────────────────────────
+  const [currentUser,  setCurrentUser]  = useState(() => getSession())
+  const [showAdmin,    setShowAdmin]    = useState(false)
+  const [adminNotifs,  setAdminNotifs]  = useState(() => getAdminNotifs())
+
+  const handleLogin = (user) => {
+    setCurrentUser(user)
+    setShowPortal(true)
+    setCurrentView('hub')
+  }
+
+  const handleLogout = () => {
+    if (currentUser) logActivity({ userId:currentUser.id, userName:currentUser.nombre, accion:'logout', detalle:'Cerró sesión', seccion:'sistema' })
+    clearSession()
+    setCurrentUser(null)
+    setShowPortal(true)
+  }
+
+  const refreshAdminNotifs = () => setAdminNotifs(getAdminNotifs())
+
+  // ── CRM state ────────────────────────────────────
   const [theme,            setTheme]           = useLocalStorage('crm_theme', 'dark')
   const [currentView,      setCurrentView]      = useLocalStorage('crm_view', 'dashboard')
   const [sidebarCollapsed, setSidebarCollapsed] = useLocalStorage('crm_sidebar', false)
@@ -975,7 +1055,7 @@ export default function App() {
   const [missions,       setMissions]       = useLocalStorage('crm_missions_v1',     DEMO_MISSIONS)
   const [notifications,  setNotifications]  = useLocalStorage('crm_notifs_v1',       DEMO_NOTIFICATIONS)
   const [portalSeen,     setPortalSeen]     = useLocalStorage('crm_portal_seen', false)
-  const [showPortal,     setShowPortal]     = useState(true)
+  const [showPortal,     setShowPortal]     = useState(() => Boolean(getSession()))
 
   const [cmdOpen,      setCmdOpen]      = useState(false)
   const [mobileMenu,   setMobileMenu]   = useState(false)
@@ -1034,7 +1114,13 @@ export default function App() {
   const handleMarkRead      = useCallback((id)=>setNotifications(p=>p.map(n=>n.id===id?{...n,read:true}:n)), [setNotifications])
   const handleMarkAllRead   = useCallback(()=>setNotifications(p=>p.map(n=>({...n,read:true}))), [setNotifications])
 
-  const navigate = useCallback((v)=>{ setCurrentView(v); setMobileMenu(false) }, [setCurrentView])
+  const navigate = useCallback((v) => {
+    setCurrentView(v)
+    setMobileMenu(false)
+    if (currentUser) {
+      logActivity({ userId:currentUser.id, userName:currentUser.nombre, accion:'cambiar_seccion', detalle:`Navegó a ${v}`, seccion:v })
+    }
+  }, [setCurrentView, currentUser])
 
   const renderView = () => {
     switch (currentView) {
@@ -1136,11 +1222,24 @@ export default function App() {
     } catch { return 'default' }
   })()
 
+  // ── Auth gate ──────────────────────────────────
+  if (!currentUser) {
+    return (
+      <>
+        <GlobalStyles/>
+        <LoginScreen onLogin={handleLogin}/>
+      </>
+    )
+  }
+
   if (showPortal) {
     return (
       <>
         <GlobalStyles/>
-        <VideoPortal onEnter={()=>{setShowPortal(false); setCurrentView('hub')}} userName={users[0]?.name || 'Usuario'}/>
+        <VideoPortal
+          onEnter={() => { setShowPortal(false); setCurrentView('hub') }}
+          userName={currentUser?.sobrenombre || currentUser?.nombre || 'Usuario'}
+        />
       </>
     )
   }
@@ -1154,7 +1253,7 @@ export default function App() {
       }}>
         {/* Desktop sidebar — oculto en Hub */}
         {!isMobile && currentView !== 'hub' && (
-          <Sidebar currentView={currentView} onNavigate={navigate} collapsed={effectiveCollapsed} onToggle={()=>setSidebarCollapsed(p=>!p)}/>
+          <Sidebar currentView={currentView} onNavigate={navigate} collapsed={effectiveCollapsed} onToggle={()=>setSidebarCollapsed(p=>!p)} currentUser={currentUser}/>
         )}
 
         {/* Mobile sidebar overlay */}
@@ -1162,7 +1261,7 @@ export default function App() {
           <>
             <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(4px)',zIndex:199}} onClick={()=>setMobileMenu(false)}/>
             <div style={{position:'fixed',top:0,left:0,height:'100vh',zIndex:200}}>
-              <Sidebar currentView={currentView} onNavigate={navigate} collapsed={false} onToggle={()=>setMobileMenu(false)}/>
+              <Sidebar currentView={currentView} onNavigate={navigate} collapsed={false} onToggle={()=>setMobileMenu(false)} currentUser={currentUser}/>
             </div>
           </>
         )}
@@ -1178,6 +1277,10 @@ export default function App() {
             notifications={notifications}
             onMarkRead={handleMarkRead}
             onMarkAllRead={handleMarkAllRead}
+            currentUser={currentUser}
+            onLogout={handleLogout}
+            onAdmin={() => setShowAdmin(true)}
+            adminNotifCount={adminNotifs.filter(n=>!n.read).length}
           />
           <main style={{flex:1,overflowY:'auto'}}>{renderView()}</main>
         </div>
@@ -1212,6 +1315,14 @@ export default function App() {
 
       {/* ROCCO chat panel */}
       <RoccoChat show={showRocco} onClose={()=>setShowRocco(false)}/>
+
+      {/* Admin Panel overlay */}
+      {showAdmin && (
+        <AdminPanel
+          currentUser={currentUser}
+          onClose={() => { setShowAdmin(false); setAdminNotifs(getAdminNotifs()) }}
+        />
+      )}
     </>
   )
 }

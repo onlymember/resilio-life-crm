@@ -10,7 +10,8 @@
       "Read(//e//**)",
       "Bash(git *)",
       "Bash(gh *)",
-      "Bash(node --input-type=module)"
+      "Bash(node --input-type=module)",
+      "Bash(curl -s http://localhost:5174)"
     ]
   }
 }
