@@ -756,26 +756,114 @@ const PlaceholderView = ({ title, icon: Icon, description, phase }) => (
 )
 
 // ═══════════════════════════════════════════════
-// MOBILE NAV
+// MOBILE NAV DINÁMICO
 // ═══════════════════════════════════════════════
 
-const MobileNav = ({ currentView, onNavigate }) => {
-  const items = [
-    { id:'dashboard',   icon:LayoutDashboard, label:'Inicio' },
-    { id:'brands',      icon:Building2,       label:'Marcas' },
-    { id:'influencers', icon:Users,           label:'Influencers' },
-    { id:'codes',       icon:QrCode,          label:'Códigos' },
-    { id:'tracking',    icon:Activity,        label:'Tracking' },
-  ]
+const ECOSYSTEM_MAP = {
+  rl_dashboard:'resilio', brands:'resilio', locations:'resilio',
+  influencers:'resilio', benefits:'resilio', codes:'resilio',
+  memberships:'resilio', users:'resilio', unregistered:'resilio',
+  tracking:'resilio', analytics:'resilio', reports:'resilio',
+  creative:'creative', creative_projects:'creative',
+  creative_clients:'creative', creative_equipo:'creative',
+  inf_dashboard:'infagency', inf_campaigns:'infagency',
+  inf_crm:'infagency', inf_collabs:'infagency',
+  prod_dashboard:'production', events:'production',
+  tickets:'production', only_members:'production', rrpp:'production',
+  elevare:'elevare', elevare_bienes:'elevare', elevare_leads:'elevare',
+  elevare_contratos:'elevare', elevare_contenido:'elevare', elevare_hosp:'elevare',
+  missions:'tools', team:'tools', advanced:'tools',
+  cap_pipeline:'captacion', cap_busqueda:'captacion', cap_speeches:'captacion',
+  cap_provincias:'captacion', cap_seguimiento:'captacion', cap_contactos:'captacion',
+  hub:'hub', dashboard:'hub',
+}
+
+const NAV_CONFIGS = {
+  resilio: [
+    { id:'rl_dashboard', icon:'📊', label:'Dashboard' },
+    { id:'brands',       icon:'🏪', label:'Marcas' },
+    { id:'locations',    icon:'📍', label:'Locales' },
+    { id:'influencers',  icon:'⭐', label:'Influencers' },
+    { id:'benefits',     icon:'🎁', label:'Beneficios' },
+  ],
+  creative: [
+    { id:'creative',          icon:'📊', label:'Dashboard' },
+    { id:'creative_projects', icon:'🎨', label:'Proyectos' },
+    { id:'creative_clients',  icon:'👥', label:'Clientes' },
+    { id:'creative_equipo',   icon:'🌍', label:'Equipo' },
+  ],
+  infagency: [
+    { id:'inf_dashboard', icon:'📊', label:'Dashboard' },
+    { id:'inf_campaigns', icon:'📱', label:'Campañas' },
+    { id:'inf_crm',       icon:'⭐', label:'Influencers' },
+    { id:'inf_collabs',   icon:'🤝', label:'Colabs' },
+  ],
+  production: [
+    { id:'prod_dashboard', icon:'📊', label:'Dashboard' },
+    { id:'events',         icon:'🎉', label:'Eventos' },
+    { id:'tickets',        icon:'🎟️', label:'Tickets' },
+    { id:'rrpp',           icon:'👔', label:'RRPP' },
+    { id:'only_members',   icon:'💎', label:'Members' },
+  ],
+  elevare: [
+    { id:'elevare',           icon:'📊', label:'Dashboard' },
+    { id:'elevare_bienes',    icon:'🏠', label:'Bienes' },
+    { id:'elevare_leads',     icon:'👤', label:'Leads' },
+    { id:'elevare_contratos', icon:'📄', label:'Contratos' },
+    { id:'elevare_contenido', icon:'📸', label:'Contenido' },
+  ],
+  tools: [
+    { id:'missions', icon:'🎯', label:'Misiones' },
+    { id:'team',     icon:'👥', label:'Team' },
+    { id:'advanced', icon:'⚙️', label:'Advanced' },
+  ],
+  captacion: [
+    { id:'cap_pipeline',    icon:'📊', label:'Pipeline' },
+    { id:'cap_busqueda',    icon:'🔍', label:'Búsqueda' },
+    { id:'cap_speeches',    icon:'💬', label:'Speeches' },
+    { id:'cap_provincias',  icon:'🌎', label:'Expansión' },
+    { id:'cap_seguimiento', icon:'📞', label:'Seguimiento' },
+  ],
+  hub: [
+    { id:'hub',       icon:'🏠', label:'Hub' },
+    { id:'dashboard', icon:'📊', label:'Dashboard' },
+    { id:'team',      icon:'⚙️', label:'Gestión' },
+    { id:'__rocco__', icon:'🤖', label:'ROCCO' },
+  ],
+}
+
+const MobileNav = ({ currentView, onNavigate, onRocco }) => {
+  const ecosystem = ECOSYSTEM_MAP[currentView] || 'hub'
+  const items = NAV_CONFIGS[ecosystem] || NAV_CONFIGS.hub
   return (
-    <nav style={{position:'fixed',bottom:0,left:0,right:0,background:'var(--glass-bg)',backdropFilter:'blur(40px)',borderTop:'1px solid var(--border-violet)',zIndex:200,display:'flex',padding:'8px 0 max(8px, env(safe-area-inset-bottom))'}} className="show-mobile-only">
-      {items.map(item=>(
-        <button key={item.id} onClick={()=>onNavigate(item.id)} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3,padding:'6px 0',color:currentView===item.id?'var(--primary-violet-light)':'var(--text-secondary)',transition:'all 0.2s',cursor:'pointer'}}>
-          <item.icon size={20}/>
-          <span style={{fontSize:9,fontWeight:currentView===item.id?600:400}}>{item.label}</span>
-          {currentView===item.id&&<div style={{width:4,height:4,borderRadius:'50%',background:'var(--primary-violet)',boxShadow:'0 0 6px var(--primary-violet)'}}/>}
-        </button>
-      ))}
+    <nav style={{
+      position:'fixed', bottom:0, left:0, right:0,
+      background:'rgba(10,6,24,0.92)',
+      backdropFilter:'blur(40px)', WebkitBackdropFilter:'blur(40px)',
+      borderTop:'1px solid rgba(139,92,246,0.2)',
+      zIndex:200, display:'flex',
+      padding:'8px 4px max(8px, env(safe-area-inset-bottom))',
+      transition:'all 0.3s ease',
+    }} className="show-mobile-only">
+      {items.map(item => {
+        const isActive = currentView === item.id
+        const isRocco  = item.id === '__rocco__'
+        return (
+          <button key={item.id}
+            onClick={() => isRocco ? onRocco?.() : onNavigate(item.id)}
+            style={{
+              flex:1, display:'flex', flexDirection:'column',
+              alignItems:'center', gap:3, padding:'6px 2px',
+              color: isActive ? 'var(--primary-violet-light)' : 'var(--text-secondary)',
+              background: isActive ? 'rgba(139,92,246,0.12)' : 'transparent',
+              borderRadius:10, transition:'all 0.2s', cursor:'pointer',
+            }}>
+            <span style={{ fontSize:18, lineHeight:1 }}>{item.icon}</span>
+            <span style={{ fontSize:9, fontWeight:isActive?700:400, lineHeight:1.1, textAlign:'center' }}>{item.label}</span>
+            {isActive && <div style={{ width:4, height:4, borderRadius:'50%', background:'var(--primary-violet)', boxShadow:'0 0 6px var(--primary-violet)' }}/>}
+          </button>
+        )
+      })}
     </nav>
   )
 }
@@ -1094,7 +1182,7 @@ export default function App() {
           <main style={{flex:1,overflowY:'auto'}}>{renderView()}</main>
         </div>
 
-        {isMobile && <MobileNav currentView={currentView} onNavigate={navigate}/>}
+        {isMobile && <MobileNav currentView={currentView} onNavigate={navigate} onRocco={()=>setShowRocco(p=>!p)}/>}
       </div>
 
       <CommandPalette isOpen={cmdOpen} onClose={()=>setCmdOpen(false)} onNavigate={navigate}/>
@@ -1104,7 +1192,7 @@ export default function App() {
         onClick={()=>setShowRocco(p=>!p)}
         title="ROCCO IA Assistant"
         style={{
-          position:'fixed', bottom:'2rem', right:'2rem',
+          position:'fixed', bottom: isMobile ? '88px' : '2rem', right:'2rem',
           width:56, height:56, borderRadius:'50%',
           background: showRocco
             ? 'linear-gradient(135deg,#6D28D9,#7C3AED)'
