@@ -62,18 +62,25 @@ const Checkbox = ({ checked, onChange, label }) => (
   </label>
 )
 
-const SectionBtn = ({ id, label, icon, active, badge, onClick }) => (
+const SectionBtn = ({ id, label, icon, active, badge, onClick, compact }) => (
   <button onClick={() => onClick(id)} style={{
-    display:'flex', alignItems:'center', gap:10, padding:'10px 16px', borderRadius:10,
-    width:'100%', marginBottom:4, transition:'all 0.2s', textAlign:'left',
+    display:'flex', alignItems:'center',
+    gap: compact ? 5 : 10,
+    padding: compact ? '7px 10px' : '10px 16px',
+    borderRadius:10,
+    width: compact ? 'auto' : '100%',
+    flexShrink: compact ? 0 : undefined,
+    marginBottom: compact ? 0 : 4,
+    transition:'all 0.2s', textAlign:'left',
+    whiteSpace: compact ? 'nowrap' : 'normal',
     background: active ? 'rgba(139,92,246,0.22)' : 'transparent',
     color: active ? '#A78BFA' : 'rgba(196,181,253,0.6)',
     border: active ? '1px solid rgba(139,92,246,0.4)' : '1px solid transparent',
-    fontSize:13, fontWeight: active ? 600 : 400,
+    fontSize: compact ? 12 : 13, fontWeight: active ? 600 : 400,
   }}>
-    <span style={{fontSize:16}}>{icon}</span>
-    <span style={{flex:1}}>{label}</span>
-    {badge > 0 && <span style={{ minWidth:18, height:18, background:'#E879F9', borderRadius:9, fontSize:10, fontWeight:700, color:'white', display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>{badge}</span>}
+    <span style={{fontSize: compact ? 14 : 16}}>{icon}</span>
+    <span style={{flex: compact ? undefined : 1}}>{label}</span>
+    {badge > 0 && <span style={{ minWidth:16, height:16, background:'#E879F9', borderRadius:8, fontSize:9, fontWeight:700, color:'white', display:'flex', alignItems:'center', justifyContent:'center', padding:'0 3px', flexShrink:0 }}>{badge}</span>}
   </button>
 )
 
@@ -166,7 +173,7 @@ const EditUserModal = ({ user, onSave, onClose, currentUser }) => {
                 <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:6 }}>Sobrenombre / Apodo</label>
                 <input className="input-field" value={form.sobrenombre} onChange={e=>set('sobrenombre',e.target.value)} placeholder="Opcional" style={{ width:'100%', padding:'9px 12px', background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.25)', borderRadius:8, color:'#F9FAFB', fontSize:13, outline:'none', boxSizing:'border-box' }}/>
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <div style={{ display:'grid', gridTemplateColumns: window.innerWidth < 640 ? '1fr' : '1fr 1fr', gap:12 }}>
                 <div>
                   <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:6 }}>Rol</label>
                   <select value={form.rol} onChange={e=>applyRoleDefaults(e.target.value)} disabled={isSA} style={{ width:'100%', padding:'9px 12px', background:'rgba(18,10,40,0.95)', border:'1px solid rgba(139,92,246,0.25)', borderRadius:8, color:'#F9FAFB', fontSize:13, outline:'none', cursor:isSA?'not-allowed':'pointer' }}>
@@ -396,7 +403,7 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
               <Badge type={ROLE_COLOR[u.rol]} label={ROLE_LABEL[u.rol]}/>
               <Badge type={ESTADO_COLOR[u.estado]} label={ESTADO_LABEL[u.estado]}/>
             </div>
-            <div style={{ display:'flex', gap:6 }}>
+            <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
               {u.estado === 'pendiente' && (
                 <button onClick={() => { setApproveModal(u); setApproveRol('viewer') }} style={{ padding:'6px 12px', borderRadius:7, background:'rgba(16,185,129,0.15)', border:'1px solid rgba(16,185,129,0.3)', color:'#10B981', fontSize:11, fontWeight:700, cursor:'pointer' }}>✅ Aprobar</button>
               )}
@@ -777,12 +784,26 @@ export default function AdminPanel({ onClose, currentUser }) {
   const [users,     setUsers]     = useState(() => getUsers())
   const [badgeNotif,setBadgeNotif]= useState(() => getAdminNotifs().filter(n=>!n.read).length)
   const [badgePend, setBadgePend] = useState(() => getUsers().filter(u=>u.estado==='pendiente').length)
+  const [isMobile,  setIsMobile]  = useState(() => window.innerWidth < 768)
 
   const refreshUsers = useCallback((u) => {
     const list = u || getUsers()
     setUsers(list)
     setBadgePend(list.filter(x=>x.estado==='pendiente').length)
   }, [])
+
+  // Resize listener for responsive layout
+  useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', h)
+    return () => window.removeEventListener('resize', h)
+  }, [])
+
+  // BUG 1 FIX: Poll localStorage every 3s so new registrations appear without manual refresh
+  useEffect(() => {
+    const interval = setInterval(refreshUsers, 3000)
+    return () => clearInterval(interval)
+  }, [refreshUsers])
 
   const sections = [
     { id:'dashboard',     icon:'📊', label:'Dashboard',       badge:0 },
@@ -810,28 +831,56 @@ export default function AdminPanel({ onClose, currentUser }) {
   }
 
   return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.85)', backdropFilter:'blur(10px)', zIndex:2500, display:'flex', alignItems:'center', justifyContent:'center', padding:16, animation:'fadeIn 0.2s ease' }}>
-      <div style={{ width:'100%', maxWidth:1100, height:'90vh', display:'flex', background:'rgba(10,6,24,0.98)', border:'1px solid rgba(139,92,246,0.35)', borderRadius:20, overflow:'hidden', boxShadow:'0 0 60px rgba(139,92,246,0.2),0 40px 80px rgba(0,0,0,0.7)' }}>
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.85)', backdropFilter:'blur(10px)', zIndex:2500, display:'flex', alignItems:'center', justifyContent:'center', padding: isMobile ? 0 : 16, animation:'fadeIn 0.2s ease' }}>
+      <div style={{
+        width:'100%', maxWidth: isMobile ? '100%' : 1100,
+        height: isMobile ? '100dvh' : '90vh',
+        display:'flex', flexDirection: isMobile ? 'column' : 'row',
+        background:'rgba(10,6,24,0.98)', border:'1px solid rgba(139,92,246,0.35)',
+        borderRadius: isMobile ? 0 : 20, overflow:'hidden',
+        boxShadow:'0 0 60px rgba(139,92,246,0.2),0 40px 80px rgba(0,0,0,0.7)',
+      }}>
 
-        {/* Sidebar */}
-        <div style={{ width:220, flexShrink:0, background:'rgba(18,10,40,0.8)', borderRight:'1px solid rgba(139,92,246,0.2)', display:'flex', flexDirection:'column', padding:'20px 12px' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:24, paddingLeft:4 }}>
-            <div style={{ fontSize:20 }}>⚙️</div>
-            <div>
-              <div style={{ fontSize:14, fontWeight:800, color:'#F9FAFB' }}>Admin Panel</div>
-              <div style={{ fontSize:10, color:'rgba(196,181,253,0.5)' }}>{currentUser?.nombre}</div>
+        {/* Sidebar — vertical on desktop, horizontal tabs on mobile */}
+        <div style={{
+          width: isMobile ? '100%' : 220, flexShrink:0,
+          background:'rgba(18,10,40,0.8)',
+          borderRight: isMobile ? 'none' : '1px solid rgba(139,92,246,0.2)',
+          borderBottom: isMobile ? '1px solid rgba(139,92,246,0.2)' : 'none',
+          display:'flex', flexDirection: isMobile ? 'row' : 'column',
+          padding: isMobile ? '6px 8px' : '20px 12px',
+          overflowX: isMobile ? 'auto' : 'visible',
+          gap: isMobile ? 4 : 0,
+          alignItems: isMobile ? 'center' : 'stretch',
+        }}>
+          {!isMobile && (
+            <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:24, paddingLeft:4 }}>
+              <div style={{ fontSize:20 }}>⚙️</div>
+              <div>
+                <div style={{ fontSize:14, fontWeight:800, color:'#F9FAFB' }}>Admin Panel</div>
+                <div style={{ fontSize:10, color:'rgba(196,181,253,0.5)' }}>{currentUser?.nombre}</div>
+              </div>
             </div>
-          </div>
-          <nav style={{ flex:1 }}>
+          )}
+          <nav style={{ flex:1, display: isMobile ? 'flex' : 'block', gap: isMobile ? 4 : 0 }}>
             {sections.map(s => (
-              <SectionBtn key={s.id} {...s} active={section===s.id} onClick={setSection}/>
+              <SectionBtn key={s.id} {...s} active={section===s.id} onClick={setSection} compact={isMobile}/>
             ))}
           </nav>
-          <button onClick={onClose} style={{ width:'100%', padding:'10px', borderRadius:10, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', color:'#F87171', fontSize:13, fontWeight:600, cursor:'pointer', transition:'all 0.2s' }}>✕ Cerrar panel</button>
+          <button onClick={onClose} style={{
+            flexShrink: 0, whiteSpace:'nowrap',
+            width: isMobile ? 'auto' : '100%',
+            padding: isMobile ? '7px 12px' : '10px',
+            borderRadius:10, background:'rgba(239,68,68,0.08)',
+            border:'1px solid rgba(239,68,68,0.2)', color:'#F87171',
+            fontSize: isMobile ? 15 : 13, fontWeight:600, cursor:'pointer', transition:'all 0.2s',
+          }}>
+            {isMobile ? '✕' : '✕ Cerrar panel'}
+          </button>
         </div>
 
         {/* Content */}
-        <div style={{ flex:1, overflowY:'auto', padding:'28px 28px' }}>
+        <div style={{ flex:1, overflowY:'auto', padding: isMobile ? '16px 14px' : '28px 28px' }}>
           {renderSection()}
         </div>
       </div>
