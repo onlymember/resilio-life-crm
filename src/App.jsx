@@ -5,7 +5,7 @@ import {
   Bell, Sun, Moon, Menu, X, Plus, Edit3, Trash2,
   Phone, Mail, Globe, Calendar, Tag, CheckCircle,
   Clock, Star, TrendingUp,
-  User, Shield, Zap, Layers,
+  User, Shield, Layers,
   AlertCircle, ChevronLeft, Save, Award,
   Building, CreditCard, Activity, Palette, FileText, Ticket,
   Target, Radio, Crown, Megaphone, PhoneCall, Home, Map,
@@ -58,6 +58,14 @@ import AdvancedView          from './views/AdvancedView.jsx'
 import MissionsView          from './views/MissionsView.jsx'
 import CaptacionView         from './views/CaptacionView.jsx'
 import HubView               from './views/HubView.jsx'
+
+const ResilioIcon = ({ size = 17 }) => (
+  <img
+    src="/logoresilio.png"
+    alt="Resilio"
+    style={{ width: size, height: size, objectFit: 'contain', filter: 'brightness(0) invert(1)', flexShrink: 0 }}
+  />
+)
 
 // ═══════════════════════════════════════════════
 // GLOBAL STYLES
@@ -200,7 +208,7 @@ const CommandPalette = ({ isOpen, onClose, onNavigate }) => {
     { id: 'elevare_hosp',    label: '💎 Elevare · Hospitality',icon:Home,          action: () => onNavigate('elevare_hosp')    },
     { id: 'missions',        label: '🎯 Misiones',          icon: Target,          action: () => onNavigate('missions')        },
     { id: 'team',            label: 'Team Management',      icon: Users,           action: () => onNavigate('team')            },
-    { id: 'advanced',        label: 'Features Avanzadas',   icon: Zap,             action: () => onNavigate('advanced')        },
+    { id: 'advanced',        label: 'Features Avanzadas',   icon: ResilioIcon,     action: () => onNavigate('advanced')        },
     { id: 'cap_pipeline',    label: '📞 Captación · Pipeline',icon:BarChart3,      action: () => onNavigate('cap_pipeline')    },
     { id: 'cap_speeches',    label: '📞 Captación · Speeches',icon:Megaphone,      action: () => onNavigate('cap_speeches')    },
     { id: 'cap_provincias',  label: '📞 Captación · Provincias',icon:Map,          action: () => onNavigate('cap_provincias')  },
@@ -262,7 +270,7 @@ const Sidebar = ({ currentView, onNavigate, collapsed, onToggle, currentUser }) 
       ]
     },
     {
-      id: 'resilio', label: 'Resilio Life', icon: Zap, collapsible: true,
+      id: 'resilio', label: 'Resilio Life', icon: ResilioIcon, collapsible: true,
       open: resilioOpen, onToggle: () => setResilioOpen(p => !p),
       items: [
         { id: 'rl_dashboard', label: 'Dashboard',           icon: BarChart3    },
@@ -328,7 +336,7 @@ const Sidebar = ({ currentView, onNavigate, collapsed, onToggle, currentUser }) 
       items: [
         { id: 'missions', label: 'Misiones', icon: Target },
         { id: 'team',     label: 'Team',     icon: Users  },
-        { id: 'advanced', label: 'Advanced', icon: Zap    },
+        { id: 'advanced', label: 'Advanced', icon: ResilioIcon },
       ]
     },
     {
@@ -355,11 +363,10 @@ const Sidebar = ({ currentView, onNavigate, collapsed, onToggle, currentUser }) 
     }}>
       {/* Logo */}
       <div style={{ padding:'20px 16px',borderBottom:'1px solid var(--border-violet)',display:'flex',alignItems:'center',gap:12,minHeight:72 }}>
-        <div style={{ width:40,height:40,borderRadius:12,flexShrink:0,background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'var(--glow-violet-sm)',fontSize:18 }}>⚡</div>
+        <div style={{ width:40,height:40,borderRadius:12,flexShrink:0,background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'var(--glow-violet-sm)' }}><img src="/logoresilio.png" alt="Resilio" style={{ width:26,height:26,objectFit:'contain',filter:'brightness(0) invert(1)' }}/></div>
         {!collapsed&&(
           <div style={{ overflow:'hidden' }}>
             <div className="gradient-text" style={{ fontSize:14,fontWeight:700,letterSpacing:0.5,whiteSpace:'nowrap' }}>Resilio Life</div>
-            <div style={{ fontSize:11,color:'var(--text-secondary)',whiteSpace:'nowrap' }}>CRM v3.0</div>
           </div>
         )}
         <button onClick={onToggle} style={{ marginLeft:'auto',color:'var(--text-secondary)',padding:4,borderRadius:6,transition:'all 0.2s',flexShrink:0 }} onMouseEnter={e=>{e.currentTarget.style.color='var(--primary-violet-light)';e.currentTarget.style.background='rgba(139,92,246,0.1)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-secondary)';e.currentTarget.style.background='transparent'}}>
@@ -450,13 +457,12 @@ const Header = ({ currentView, theme, onThemeToggle, onCommandPalette, onMobileM
       <button className="show-mobile-only" onClick={onMobileMenu} style={{ color:'var(--text-secondary)',padding:6,borderRadius:8 }}><Menu size={20}/></button>
       <div>
         <h1 style={{ fontSize:16,fontWeight:700 }}>{labels[currentView]||currentView}</h1>
-        <p style={{ fontSize:11,color:'var(--text-secondary)' }}>Resilio Life CRM · v5.0</p>
       </div>
       <div style={{ flex:1 }}/>
 
       {/* Hub button */}
       <button onClick={onHub} title="Volver al Hub" style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 14px',borderRadius:10,fontSize:12,fontWeight:600,background:currentView==='hub'?'rgba(139,92,246,0.25)':'rgba(139,92,246,0.08)',border:`1px solid ${currentView==='hub'?'var(--primary-violet)':'var(--border-violet)'}`,color:currentView==='hub'?'var(--primary-violet-light)':'var(--text-secondary)',transition:'all 0.2s' }} onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--primary-violet)';e.currentTarget.style.background='rgba(139,92,246,0.2)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor=currentView==='hub'?'var(--primary-violet)':'var(--border-violet)';e.currentTarget.style.background=currentView==='hub'?'rgba(139,92,246,0.25)':'rgba(139,92,246,0.08)'}}>
-        ⚡ Hub
+        <img src="/logoresilio.png" alt="Resilio" style={{ width:14,height:14,objectFit:'contain',filter:'brightness(0) invert(1)' }}/> Hub
       </button>
 
       {/* Admin button — only for admin/super_admin */}
