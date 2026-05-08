@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { Palette, Plus, Edit3, Trash2, X, Save, Users, Clock, CheckCircle, Circle, AlertCircle, Search, Globe, Briefcase, Tag, Calendar, ChevronDown, BarChart3, Star } from 'lucide-react'
 
 // ── Equipo Demo ──────────────────────────────
@@ -24,6 +24,16 @@ const F = ({ label, children, err: e }) => (
 const fmtMoney = (n) => n >= 1000000 ? `$${(n/1000000).toFixed(1)}M` : n >= 1000 ? `$${(n/1000).toFixed(0)}K` : `$${n}`
 const fmtDate  = (d) => { if (!d) return '—'; const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0].slice(2)}` }
 const generateId = () => `${Date.now()}_${Math.random().toString(36).slice(2,7)}`
+
+const useIsMobile = () => {
+  const [w, setW] = useState(window.innerWidth)
+  useEffect(() => {
+    const h = () => setW(window.innerWidth)
+    window.addEventListener('resize', h)
+    return () => window.removeEventListener('resize', h)
+  }, [])
+  return w < 640
+}
 
 // ── Project constants ─────────────────────────
 const TYPE_CFG = {
@@ -73,6 +83,7 @@ const ProgressBar = ({ value, max, color='#8B5CF6', label }) => {
 const PROJ_EMPTY = { type:'monthly_retainer',clientId:'',creadorId:'',name:'',description:'',status:'proposal',budget:0,budgetSpent:0,startDate:'',endDate:'',hoursTracked:0,hoursEstimated:0,deliverables:[],team:[] }
 
 const ProjectModal = ({ project, clients, equipo, onSave, onClose }) => {
+  const isMobile = useIsMobile()
   const [form, setForm] = useState(project || PROJ_EMPTY)
   const [newDel, setNewDel] = useState('')
   const set = (f,v) => setForm(p=>({...p,[f]:v}))
@@ -97,24 +108,24 @@ const ProjectModal = ({ project, clients, equipo, onSave, onClose }) => {
   const DEL_COLORS = { pending:'#9CA3AF', in_progress:'#FCD34D', completed:'#4ADE80' }
 
   return (
-    <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',backdropFilter:'blur(8px)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20 }} onClick={onClose}>
-      <div style={{ width:'100%',maxWidth:620,background:'var(--bg-secondary)',border:'1px solid var(--border-violet)',borderRadius:20,maxHeight:'92vh',overflowY:'auto',boxShadow:'var(--glow-violet),0 40px 80px rgba(0,0,0,0.5)',animation:'fadeIn 0.3s ease' }} onClick={e=>e.stopPropagation()}>
-        <div style={{ padding:'24px 28px',borderBottom:'1px solid var(--border-violet)',display:'flex',alignItems:'center',gap:12 }}>
-          <div style={{ width:40,height:40,borderRadius:12,background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20 }}>🎨</div>
-          <h2 style={{ fontSize:16,fontWeight:700 }}>{project?'Editar Proyecto':'Nuevo Proyecto'}</h2>
-          <button onClick={onClose} style={{ marginLeft:'auto',color:'var(--text-secondary)',padding:6,borderRadius:8 }}><X size={20}/></button>
+    <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',backdropFilter:'blur(8px)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:isMobile?12:20 }} onClick={onClose}>
+      <div style={{ width:'100%',maxWidth:620,background:'var(--bg-secondary)',border:'1px solid var(--border-violet)',borderRadius:isMobile?16:20,maxHeight:'92vh',overflowY:'auto',boxShadow:'var(--glow-violet),0 40px 80px rgba(0,0,0,0.5)',animation:'fadeIn 0.3s ease' }} onClick={e=>e.stopPropagation()}>
+        <div style={{ padding:isMobile?'16px 18px':'24px 28px',borderBottom:'1px solid var(--border-violet)',display:'flex',alignItems:'center',gap:12 }}>
+          <div style={{ width:36,height:36,borderRadius:10,background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0 }}>🎨</div>
+          <h2 style={{ fontSize:15,fontWeight:700 }}>{project?'Editar Proyecto':'Nuevo Proyecto'}</h2>
+          <button onClick={onClose} style={{ marginLeft:'auto',color:'var(--text-secondary)',padding:6,borderRadius:8 }}><X size={18}/></button>
         </div>
-        <div style={{ padding:'24px 28px',display:'flex',flexDirection:'column',gap:16 }}>
+        <div style={{ padding:isMobile?'16px 18px':'24px 28px',display:'flex',flexDirection:'column',gap:14 }}>
           {/* Tipo */}
           <div>
             <label style={{ fontSize:12,fontWeight:500,color:'var(--text-secondary)',display:'block',marginBottom:8 }}>Tipo</label>
             <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:8 }}>
               {Object.entries(TYPE_CFG).map(([k,v])=>(
-                <button key={k} onClick={()=>set('type',k)} style={{ padding:'8px 12px',borderRadius:10,fontSize:12,fontWeight:500,border:`1px solid ${form.type===k?v.color:'var(--border-violet)'}`,background:form.type===k?v.bg:'rgba(139,92,246,0.05)',color:form.type===k?v.color:'var(--text-secondary)',transition:'all 0.2s',textAlign:'left' }}>{v.icon} {v.label}</button>
+                <button key={k} onClick={()=>set('type',k)} style={{ padding:'8px 10px',borderRadius:10,fontSize:12,fontWeight:500,border:`1px solid ${form.type===k?v.color:'var(--border-violet)'}`,background:form.type===k?v.bg:'rgba(139,92,246,0.05)',color:form.type===k?v.color:'var(--text-secondary)',transition:'all 0.2s',textAlign:'left' }}>{v.icon} {v.label}</button>
               ))}
             </div>
           </div>
-          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+          <div style={{ display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 1fr',gap:12 }}>
             <F label="Cliente">
               <select className="select-field" value={form.clientId} onChange={e=>set('clientId',e.target.value)}>
                 <option value="">Seleccionar cliente...</option>
@@ -136,11 +147,11 @@ const ProjectModal = ({ project, clients, equipo, onSave, onClose }) => {
           </F>
           <F label="Nombre del proyecto *"><input className="input-field" value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Nike Social Media Management"/></F>
           <F label="Descripción"><textarea className="input-field" value={form.description} onChange={e=>set('description',e.target.value)} rows={2} style={{ resize:'vertical' }}/></F>
-          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+          <div style={{ display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 1fr',gap:12 }}>
             <F label="Presupuesto ($)"><input className="input-field" type="number" value={form.budget} onChange={e=>set('budget',+e.target.value)}/></F>
             <F label="Gastado ($)"><input className="input-field" type="number" value={form.budgetSpent} onChange={e=>set('budgetSpent',+e.target.value)}/></F>
           </div>
-          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:12 }}>
+          <div style={{ display:'grid',gridTemplateColumns:isMobile?'1fr 1fr':'1fr 1fr 1fr 1fr',gap:12 }}>
             <F label="Inicio"><input className="input-field" type="date" value={form.startDate} onChange={e=>set('startDate',e.target.value)}/></F>
             <F label="Fin"><input className="input-field" type="date" value={form.endDate} onChange={e=>set('endDate',e.target.value)}/></F>
             <F label="Hs estimadas"><input className="input-field" type="number" value={form.hoursEstimated} onChange={e=>set('hoursEstimated',+e.target.value)}/></F>
@@ -165,7 +176,7 @@ const ProjectModal = ({ project, clients, equipo, onSave, onClose }) => {
             })}
           </div>
         </div>
-        <div style={{ padding:'16px 28px',borderTop:'1px solid var(--border-violet)',display:'flex',gap:10,justifyContent:'flex-end' }}>
+        <div style={{ padding:isMobile?'12px 18px':'16px 28px',borderTop:'1px solid var(--border-violet)',display:'flex',gap:10,justifyContent:'flex-end' }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
           <button className="btn btn-primary" onClick={handleSave}><Save size={14}/>{project?'Guardar':'Crear Proyecto'}</button>
         </div>
@@ -205,6 +216,7 @@ const ProjectKanbanCard = ({ project, client, creador, onEdit, onDelete }) => {
 const CLIENT_EMPTY = { name:'',contactPerson:'',email:'',phone:'',type:'retainer',status:'active',tipoCliente:'fijo',descripcion:'',prioridad:'',fuente:'',valorEstimado:0,responsable:'',etiquetas:[],notas:'' }
 
 const ClientModal = ({ client, onSave, onClose }) => {
+  const isMobile = useIsMobile()
   const [form, setForm] = useState(client || CLIENT_EMPTY)
   const set = (f,v) => setForm(p=>({...p,[f]:v}))
   const handleSave = () => {
@@ -212,16 +224,16 @@ const ClientModal = ({ client, onSave, onClose }) => {
     onSave({ ...form, id:client?.id||generateId(), projectsCount:client?.projectsCount||0, totalRevenue:client?.totalRevenue||0, createdAt:client?.createdAt||new Date().toISOString() })
   }
   return (
-    <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',backdropFilter:'blur(8px)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20 }} onClick={onClose}>
-      <div style={{ width:'100%',maxWidth:500,background:'var(--bg-secondary)',border:'1px solid var(--border-violet)',borderRadius:20,boxShadow:'var(--glow-violet),0 40px 80px rgba(0,0,0,0.5)',animation:'fadeIn 0.3s ease' }} onClick={e=>e.stopPropagation()}>
-        <div style={{ padding:'24px 28px',borderBottom:'1px solid var(--border-violet)',display:'flex',alignItems:'center',gap:12 }}>
-          <div style={{ width:40,height:40,borderRadius:12,background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20 }}>🤝</div>
-          <h2 style={{ fontSize:16,fontWeight:700 }}>{client?'Editar Cliente':'Nuevo Cliente'}</h2>
-          <button onClick={onClose} style={{ marginLeft:'auto',color:'var(--text-secondary)',padding:6,borderRadius:8 }}><X size={20}/></button>
+    <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',backdropFilter:'blur(8px)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:isMobile?12:20 }} onClick={onClose}>
+      <div style={{ width:'100%',maxWidth:500,background:'var(--bg-secondary)',border:'1px solid var(--border-violet)',borderRadius:isMobile?16:20,boxShadow:'var(--glow-violet),0 40px 80px rgba(0,0,0,0.5)',animation:'fadeIn 0.3s ease' }} onClick={e=>e.stopPropagation()}>
+        <div style={{ padding:isMobile?'14px 18px':'24px 28px',borderBottom:'1px solid var(--border-violet)',display:'flex',alignItems:'center',gap:10 }}>
+          <div style={{ width:36,height:36,borderRadius:10,background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0 }}>🤝</div>
+          <h2 style={{ fontSize:15,fontWeight:700 }}>{client?'Editar Cliente':'Nuevo Cliente'}</h2>
+          <button onClick={onClose} style={{ marginLeft:'auto',color:'var(--text-secondary)',padding:6,borderRadius:8 }}><X size={18}/></button>
         </div>
-        <div style={{ padding:'24px 28px',display:'flex',flexDirection:'column',gap:14 }}>
+        <div style={{ padding:isMobile?'14px 18px':'24px 28px',display:'flex',flexDirection:'column',gap:12 }}>
           <F label="Empresa *"><input className="input-field" value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Nike Argentina"/></F>
-          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+          <div style={{ display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 1fr',gap:12 }}>
             <F label="Contacto"><input className="input-field" value={form.contactPerson} onChange={e=>set('contactPerson',e.target.value)} placeholder="Juan Pérez"/></F>
             <F label="Email"><input className="input-field" type="email" value={form.email} onChange={e=>set('email',e.target.value)} placeholder="juan@empresa.com"/></F>
             <F label="Teléfono"><input className="input-field" value={form.phone} onChange={e=>set('phone',e.target.value)} placeholder="+54 11 1234-5678"/></F>
@@ -244,7 +256,7 @@ const ClientModal = ({ client, onSave, onClose }) => {
             </div>
           </div>
         </div>
-        <div style={{ padding:'16px 28px',borderTop:'1px solid var(--border-violet)',display:'flex',gap:10,justifyContent:'flex-end' }}>
+        <div style={{ padding:isMobile?'12px 18px':'16px 28px',borderTop:'1px solid var(--border-violet)',display:'flex',gap:10,justifyContent:'flex-end' }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
           <button className="btn btn-primary" onClick={handleSave}><Save size={14}/>{client?'Guardar':'Crear Cliente'}</button>
         </div>
@@ -255,6 +267,7 @@ const ClientModal = ({ client, onSave, onClose }) => {
 
 // ── Client Detail Modal (3 tabs) ──────────────
 const ClientDetailModal = ({ client, projects, equipo, onSave, onDelete, onClose }) => {
+  const isMobile = useIsMobile()
   const [tab, setTab] = useState('info')
   const [form, setForm] = useState({ ...CLIENT_EMPTY, ...client })
   const set = (f,v) => setForm(p=>({...p,[f]:v}))
@@ -267,35 +280,36 @@ const ClientDetailModal = ({ client, projects, equipo, onSave, onDelete, onClose
   }
 
   return (
-    <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.75)',backdropFilter:'blur(10px)',zIndex:1100,display:'flex',alignItems:'center',justifyContent:'center',padding:16 }} onClick={onClose}>
-      <div style={{ width:'100%',maxWidth:680,background:'var(--bg-secondary)',border:'1px solid var(--border-violet)',borderRadius:22,maxHeight:'92vh',display:'flex',flexDirection:'column',boxShadow:'var(--glow-violet),0 40px 80px rgba(0,0,0,0.6)',animation:'fadeIn 0.3s ease' }} onClick={e=>e.stopPropagation()}>
+    <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.75)',backdropFilter:'blur(10px)',zIndex:1100,display:'flex',alignItems:'center',justifyContent:'center',padding:isMobile?10:16 }} onClick={onClose}>
+      <div style={{ width:'100%',maxWidth:680,background:'var(--bg-secondary)',border:'1px solid var(--border-violet)',borderRadius:isMobile?16:22,maxHeight:'94vh',display:'flex',flexDirection:'column',boxShadow:'var(--glow-violet),0 40px 80px rgba(0,0,0,0.6)',animation:'fadeIn 0.3s ease' }} onClick={e=>e.stopPropagation()}>
         {/* Header */}
-        <div style={{ padding:'20px 24px',borderBottom:'1px solid var(--border-violet)',display:'flex',alignItems:'center',gap:12,flexShrink:0 }}>
-          <div style={{ width:48,height:48,borderRadius:14,background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,fontSize:22 }}>{client.name.charAt(0)}</div>
-          <div>
-            <div style={{ fontSize:16,fontWeight:700 }}>{client.name}</div>
-            <div style={{ fontSize:11,color:'var(--text-secondary)' }}>{client.contactPerson} · {client.email}</div>
+        <div style={{ padding:isMobile?'14px 16px':'20px 24px',borderBottom:'1px solid var(--border-violet)',display:'flex',alignItems:'center',gap:10,flexShrink:0 }}>
+          <div style={{ width:isMobile?38:48,height:isMobile?38:48,borderRadius:12,background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,fontSize:isMobile?18:22,flexShrink:0 }}>{client.name.charAt(0)}</div>
+          <div style={{ flex:1,minWidth:0 }}>
+            <div style={{ fontSize:isMobile?14:16,fontWeight:700,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{client.name}</div>
+            <div style={{ fontSize:11,color:'var(--text-secondary)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{client.contactPerson}{!isMobile&&` · ${client.email}`}</div>
           </div>
-          <div style={{ marginLeft:'auto',display:'flex',gap:8 }}>
-            <button onClick={()=>{ if(window.confirm(`¿Eliminar a ${client.name}?`)){onDelete(client.id);onClose()} }} className="btn btn-danger" style={{ fontSize:12,padding:'6px 12px' }}><Trash2 size={13}/>Eliminar</button>
-            <button onClick={onClose} style={{ color:'var(--text-secondary)',padding:6,borderRadius:8 }}><X size={20}/></button>
+          <div style={{ display:'flex',gap:6,flexShrink:0 }}>
+            {!isMobile && <button onClick={()=>{ if(window.confirm(`¿Eliminar a ${client.name}?`)){onDelete(client.id);onClose()} }} className="btn btn-danger" style={{ fontSize:12,padding:'6px 12px' }}><Trash2 size={13}/>Eliminar</button>}
+            {isMobile && <button onClick={()=>{ if(window.confirm(`¿Eliminar?`)){onDelete(client.id);onClose()} }} style={{ padding:'6px 8px',borderRadius:8,color:'#F87171',background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',cursor:'pointer' }}><Trash2 size={14}/></button>}
+            <button onClick={onClose} style={{ color:'var(--text-secondary)',padding:6,borderRadius:8 }}><X size={18}/></button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div style={{ display:'flex',gap:6,padding:'12px 24px 0',flexShrink:0 }}>
-          {[{id:'info',l:'📋 Información'},{id:'internos',l:'🔒 Datos Internos'},{id:'historial',l:`📊 Historial (${cProjects.length})`}].map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{ padding:'8px 16px',borderRadius:10,fontSize:12,fontWeight:tab===t.id?700:400,border:`1px solid ${tab===t.id?'var(--primary-violet)':'var(--border-violet)'}`,background:tab===t.id?'rgba(139,92,246,0.2)':'rgba(139,92,246,0.05)',color:tab===t.id?'var(--primary-violet-light)':'var(--text-secondary)',transition:'all 0.2s',cursor:'pointer' }}>{t.l}</button>
+        <div style={{ display:'flex',gap:6,padding:isMobile?'10px 16px 0':'12px 24px 0',flexShrink:0,overflowX:'auto' }}>
+          {[{id:'info',l:isMobile?'📋 Info':'📋 Información'},{id:'internos',l:isMobile?'🔒 Internos':'🔒 Datos Internos'},{id:'historial',l:`📊 Historial (${cProjects.length})`}].map(t=>(
+            <button key={t.id} onClick={()=>setTab(t.id)} style={{ padding:isMobile?'7px 12px':'8px 16px',borderRadius:10,fontSize:12,fontWeight:tab===t.id?700:400,border:`1px solid ${tab===t.id?'var(--primary-violet)':'var(--border-violet)'}`,background:tab===t.id?'rgba(139,92,246,0.2)':'rgba(139,92,246,0.05)',color:tab===t.id?'var(--primary-violet-light)':'var(--text-secondary)',transition:'all 0.2s',cursor:'pointer',flexShrink:0,whiteSpace:'nowrap' }}>{t.l}</button>
           ))}
         </div>
 
         {/* Body */}
-        <div style={{ flex:1,overflowY:'auto',padding:'20px 24px' }}>
+        <div style={{ flex:1,overflowY:'auto',padding:isMobile?'16px':'20px 24px' }}>
           {/* Tab Información */}
           {tab==='info' && (
             <div style={{ display:'flex',flexDirection:'column',gap:14 }}>
               <F label="Empresa"><input className="input-field" value={form.name} onChange={e=>set('name',e.target.value)}/></F>
-              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+              <div style={{ display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 1fr',gap:12 }}>
                 <F label="Contacto"><input className="input-field" value={form.contactPerson} onChange={e=>set('contactPerson',e.target.value)}/></F>
                 <F label="Email"><input className="input-field" type="email" value={form.email} onChange={e=>set('email',e.target.value)}/></F>
                 <F label="Teléfono"><input className="input-field" value={form.phone} onChange={e=>set('phone',e.target.value)}/></F>
@@ -331,7 +345,7 @@ const ClientDetailModal = ({ client, projects, equipo, onSave, onDelete, onClose
           {/* Tab Datos Internos */}
           {tab==='internos' && (
             <div style={{ display:'flex',flexDirection:'column',gap:14 }}>
-              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+              <div style={{ display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 1fr',gap:12 }}>
                 <F label="Prioridad">
                   <select className="select-field" value={form.prioridad} onChange={e=>set('prioridad',e.target.value)}>
                     <option value="">Sin asignar</option>
@@ -404,7 +418,7 @@ const ClientDetailModal = ({ client, projects, equipo, onSave, onDelete, onClose
         </div>
 
         {/* Footer */}
-        <div style={{ padding:'14px 24px',borderTop:'1px solid var(--border-violet)',display:'flex',gap:10,justifyContent:'flex-end',flexShrink:0 }}>
+        <div style={{ padding:isMobile?'12px 16px':'14px 24px',borderTop:'1px solid var(--border-violet)',display:'flex',gap:10,justifyContent:'flex-end',flexShrink:0 }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
           <button className="btn btn-primary" onClick={handleSave}><Save size={14}/>Guardar Cambios</button>
         </div>
@@ -415,6 +429,7 @@ const ClientDetailModal = ({ client, projects, equipo, onSave, onDelete, onClose
 
 // ── Creador Detail Modal (3 tabs) ─────────────
 const CreadorDetailModal = ({ creador, projects, onSave, onClose }) => {
+  const isMobile = useIsMobile()
   const [tab, setTab] = useState('perfil')
   const [form, setForm] = useState({ ...EQUIPO_EMPTY, ...creador })
   const set = (f,v) => setForm(p=>({...p,[f]:v}))
@@ -428,33 +443,33 @@ const CreadorDetailModal = ({ creador, projects, onSave, onClose }) => {
   }
 
   return (
-    <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.75)',backdropFilter:'blur(10px)',zIndex:1100,display:'flex',alignItems:'center',justifyContent:'center',padding:16 }} onClick={onClose}>
-      <div style={{ width:'100%',maxWidth:680,background:'var(--bg-secondary)',border:'1px solid var(--border-violet)',borderRadius:22,maxHeight:'92vh',display:'flex',flexDirection:'column',boxShadow:'var(--glow-violet),0 40px 80px rgba(0,0,0,0.6)',animation:'fadeIn 0.3s ease' }} onClick={e=>e.stopPropagation()}>
+    <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.75)',backdropFilter:'blur(10px)',zIndex:1100,display:'flex',alignItems:'center',justifyContent:'center',padding:isMobile?10:16 }} onClick={onClose}>
+      <div style={{ width:'100%',maxWidth:680,background:'var(--bg-secondary)',border:'1px solid var(--border-violet)',borderRadius:isMobile?16:22,maxHeight:'94vh',display:'flex',flexDirection:'column',boxShadow:'var(--glow-violet),0 40px 80px rgba(0,0,0,0.6)',animation:'fadeIn 0.3s ease' }} onClick={e=>e.stopPropagation()}>
         {/* Header */}
-        <div style={{ padding:'20px 24px',borderBottom:'1px solid var(--border-violet)',display:'flex',alignItems:'center',gap:12,flexShrink:0 }}>
-          <div style={{ width:52,height:52,borderRadius:16,background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,fontSize:22 }}>{creador.nombre.charAt(0)}</div>
-          <div>
-            <div style={{ fontSize:16,fontWeight:700 }}>{creador.nombre}</div>
+        <div style={{ padding:isMobile?'14px 16px':'20px 24px',borderBottom:'1px solid var(--border-violet)',display:'flex',alignItems:'center',gap:10,flexShrink:0 }}>
+          <div style={{ width:isMobile?40:52,height:isMobile?40:52,borderRadius:14,background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,fontSize:isMobile?18:22,flexShrink:0 }}>{creador.nombre.charAt(0)}</div>
+          <div style={{ flex:1,minWidth:0 }}>
+            <div style={{ fontSize:isMobile?14:16,fontWeight:700,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{creador.nombre}</div>
             <div style={{ fontSize:11,color:'var(--primary-violet-light)' }}>{creador.rol}</div>
-            <div style={{ fontSize:10,color:'var(--text-secondary)' }}><Globe size={9} style={{ display:'inline',marginRight:3 }}/>{creador.ciudad}, {creador.pais}</div>
+            {!isMobile && <div style={{ fontSize:10,color:'var(--text-secondary)' }}><Globe size={9} style={{ display:'inline',marginRight:3 }}/>{creador.ciudad}, {creador.pais}</div>}
           </div>
-          <span style={{ marginLeft:'auto',fontSize:10,padding:'3px 10px',borderRadius:20,background:`${estadoColor[form.estado]||'#9CA3AF'}22`,color:estadoColor[form.estado]||'#9CA3AF',fontWeight:700,border:`1px solid ${estadoColor[form.estado]||'#9CA3AF'}44` }}>{form.estado}</span>
-          <button onClick={onClose} style={{ color:'var(--text-secondary)',padding:6,borderRadius:8 }}><X size={20}/></button>
+          <span style={{ fontSize:10,padding:'3px 8px',borderRadius:20,background:`${estadoColor[form.estado]||'#9CA3AF'}22`,color:estadoColor[form.estado]||'#9CA3AF',fontWeight:700,border:`1px solid ${estadoColor[form.estado]||'#9CA3AF'}44`,flexShrink:0 }}>{form.estado}</span>
+          <button onClick={onClose} style={{ color:'var(--text-secondary)',padding:6,borderRadius:8,flexShrink:0 }}><X size={18}/></button>
         </div>
 
         {/* Tabs */}
-        <div style={{ display:'flex',gap:6,padding:'12px 24px 0',flexShrink:0 }}>
-          {[{id:'perfil',l:'👤 Perfil'},{id:'internos',l:'🔒 Datos Internos'},{id:'historial',l:`📊 Historial (${cProjects.length})`}].map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{ padding:'8px 16px',borderRadius:10,fontSize:12,fontWeight:tab===t.id?700:400,border:`1px solid ${tab===t.id?'var(--primary-violet)':'var(--border-violet)'}`,background:tab===t.id?'rgba(139,92,246,0.2)':'rgba(139,92,246,0.05)',color:tab===t.id?'var(--primary-violet-light)':'var(--text-secondary)',transition:'all 0.2s',cursor:'pointer' }}>{t.l}</button>
+        <div style={{ display:'flex',gap:6,padding:isMobile?'10px 16px 0':'12px 24px 0',flexShrink:0,overflowX:'auto' }}>
+          {[{id:'perfil',l:isMobile?'👤 Perfil':'👤 Perfil'},{id:'internos',l:isMobile?'🔒 Internos':'🔒 Datos Internos'},{id:'historial',l:`📊 Historial (${cProjects.length})`}].map(t=>(
+            <button key={t.id} onClick={()=>setTab(t.id)} style={{ padding:isMobile?'7px 12px':'8px 16px',borderRadius:10,fontSize:12,fontWeight:tab===t.id?700:400,border:`1px solid ${tab===t.id?'var(--primary-violet)':'var(--border-violet)'}`,background:tab===t.id?'rgba(139,92,246,0.2)':'rgba(139,92,246,0.05)',color:tab===t.id?'var(--primary-violet-light)':'var(--text-secondary)',transition:'all 0.2s',cursor:'pointer',flexShrink:0,whiteSpace:'nowrap' }}>{t.l}</button>
           ))}
         </div>
 
         {/* Body */}
-        <div style={{ flex:1,overflowY:'auto',padding:'20px 24px' }}>
+        <div style={{ flex:1,overflowY:'auto',padding:isMobile?'16px':'20px 24px' }}>
           {/* Tab Perfil */}
           {tab==='perfil' && (
             <div style={{ display:'flex',flexDirection:'column',gap:14 }}>
-              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+              <div style={{ display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 1fr',gap:12 }}>
                 <F label="Nombre"><input className="input-field" value={form.nombre} onChange={e=>set('nombre',e.target.value)}/></F>
                 <F label="Rol"><input className="input-field" value={form.rol} onChange={e=>set('rol',e.target.value)} placeholder="Motion Designer"/></F>
                 <F label="País"><input className="input-field" value={form.pais} onChange={e=>set('pais',e.target.value)}/></F>
@@ -481,7 +496,7 @@ const CreadorDetailModal = ({ creador, projects, onSave, onClose }) => {
           {/* Tab Datos Internos */}
           {tab==='internos' && (
             <div style={{ display:'flex',flexDirection:'column',gap:14 }}>
-              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+              <div style={{ display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 1fr',gap:12 }}>
                 <F label="Fecha de Ingreso"><input className="input-field" type="date" value={form.fechaIngreso} onChange={e=>set('fechaIngreso',e.target.value)}/></F>
                 <F label="Disponibilidad">
                   <select className="select-field" value={form.disponibilidad} onChange={e=>set('disponibilidad',e.target.value)}>
@@ -566,7 +581,7 @@ const CreadorDetailModal = ({ creador, projects, onSave, onClose }) => {
         </div>
 
         {/* Footer */}
-        <div style={{ padding:'14px 24px',borderTop:'1px solid var(--border-violet)',display:'flex',gap:10,justifyContent:'flex-end',flexShrink:0 }}>
+        <div style={{ padding:isMobile?'12px 16px':'14px 24px',borderTop:'1px solid var(--border-violet)',display:'flex',gap:10,justifyContent:'flex-end',flexShrink:0 }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
           <button className="btn btn-primary" onClick={handleSave}><Save size={14}/>Guardar Cambios</button>
         </div>
@@ -577,6 +592,7 @@ const CreadorDetailModal = ({ creador, projects, onSave, onClose }) => {
 
 // ── Equipo Form Modal ─────────────────────────
 const EquipoFormModal = ({ miembro, onSave, onClose }) => {
+  const isMobile = useIsMobile()
   const estadoColor = { activo:'#4ADE80', freelance:'#FCD34D', inactivo:'#9CA3AF' }
   const [form, setForm] = useState(miembro || EQUIPO_EMPTY)
   const set = (f,v) => setForm(p=>({...p,[f]:v}))
@@ -585,7 +601,7 @@ const EquipoFormModal = ({ miembro, onSave, onClose }) => {
     onSave({ ...form, id:form.id||`e${Date.now()}` })
   }
   return (
-    <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.75)',backdropFilter:'blur(8px)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20 }} onClick={onClose}>
+    <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.75)',backdropFilter:'blur(8px)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:isMobile?12:20 }} onClick={onClose}>
       <div style={{ width:'100%',maxWidth:520,background:'var(--bg-secondary)',border:'1px solid var(--border-violet)',borderRadius:20,maxHeight:'90vh',overflowY:'auto',animation:'fadeIn 0.3s ease' }} onClick={e=>e.stopPropagation()}>
         <div style={{ padding:'20px 24px',borderBottom:'1px solid var(--border-violet)',display:'flex',alignItems:'center',gap:12 }}>
           <div style={{ width:40,height:40,borderRadius:12,background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18 }}>👤</div>
@@ -628,6 +644,7 @@ const EquipoFormModal = ({ miembro, onSave, onClose }) => {
 
 // ── MAIN ─────────────────────────────────────
 export default function CreativeAgencyView({ projects, clients, onSaveProject, onDeleteProject, onSaveClient, onDeleteClient, defaultTab = 'kanban' }) {
+  const isMobile = useIsMobile()
   const [tab,            setTab]           = useState(defaultTab)
   const [modal,          setModal]         = useState(null)       // ProjectModal
   const [cModal,         setCModal]        = useState(null)       // ClientModal (quick edit)
@@ -693,19 +710,18 @@ export default function CreativeAgencyView({ projects, clients, onSaveProject, o
   }
 
   return (
-    <div style={{ padding:24,animation:'fadeIn 0.3s ease' }}>
-      <div style={{ display:'flex',alignItems:'center',gap:12,marginBottom:20,flexWrap:'wrap' }}>
-        <div>
-          <h2 style={{ fontSize:20,fontWeight:700 }}>Agencia Creativa</h2>
-          <p style={{ fontSize:12,color:'var(--text-secondary)' }}>{projects.length} proyectos · {clients.length} clientes</p>
+    <div style={{ padding:isMobile?16:24,animation:'fadeIn 0.3s ease' }}>
+      <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:16,flexWrap:'wrap' }}>
+        <div style={{ flex:1,minWidth:0 }}>
+          <h2 style={{ fontSize:isMobile?17:20,fontWeight:700 }}>Agencia Creativa</h2>
+          <p style={{ fontSize:11,color:'var(--text-secondary)' }}>{projects.length} proyectos · {clients.length} clientes</p>
         </div>
-        <div style={{ flex:1 }}/>
-        <button className="btn btn-ghost" onClick={()=>setCModal('create')} style={{ fontSize:13 }}><Plus size={14}/>Cliente</button>
-        <button className="btn btn-primary" onClick={()=>setModal('create')}><Plus size={16}/>Nuevo Proyecto</button>
+        <button className="btn btn-ghost" onClick={()=>setCModal('create')} style={{ fontSize:12,padding:'7px 12px' }}><Plus size={13}/>Cliente</button>
+        <button className="btn btn-primary" style={{ fontSize:12,padding:'7px 12px' }} onClick={()=>setModal('create')}><Plus size={14}/>{isMobile?'Proyecto':'Nuevo Proyecto'}</button>
       </div>
 
       {/* KPIs */}
-      <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:12,marginBottom:20 }}>
+      <div style={{ display:'grid',gridTemplateColumns:isMobile?'1fr 1fr':'repeat(auto-fit,minmax(150px,1fr))',gap:10,marginBottom:16 }}>
         {[
           { label:'Proyectos activos', value:activeProj,                                            color:'#8B5CF6' },
           { label:'MRR estimado',      value:fmtMoney(Math.round(retainerRevMRR)),                  color:'#4ADE80' },
@@ -723,9 +739,9 @@ export default function CreativeAgencyView({ projects, clients, onSaveProject, o
       </div>
 
       {/* Tabs */}
-      <div style={{ display:'flex',gap:8,marginBottom:20 }}>
+      <div style={{ display:'flex',gap:6,marginBottom:16,overflowX:'auto' }}>
         {[{id:'kanban',label:'🎨 Creación'},{id:'clients',label:'🤝 Clientes'},{id:'equipo',label:'👥 Equipo'}].map(t=>(
-          <button key={t.id} onClick={()=>setTab(t.id)} style={{ padding:'8px 18px',borderRadius:10,fontSize:13,fontWeight:tab===t.id?700:400,border:`1px solid ${tab===t.id?'var(--primary-violet)':'var(--border-violet)'}`,background:tab===t.id?'rgba(139,92,246,0.2)':'rgba(139,92,246,0.05)',color:tab===t.id?'var(--primary-violet-light)':'var(--text-secondary)',transition:'all 0.2s',cursor:'pointer' }}>{t.label}</button>
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{ padding:isMobile?'7px 14px':'8px 18px',borderRadius:10,fontSize:isMobile?12:13,fontWeight:tab===t.id?700:400,border:`1px solid ${tab===t.id?'var(--primary-violet)':'var(--border-violet)'}`,background:tab===t.id?'rgba(139,92,246,0.2)':'rgba(139,92,246,0.05)',color:tab===t.id?'var(--primary-violet-light)':'var(--text-secondary)',transition:'all 0.2s',cursor:'pointer',flexShrink:0,whiteSpace:'nowrap' }}>{t.label}</button>
         ))}
       </div>
 
@@ -733,31 +749,34 @@ export default function CreativeAgencyView({ projects, clients, onSaveProject, o
       {tab === 'kanban' && (
         <div>
           {/* Filtros del Kanban */}
-          <div style={{ display:'flex',gap:10,marginBottom:16,flexWrap:'wrap',alignItems:'center' }}>
-            <select className="select-field" style={{ width:'auto',minWidth:160 }} value={filtroKanbanCliente} onChange={e=>setFiltroKanbanCliente(e.target.value)}>
+          <div style={{ display:'flex',gap:8,marginBottom:14,flexWrap:'wrap',alignItems:'center' }}>
+            <select className="select-field" style={{ flex:isMobile?'1 1 calc(50% - 4px)':'none',minWidth:isMobile?0:160 }} value={filtroKanbanCliente} onChange={e=>setFiltroKanbanCliente(e.target.value)}>
               <option value="">Todos los clientes</option>
               {clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
-            <select className="select-field" style={{ width:'auto',minWidth:160 }} value={filtroKanbanCreador} onChange={e=>setFiltroKanbanCreador(e.target.value)}>
+            <select className="select-field" style={{ flex:isMobile?'1 1 calc(50% - 4px)':'none',minWidth:isMobile?0:160 }} value={filtroKanbanCreador} onChange={e=>setFiltroKanbanCreador(e.target.value)}>
               <option value="">Todos los creadores</option>
               {equipo.map(m=><option key={m.id} value={m.id}>{m.nombre}</option>)}
             </select>
             {(filtroKanbanCliente||filtroKanbanCreador) && (
-              <button className="btn btn-ghost" onClick={()=>{setFiltroKanbanCliente('');setFiltroKanbanCreador('')}} style={{ fontSize:12,padding:'6px 12px' }}><X size={13}/>Limpiar filtros</button>
+              <button className="btn btn-ghost" onClick={()=>{setFiltroKanbanCliente('');setFiltroKanbanCreador('')}} style={{ fontSize:12,padding:'6px 12px' }}><X size={13}/>Limpiar</button>
             )}
-            <span style={{ fontSize:12,color:'var(--text-secondary)',marginLeft:'auto' }}>{filteredProjects.length} proyectos</span>
+            <span style={{ fontSize:12,color:'var(--text-secondary)',marginLeft:'auto' }}>{filteredProjects.length} proy.</span>
           </div>
-          <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:16 }}>
+          <div style={isMobile
+            ? { display:'flex',gap:14,overflowX:'auto',flexWrap:'nowrap',paddingBottom:8,WebkitOverflowScrolling:'touch' }
+            : { display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:16 }
+          }>
             {KANBAN_COLS.map(col => {
               const colProjects = filteredProjects.filter(p=>p.status===col.id)
               return (
-                <div key={col.id}>
+                <div key={col.id} style={isMobile?{ flexShrink:0,width:260 }:{}}>
                   <div style={{ display:'flex',alignItems:'center',gap:8,marginBottom:12 }}>
                     <div style={{ width:8,height:8,borderRadius:'50%',background:col.color,boxShadow:`0 0 6px ${col.color}` }}/>
                     <span style={{ fontSize:12,fontWeight:700,color:col.color }}>{col.label}</span>
                     <span style={{ marginLeft:'auto',fontSize:11,fontWeight:600,padding:'1px 7px',borderRadius:20,background:`${col.color}22`,color:col.color }}>{colProjects.length}</span>
                   </div>
-                  <div style={{ minHeight:100 }}>
+                  <div style={{ minHeight:80 }}>
                     {colProjects.map(p=>(
                       <ProjectKanbanCard key={p.id} project={p}
                         client={clients.find(c=>c.id===p.clientId)}
@@ -765,7 +784,7 @@ export default function CreativeAgencyView({ projects, clients, onSaveProject, o
                         onEdit={()=>setModal(p)} onDelete={()=>onDeleteProject(p.id)}
                       />
                     ))}
-                    {colProjects.length===0 && <div style={{ border:'1px dashed var(--border-violet)',borderRadius:10,padding:'20px',textAlign:'center',color:'var(--text-secondary)',fontSize:12 }}>Sin proyectos</div>}
+                    {colProjects.length===0 && <div style={{ border:'1px dashed var(--border-violet)',borderRadius:10,padding:'16px',textAlign:'center',color:'var(--text-secondary)',fontSize:12 }}>Sin proyectos</div>}
                   </div>
                 </div>
               )
@@ -778,12 +797,12 @@ export default function CreativeAgencyView({ projects, clients, onSaveProject, o
       {tab === 'clients' && (
         <div>
           {/* Buscador + Filtros */}
-          <div style={{ display:'flex',gap:10,marginBottom:14,flexWrap:'wrap' }}>
-            <div style={{ position:'relative',flex:1,minWidth:200 }}>
+          <div style={{ display:'flex',gap:10,marginBottom:12,flexWrap:'wrap' }}>
+            <div style={{ position:'relative',flex:1,minWidth:isMobile?'100%':200 }}>
               <Search size={14} style={{ position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'var(--text-secondary)' }}/>
-              <input className="input-field" value={searchClientes} onChange={e=>setSearchClientes(e.target.value)} placeholder="Buscar cliente, contacto, email..." style={{ paddingLeft:36 }}/>
+              <input className="input-field" value={searchClientes} onChange={e=>setSearchClientes(e.target.value)} placeholder="Buscar cliente..." style={{ paddingLeft:36 }}/>
             </div>
-            <select className="select-field" style={{ width:'auto',minWidth:150 }} value={filtroFecha} onChange={e=>setFiltroFecha(e.target.value)}>
+            <select className="select-field" style={{ width:isMobile?'100%':'auto',minWidth:isMobile?0:150 }} value={filtroFecha} onChange={e=>setFiltroFecha(e.target.value)}>
               <option value="all">Todos los tiempos</option>
               <option value="hoy">Hoy</option>
               <option value="semana">Esta semana</option>
@@ -799,7 +818,7 @@ export default function CreativeAgencyView({ projects, clients, onSaveProject, o
             <span style={{ marginLeft:'auto',fontSize:12,color:'var(--text-secondary)',alignSelf:'center' }}>{filteredClients.length} clientes</span>
           </div>
 
-          <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:14 }}>
+          <div style={{ display:'grid',gridTemplateColumns:isMobile?'1fr':'repeat(auto-fill,minmax(280px,1fr))',gap:12 }}>
             {filteredClients.map(c => {
               const cProjects = projects.filter(p=>p.clientId===c.id)
               const cRev = cProjects.reduce((s,p)=>s+p.budgetSpent,0)
@@ -873,6 +892,7 @@ export default function CreativeAgencyView({ projects, clients, onSaveProject, o
 
 // ── Equipo Tab ────────────────────────────────
 function EquipoTab({ equipo, setEquipo, projects, onOpenDetalle, onOpenForm }) {
+  const isMobile = useIsMobile()
   const [search,    setSearch]    = useState('')
   const [filterPais,setFilterPais]= useState('all')
   const [filterEsp, setFilterEsp] = useState('all')
@@ -912,16 +932,16 @@ function EquipoTab({ equipo, setEquipo, projects, onOpenDetalle, onOpenForm }) {
       </div>
 
       {/* Filters */}
-      <div style={{ display:'flex',gap:10,marginBottom:20,flexWrap:'wrap' }}>
-        <div style={{ position:'relative',flex:1,minWidth:200 }}>
+      <div style={{ display:'flex',gap:10,marginBottom:16,flexWrap:'wrap' }}>
+        <div style={{ position:'relative',flex:1,minWidth:isMobile?'100%':200 }}>
           <Search size={14} style={{ position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'var(--text-secondary)' }}/>
           <input className="input-field" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar por nombre o rol..." style={{ paddingLeft:36 }}/>
         </div>
-        <select className="select-field" style={{ width:'auto',minWidth:140 }} value={filterPais} onChange={e=>setFilterPais(e.target.value)}>
+        <select className="select-field" style={{ width:'auto',minWidth:isMobile?'calc(50% - 5px)':140 }} value={filterPais} onChange={e=>setFilterPais(e.target.value)}>
           <option value="all">Todos los países</option>
           {paises.map(p=><option key={p} value={p}>{p}</option>)}
         </select>
-        <select className="select-field" style={{ width:'auto',minWidth:160 }} value={filterEsp} onChange={e=>setFilterEsp(e.target.value)}>
+        <select className="select-field" style={{ width:'auto',minWidth:isMobile?'calc(50% - 5px)':160 }} value={filterEsp} onChange={e=>setFilterEsp(e.target.value)}>
           <option value="all">Todas las especialidades</option>
           {especialidades.map(e=><option key={e} value={e}>{e}</option>)}
         </select>
@@ -929,7 +949,7 @@ function EquipoTab({ equipo, setEquipo, projects, onOpenDetalle, onOpenForm }) {
       </div>
 
       {/* Cards */}
-      <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:16 }}>
+      <div style={{ display:'grid',gridTemplateColumns:isMobile?'1fr':'repeat(auto-fill,minmax(280px,1fr))',gap:14 }}>
         {filtered.map(m=>{
           const cProjects = projects.filter(p=>p.creadorId===m.id)
           return (
