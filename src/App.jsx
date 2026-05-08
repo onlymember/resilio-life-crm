@@ -125,6 +125,7 @@ const GlobalStyles = () => (
     @keyframes aurora     { 0%,100%{opacity:.5;transform:translateX(0) scaleY(1)} 50%{opacity:1;transform:translateX(2%) scaleY(1.05)} }
     @keyframes starTwinkle{ 0%,100%{opacity:.3} 50%{opacity:1} }
     @keyframes notifSlide { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+    @keyframes hubNodeIn { 0%{opacity:0;transform:scale(0.15);} 70%{opacity:1;transform:scale(1.08);} 100%{opacity:1;transform:scale(1);} }
     .animate-fade { animation: fadeIn 0.3s ease; }
     .glass { background: var(--glass-bg); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border: 1px solid var(--border-violet); }
     .glow { box-shadow: var(--glow-violet); }
@@ -442,30 +443,18 @@ const Sidebar = ({ currentView, onNavigate, collapsed, onToggle, currentUser }) 
 // HEADER
 // ═══════════════════════════════════════════════
 
-const Header = ({ currentView, theme, onThemeToggle, onCommandPalette, onMobileMenu, notifications, onMarkRead, onMarkAllRead, onHub, currentUser, onLogout, onAdmin, adminNotifCount }) => {
-  const [notifOpen,   setNotifOpen]   = useState(false)
-  const [avatarOpen,  setAvatarOpen]  = useState(false)
+const Header = ({ currentView, onMobileMenu, currentUser, onLogout, onAdmin, adminNotifCount }) => {
+  const [avatarOpen, setAvatarOpen] = useState(false)
   const labels = { dashboard:'Dashboard General',rl_dashboard:'Resilio Life · Dashboard',brands:'Marcas',locations:'Locales',influencers:'Influencers',benefits:'Beneficios',codes:'Códigos',memberships:'Membresías',users:'Usuarios',unregistered:'Usuarios No Registrados',tracking:'Tracking Real-Time',analytics:'Analytics',reports:'Reportes',creative:'Agencia Creativa',creative_projects:'Proyectos',creative_clients:'Clientes Creativos',creative_equipo:'Equipo Creativo',inf_dashboard:'Agencia Influencers · Dashboard',inf_campaigns:'Campañas',inf_crm:'Influencers CRM',inf_collabs:'Colaboraciones',prod_dashboard:'Productora · Dashboard',events:'Eventos',tickets:'Tickets',only_members:'⭐ Only Members',rrpp:'Relaciones Públicas',elevare:'💎 Elevare · Dashboard',elevare_bienes:'💎 Elevare · Bienes',elevare_leads:'💎 Elevare · Leads',elevare_contratos:'💎 Elevare · Contratos',elevare_contenido:'💎 Elevare · Contenido',elevare_hosp:'💎 Elevare · Hospitality',missions:'🎯 Misiones',team:'Team Management',advanced:'Features Avanzadas',cap_pipeline:'📞 Captación · Pipeline',cap_busqueda:'📞 Captación · Búsqueda',cap_speeches:'📞 Captación · Speeches',cap_provincias:'📞 Captación · Expansión',cap_seguimiento:'📞 Captación · Seguimiento',cap_contactos:'📞 Captación · Contactos',hub:'Hub Central' }
-  const unread = (notifications||[]).filter(n=>!n.read).length
-  const notifTypeColor = { mission:'var(--primary-violet)', elevare:'#FCD34D', creative:'#EC4899', campaign:'#06B6D4' }
-  const notifTypeIcon  = { mission:'🎯', elevare:'💎', creative:'🎨', campaign:'⚡' }
   const displayName = currentUser?.sobrenombre || currentUser?.nombre || 'Usuario'
   const roleLabel = { super_admin:'Super Admin', admin:'Admin', editor:'Editor', viewer:'Viewer', custom:'Custom' }
 
   return (
-    <header style={{ height:64,background:'var(--glass-bg)',backdropFilter:'blur(40px)',borderBottom:'1px solid var(--border-violet)',display:'flex',alignItems:'center',padding:'0 20px',gap:12,position:'sticky',top:0,zIndex:100 }}>
+    <header style={{ height:56,background:'var(--glass-bg)',backdropFilter:'blur(40px)',borderBottom:'1px solid var(--border-violet)',display:'flex',alignItems:'center',padding:'0 16px',gap:10,position:'sticky',top:0,zIndex:100 }}>
       <button className="show-mobile-only" onClick={onMobileMenu} style={{ color:'var(--text-secondary)',padding:6,borderRadius:8 }}><Menu size={20}/></button>
-      <div>
-        <h1 style={{ fontSize:16,fontWeight:700 }}>{labels[currentView]||currentView}</h1>
-      </div>
+      <h1 style={{ fontSize:15,fontWeight:700 }}>{labels[currentView]||currentView}</h1>
       <div style={{ flex:1 }}/>
 
-      {/* Hub button */}
-      <button onClick={onHub} title="Volver al Hub" style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 14px',borderRadius:10,fontSize:12,fontWeight:600,background:currentView==='hub'?'rgba(139,92,246,0.25)':'rgba(139,92,246,0.08)',border:`1px solid ${currentView==='hub'?'var(--primary-violet)':'var(--border-violet)'}`,color:currentView==='hub'?'var(--primary-violet-light)':'var(--text-secondary)',transition:'all 0.2s' }} onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--primary-violet)';e.currentTarget.style.background='rgba(139,92,246,0.2)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor=currentView==='hub'?'var(--primary-violet)':'var(--border-violet)';e.currentTarget.style.background=currentView==='hub'?'rgba(139,92,246,0.25)':'rgba(139,92,246,0.08)'}}>
-        <img src="/logoresilio.png" alt="Resilio" style={{ width:14,height:14,objectFit:'contain',filter:'brightness(0) invert(1)' }}/> Hub
-      </button>
-
-      {/* Admin button — only for admin/super_admin */}
       {isAdmin(currentUser) && (
         <div style={{ position:'relative' }}>
           <button onClick={onAdmin} style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 14px',borderRadius:10,fontSize:12,fontWeight:600,background:'rgba(245,158,11,0.1)',border:'1px solid rgba(245,158,11,0.3)',color:'#F59E0B',transition:'all 0.2s',position:'relative' }}
@@ -477,56 +466,9 @@ const Header = ({ currentView, theme, onThemeToggle, onCommandPalette, onMobileM
         </div>
       )}
 
-      {/* Search */}
-      <button onClick={onCommandPalette} className="hide-mobile" style={{ display:'flex',alignItems:'center',gap:10,background:'rgba(139,92,246,0.08)',border:'1px solid var(--border-violet)',borderRadius:10,padding:'8px 14px',color:'var(--text-secondary)',fontSize:13,transition:'all 0.2s',minWidth:180 }} onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--primary-violet)';e.currentTarget.style.background='rgba(139,92,246,0.15)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border-violet)';e.currentTarget.style.background='rgba(139,92,246,0.08)'}}>
-        <Search size={14}/><span>Buscar...</span>
-        <kbd style={{ marginLeft:'auto',padding:'1px 6px',background:'rgba(139,92,246,0.2)',border:'1px solid var(--border-violet)',borderRadius:5,fontSize:10 }}>⌘K</kbd>
-      </button>
-
-      {/* Notification bell */}
-      <div style={{ position:'relative' }}>
-        <button onClick={()=>{setNotifOpen(p=>!p);setAvatarOpen(false)}} style={{ width:38,height:38,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',background: notifOpen ? 'rgba(139,92,246,0.2)' : 'rgba(139,92,246,0.08)',border:`1px solid ${notifOpen?'var(--primary-violet)':'var(--border-violet)'}`,color: notifOpen ? 'var(--primary-violet-light)' : 'var(--text-secondary)',position:'relative',transition:'all 0.2s' }}>
-          <Bell size={16}/>
-          {unread > 0 && <span style={{ position:'absolute',top:6,right:6,minWidth:16,height:16,background:'var(--accent-magenta)',borderRadius:8,fontSize:9,fontWeight:700,color:'white',display:'flex',alignItems:'center',justifyContent:'center',padding:'0 3px',boxShadow:'0 0 8px var(--accent-magenta)' }}>{unread}</span>}
-        </button>
-        {notifOpen && (
-          <>
-            <div style={{ position:'fixed',inset:0,zIndex:200 }} onClick={()=>setNotifOpen(false)}/>
-            <div className="glass" style={{ position:'absolute',top:'calc(100% + 8px)',right:0,width:340,borderRadius:16,overflow:'hidden',zIndex:201,boxShadow:'var(--glow-violet),0 20px 40px rgba(0,0,0,0.5)',animation:'notifSlide 0.2s ease' }}>
-              <div style={{ padding:'14px 16px',borderBottom:'1px solid var(--border-violet)',display:'flex',alignItems:'center',justifyContent:'space-between' }}>
-                <span style={{ fontWeight:700,fontSize:14 }}>Notificaciones {unread>0&&<span style={{ marginLeft:6,padding:'1px 8px',borderRadius:10,background:'rgba(232,121,249,0.2)',color:'var(--accent-magenta)',fontSize:11 }}>{unread}</span>}</span>
-                {unread>0&&<button onClick={onMarkAllRead} style={{ fontSize:11,color:'var(--primary-violet-light)',background:'none',border:'none',cursor:'pointer' }}>Marcar todas leídas</button>}
-              </div>
-              <div style={{ maxHeight:360,overflowY:'auto' }}>
-                {(notifications||[]).length===0 && <div style={{ padding:24,textAlign:'center',color:'var(--text-secondary)',fontSize:13 }}>Sin notificaciones</div>}
-                {(notifications||[]).map(n=>(
-                  <div key={n.id} onClick={()=>onMarkRead(n.id)} style={{ padding:'12px 16px',borderBottom:'1px solid var(--border-violet)',cursor:'pointer',background:n.read?'transparent':'rgba(139,92,246,0.06)',transition:'background 0.2s',display:'flex',gap:10,alignItems:'flex-start' }}
-                    onMouseEnter={e=>e.currentTarget.style.background='rgba(139,92,246,0.1)'}
-                    onMouseLeave={e=>e.currentTarget.style.background=n.read?'transparent':'rgba(139,92,246,0.06)'}>
-                    <div style={{ width:32,height:32,borderRadius:10,background:`${notifTypeColor[n.type]||'var(--primary-violet)'}22`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0 }}>{notifTypeIcon[n.type]||'🔔'}</div>
-                    <div style={{ flex:1,minWidth:0 }}>
-                      <div style={{ fontSize:12,fontWeight:n.read?500:700,marginBottom:2 }}>{n.title}</div>
-                      <div style={{ fontSize:11,color:'var(--text-secondary)',lineHeight:1.4,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{n.body}</div>
-                      <div style={{ fontSize:10,color:'var(--text-secondary)',opacity:0.6,marginTop:3 }}>{new Date(n.createdAt||n.timestamp).toLocaleString('es-AR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
-                    </div>
-                    {!n.read&&<div style={{ width:7,height:7,borderRadius:'50%',background:'var(--accent-magenta)',flexShrink:0,marginTop:4 }}/>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Theme toggle */}
-      <button onClick={onThemeToggle} style={{ width:38,height:38,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(139,92,246,0.08)',border:'1px solid var(--border-violet)',color:'var(--text-secondary)',transition:'all 0.2s' }} onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--primary-violet)';e.currentTarget.style.color='var(--primary-violet-light)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border-violet)';e.currentTarget.style.color='var(--text-secondary)'}}>
-        {theme==='dark'?<Sun size={16}/>:<Moon size={16}/>}
-      </button>
-
-      {/* User Avatar + dropdown */}
       {currentUser && (
         <div style={{ position:'relative' }}>
-          <button onClick={()=>{setAvatarOpen(p=>!p);setNotifOpen(false)}} style={{ width:38,height:38,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:currentUser.avatarColor||'var(--primary-violet)',border:'2px solid rgba(255,255,255,0.2)',color:'white',fontWeight:700,fontSize:13,cursor:'pointer',transition:'all 0.2s',boxShadow:avatarOpen?'0 0 0 3px rgba(139,92,246,0.5)':'none' }}>
+          <button onClick={()=>setAvatarOpen(p=>!p)} style={{ width:38,height:38,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:currentUser.avatarColor||'var(--primary-violet)',border:'2px solid rgba(255,255,255,0.2)',color:'white',fontWeight:700,fontSize:13,cursor:'pointer',transition:'all 0.2s',boxShadow:avatarOpen?'0 0 0 3px rgba(139,92,246,0.5)':'none' }}>
             {currentUser.avatar||'?'}
           </button>
           {avatarOpen && (
@@ -826,115 +768,168 @@ const PlaceholderView = ({ title, icon: Icon, description, phase }) => (
 )
 
 // ═══════════════════════════════════════════════
-// MOBILE NAV DINÁMICO
+// HUB NODES - NODOS EMPRESA (NUEVO)
 // ═══════════════════════════════════════════════
 
-const ECOSYSTEM_MAP = {
-  rl_dashboard:'resilio', brands:'resilio', locations:'resilio',
-  influencers:'resilio', benefits:'resilio', codes:'resilio',
-  memberships:'resilio', users:'resilio', unregistered:'resilio',
-  tracking:'resilio', analytics:'resilio', reports:'resilio',
-  creative:'creative', creative_projects:'creative',
-  creative_clients:'creative', creative_equipo:'creative',
-  inf_dashboard:'infagency', inf_campaigns:'infagency',
-  inf_crm:'infagency', inf_collabs:'infagency',
-  prod_dashboard:'production', events:'production',
-  tickets:'production', only_members:'production', rrpp:'production',
-  elevare:'elevare', elevare_bienes:'elevare', elevare_leads:'elevare',
-  elevare_contratos:'elevare', elevare_contenido:'elevare', elevare_hosp:'elevare',
-  missions:'tools', team:'tools', advanced:'tools',
-  cap_pipeline:'captacion', cap_busqueda:'captacion', cap_speeches:'captacion',
-  cap_provincias:'captacion', cap_seguimiento:'captacion', cap_contactos:'captacion',
-  hub:'hub', dashboard:'hub',
-}
+const EMPRESA_NODOS = [
+  { id:'creative', icon:'🎨', label:'Creative',    color:'#FF6B6B', view:'creative'      },
+  { id:'elevare',  icon:'💎', label:'ELEVARE',     color:'#4ECDC4', view:'elevare'       },
+  { id:'crm',      icon:'👥', label:'CRM',         color:'#95E1D3', view:'inf_crm'       },
+  { id:'events',   icon:'📋', label:'Events',      color:'#F38181', view:'events'        },
+  { id:'red',      icon:'📱', label:'RED',         color:'#AA96DA', view:'rl_dashboard'  },
+  { id:'gestion',  icon:'🎯', label:'Gestión',     color:'#FCBAD3', view:'missions'      },
+]
 
-const NAV_CONFIGS = {
-  resilio: [
-    { id:'rl_dashboard', icon:'📊', label:'Dashboard' },
-    { id:'brands',       icon:'🏪', label:'Marcas' },
-    { id:'locations',    icon:'📍', label:'Locales' },
-    { id:'influencers',  icon:'⭐', label:'Influencers' },
-    { id:'benefits',     icon:'🎁', label:'Beneficios' },
-  ],
-  creative: [
-    { id:'creative',          icon:'📊', label:'Dashboard' },
-    { id:'creative_projects', icon:'🎨', label:'Proyectos' },
-    { id:'creative_clients',  icon:'👥', label:'Clientes' },
-    { id:'creative_equipo',   icon:'🌍', label:'Equipo' },
-  ],
-  infagency: [
-    { id:'inf_dashboard', icon:'📊', label:'Dashboard' },
-    { id:'inf_campaigns', icon:'📱', label:'Campañas' },
-    { id:'inf_crm',       icon:'⭐', label:'Influencers' },
-    { id:'inf_collabs',   icon:'🤝', label:'Colabs' },
-  ],
-  production: [
-    { id:'prod_dashboard', icon:'📊', label:'Dashboard' },
-    { id:'events',         icon:'🎉', label:'Eventos' },
-    { id:'tickets',        icon:'🎟️', label:'Tickets' },
-    { id:'rrpp',           icon:'👔', label:'RRPP' },
-    { id:'only_members',   icon:'💎', label:'Members' },
-  ],
-  elevare: [
-    { id:'elevare',           icon:'📊', label:'Dashboard' },
-    { id:'elevare_bienes',    icon:'🏠', label:'Bienes' },
-    { id:'elevare_leads',     icon:'👤', label:'Leads' },
-    { id:'elevare_contratos', icon:'📄', label:'Contratos' },
-    { id:'elevare_contenido', icon:'📸', label:'Contenido' },
-  ],
-  tools: [
-    { id:'missions', icon:'🎯', label:'Misiones' },
-    { id:'team',     icon:'👥', label:'Team' },
-    { id:'advanced', icon:'⚙️', label:'Advanced' },
-  ],
-  captacion: [
-    { id:'cap_pipeline',    icon:'📊', label:'Pipeline' },
-    { id:'cap_busqueda',    icon:'🔍', label:'Búsqueda' },
-    { id:'cap_speeches',    icon:'💬', label:'Speeches' },
-    { id:'cap_provincias',  icon:'🌎', label:'Expansión' },
-    { id:'cap_seguimiento', icon:'📞', label:'Seguimiento' },
-  ],
-  hub: [
-    { id:'hub',       icon:'🏠', label:'Hub' },
-    { id:'dashboard', icon:'📊', label:'Dashboard' },
-    { id:'team',      icon:'⚙️', label:'Gestión' },
-    { id:'__rocco__', icon:'🤖', label:'ROCCO' },
-  ],
-}
+const HubNodes = ({ onNavigate, onClose }) => {
+  const R = 120
+  const angles = [30, 54, 78, 102, 126, 150]
+  const nodeSize = 54
 
-const MobileNav = ({ currentView, onNavigate, onRocco }) => {
-  const ecosystem = ECOSYSTEM_MAP[currentView] || 'hub'
-  const items = NAV_CONFIGS[ecosystem] || NAV_CONFIGS.hub
   return (
-    <nav style={{
-      position:'fixed', bottom:0, left:0, right:0,
-      background:'rgba(10,6,24,0.92)',
-      backdropFilter:'blur(40px)', WebkitBackdropFilter:'blur(40px)',
-      borderTop:'1px solid rgba(139,92,246,0.2)',
-      zIndex:200, display:'flex',
-      padding:'8px 4px max(8px, env(safe-area-inset-bottom))',
-      transition:'all 0.3s ease',
-    }} className="show-mobile-only">
-      {items.map(item => {
-        const isActive = currentView === item.id
-        const isRocco  = item.id === '__rocco__'
-        return (
-          <button key={item.id}
-            onClick={() => isRocco ? onRocco?.() : onNavigate(item.id)}
-            style={{
-              flex:1, display:'flex', flexDirection:'column',
-              alignItems:'center', gap:3, padding:'6px 2px',
-              color: isActive ? 'var(--primary-violet-light)' : 'var(--text-secondary)',
-              background: isActive ? 'rgba(139,92,246,0.12)' : 'transparent',
-              borderRadius:10, transition:'all 0.2s', cursor:'pointer',
-            }}>
-            <span style={{ fontSize:18, lineHeight:1 }}>{item.icon}</span>
-            <span style={{ fontSize:9, fontWeight:isActive?700:400, lineHeight:1.1, textAlign:'center' }}>{item.label}</span>
-            {isActive && <div style={{ width:4, height:4, borderRadius:'50%', background:'var(--primary-violet)', boxShadow:'0 0 6px var(--primary-violet)' }}/>}
+    <>
+      <div onClick={onClose} style={{ position:'fixed',inset:0,zIndex:195,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(8px)',WebkitBackdropFilter:'blur(8px)' }}/>
+      <div style={{ position:'fixed',bottom:32,left:'50%',zIndex:196,pointerEvents:'none' }}>
+        {EMPRESA_NODOS.map((nodo, i) => {
+          const θ = angles[i] * Math.PI / 180
+          const x = R * Math.cos(θ)
+          const y = R * Math.sin(θ)
+          return (
+            <button key={nodo.id}
+              onClick={() => { onNavigate(nodo.view); onClose() }}
+              style={{
+                position:'absolute',
+                left: x - nodeSize/2,
+                bottom: y - nodeSize/2,
+                width: nodeSize, height: nodeSize,
+                borderRadius: 16,
+                background: `${nodo.color}20`,
+                border: `2px solid ${nodo.color}`,
+                display:'flex', flexDirection:'column',
+                alignItems:'center', justifyContent:'center',
+                gap: 3, cursor:'pointer',
+                pointerEvents:'all',
+                animation: `hubNodeIn 0.4s cubic-bezier(0.34,1.56,0.64,1) ${i*0.06}s both`,
+                boxShadow: `0 4px 16px ${nodo.color}50`,
+                transition:'transform 0.2s',
+              }}
+              onMouseEnter={e=>e.currentTarget.style.transform='scale(1.12)'}
+              onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}
+            >
+              <span style={{ fontSize:22,lineHeight:1 }}>{nodo.icon}</span>
+              <span style={{ fontSize:8,color:nodo.color,fontWeight:700,letterSpacing:0.4,lineHeight:1 }}>{nodo.label}</span>
+            </button>
+          )
+        })}
+      </div>
+    </>
+  )
+}
+
+// ═══════════════════════════════════════════════
+// MOBILE NAV - 5 BOTONES (NUEVO)
+// ═══════════════════════════════════════════════
+
+const MobileNav = ({ onMobileMenu, onNavigate, onRocco, onToggleHub, hubActive, notifications, onMarkRead, onMarkAllRead }) => {
+  const [notifOpen, setNotifOpen] = useState(false)
+  const unread = (notifications||[]).filter(n=>!n.read).length
+  const notifTypeIcon = { mission:'🎯', elevare:'💎', creative:'🎨', campaign:'⚡' }
+
+  const navBtnBase = {
+    flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+    gap:4, padding:'8px 2px', cursor:'pointer', background:'transparent', border:'none',
+    color:'var(--text-secondary)', borderRadius:10, transition:'all 0.2s',
+  }
+
+  return (
+    <>
+      {/* Panel de notificaciones */}
+      {notifOpen && (
+        <>
+          <div style={{ position:'fixed',inset:0,zIndex:195 }} onClick={()=>setNotifOpen(false)}/>
+          <div className="glass" style={{ position:'fixed',bottom:68,right:4,width:300,maxHeight:'55vh',borderRadius:16,overflow:'hidden',zIndex:196,display:'flex',flexDirection:'column',boxShadow:'var(--glow-violet),0 20px 40px rgba(0,0,0,0.5)',animation:'notifSlide 0.2s ease' }}>
+            <div style={{ padding:'12px 16px',borderBottom:'1px solid var(--border-violet)',display:'flex',alignItems:'center',justifyContent:'space-between' }}>
+              <span style={{ fontWeight:700,fontSize:13 }}>Notificaciones {unread>0&&<span style={{ marginLeft:4,padding:'1px 7px',borderRadius:10,background:'rgba(232,121,249,0.2)',color:'var(--accent-magenta)',fontSize:10 }}>{unread}</span>}</span>
+              {unread>0&&<button onClick={()=>{onMarkAllRead();}} style={{ fontSize:10,color:'var(--primary-violet-light)',background:'none',border:'none',cursor:'pointer' }}>Marcar todas</button>}
+            </div>
+            <div style={{ overflowY:'auto',flex:1 }}>
+              {(notifications||[]).length===0 && <div style={{ padding:20,textAlign:'center',color:'var(--text-secondary)',fontSize:12 }}>Sin notificaciones</div>}
+              {(notifications||[]).map(n=>(
+                <div key={n.id} onClick={()=>onMarkRead(n.id)} style={{ padding:'10px 16px',borderBottom:'1px solid var(--border-violet)',cursor:'pointer',background:n.read?'transparent':'rgba(139,92,246,0.06)',display:'flex',gap:8,alignItems:'flex-start',transition:'background 0.2s' }}
+                  onMouseEnter={e=>e.currentTarget.style.background='rgba(139,92,246,0.1)'}
+                  onMouseLeave={e=>e.currentTarget.style.background=n.read?'transparent':'rgba(139,92,246,0.06)'}>
+                  <span style={{ fontSize:16 }}>{notifTypeIcon[n.type]||'🔔'}</span>
+                  <div style={{ flex:1,minWidth:0 }}>
+                    <div style={{ fontSize:11,fontWeight:n.read?500:700,marginBottom:1 }}>{n.title}</div>
+                    <div style={{ fontSize:10,color:'var(--text-secondary)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{n.body}</div>
+                  </div>
+                  {!n.read&&<div style={{ width:6,height:6,borderRadius:'50%',background:'var(--accent-magenta)',flexShrink:0,marginTop:3 }}/>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      <nav style={{
+        position:'fixed', bottom:0, left:0, right:0,
+        background:'rgba(10,6,24,0.96)',
+        backdropFilter:'blur(40px)', WebkitBackdropFilter:'blur(40px)',
+        borderTop:'1px solid rgba(139,92,246,0.25)',
+        zIndex:200, display:'flex', alignItems:'flex-end',
+        height:'max(64px, calc(64px + env(safe-area-inset-bottom)))',
+        paddingBottom:'max(0px, env(safe-area-inset-bottom))',
+      }} className="show-mobile-only">
+
+        {/* 1. Sidebar / NODES */}
+        <button style={navBtnBase} onClick={onMobileMenu}>
+          <div style={{ display:'flex',flexDirection:'column',gap:3 }}>
+            {[0,1,2].map(i=><div key={i} style={{ width:17,height:1.5,borderRadius:1,background:'var(--text-secondary)' }}/>)}
+          </div>
+          <span style={{ fontSize:8,fontWeight:600,letterSpacing:0.5 }}>NODES</span>
+        </button>
+
+        {/* 2. Config */}
+        <button style={navBtnBase} onClick={()=>onNavigate('advanced')}>
+          <Settings size={18}/>
+          <span style={{ fontSize:8,fontWeight:500 }}>Config</span>
+        </button>
+
+        {/* 3. Hub Central (elevado) */}
+        <div style={{ flex:1,display:'flex',justifyContent:'center',alignItems:'flex-end',paddingBottom:10 }}>
+          <button onClick={onToggleHub} style={{
+            width:60, height:60, borderRadius:20,
+            background: hubActive
+              ? 'linear-gradient(135deg,#7C3AED,#A855F7)'
+              : 'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',
+            border:`2px solid ${hubActive?'rgba(255,255,255,0.35)':'rgba(139,92,246,0.5)'}`,
+            boxShadow: hubActive
+              ? '0 0 32px rgba(139,92,246,0.9),0 -6px 24px rgba(139,92,246,0.5)'
+              : '0 0 20px rgba(139,92,246,0.5),0 -4px 16px rgba(139,92,246,0.3)',
+            cursor:'pointer',
+            display:'flex', alignItems:'center', justifyContent:'center',
+            transform: hubActive ? 'translateY(-10px) scale(1.06)' : 'translateY(-6px)',
+            transition:'all 0.3s cubic-bezier(0.34,1.56,0.64,1)',
+          }}>
+            <img src="/logoresilio.png" alt="Resilio" style={{ width:28,height:28,objectFit:'contain',filter:'brightness(0) invert(1)' }}/>
           </button>
-        )
-      })}
-    </nav>
+        </div>
+
+        {/* 4. Rocco IA */}
+        <button style={navBtnBase} onClick={onRocco}>
+          <span style={{ fontSize:20,lineHeight:1 }}>▷</span>
+          <span style={{ fontSize:8,fontWeight:500 }}>Rocco</span>
+        </button>
+
+        {/* 5. Notificaciones */}
+        <button onClick={()=>setNotifOpen(p=>!p)} style={{ ...navBtnBase,color:notifOpen?'var(--primary-violet-light)':'var(--text-secondary)',position:'relative' }}>
+          <div style={{ position:'relative' }}>
+            <Bell size={18}/>
+            {unread>0&&<span style={{ position:'absolute',top:-4,right:-5,minWidth:14,height:14,background:'var(--accent-magenta)',borderRadius:7,fontSize:8,fontWeight:700,color:'white',display:'flex',alignItems:'center',justifyContent:'center',padding:'0 2px',boxShadow:'0 0 6px var(--accent-magenta)' }}>{unread}</span>}
+          </div>
+          <span style={{ fontSize:8,fontWeight:500 }}>Avisos</span>
+        </button>
+      </nav>
+    </>
   )
 }
 
@@ -1068,10 +1063,12 @@ export default function App() {
   const [portalSeen,     setPortalSeen]     = useLocalStorage('crm_portal_seen', false)
   const [showPortal,     setShowPortal]     = useState(() => Boolean(getSession()))
 
-  const [cmdOpen,      setCmdOpen]      = useState(false)
-  const [mobileMenu,   setMobileMenu]   = useState(false)
-  const [windowWidth,  setWindowWidth]  = useState(window.innerWidth)
-  const [showRocco,    setShowRocco]    = useState(false)
+  const [cmdOpen,            setCmdOpen]            = useState(false)
+  const [mobileMenu,         setMobileMenu]         = useState(false)
+  const [windowWidth,        setWindowWidth]        = useState(window.innerWidth)
+  const [showRocco,          setShowRocco]          = useState(false)
+  const [hubNodesVisible,    setHubNodesVisible]    = useState(false)
+  const [nodesBeforeSidebar, setNodesBeforeSidebar] = useState(false)
 
   useEffect(() => { const h=()=>setWindowWidth(window.innerWidth); window.addEventListener('resize',h); return()=>window.removeEventListener('resize',h) }, [])
   useEffect(() => { document.documentElement.setAttribute('data-theme',theme) }, [theme])
@@ -1079,6 +1076,10 @@ export default function App() {
     const h=(e)=>{ if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();setCmdOpen(p=>!p)} }
     window.addEventListener('keydown',h); return()=>window.removeEventListener('keydown',h)
   }, [])
+  useEffect(() => {
+    if (mobileMenu) { setNodesBeforeSidebar(hubNodesVisible); setHubNodesVisible(false) }
+    else { setHubNodesVisible(nodesBeforeSidebar) }
+  }, [mobileMenu])
 
   // Load shared CRM data from Supabase (fallback to demo data if empty)
   useEffect(() => {
@@ -1162,6 +1163,8 @@ export default function App() {
       logActivity({ userId:currentUser.id, userName:currentUser.nombre, accion:'cambiar_seccion', detalle:`Navegó a ${v}`, seccion:v })
     }
   }, [setCurrentView, currentUser])
+
+  const handleToggleHub = useCallback(() => setHubNodesVisible(p => !p), [])
 
   const renderView = () => {
     switch (currentView) {
@@ -1310,14 +1313,8 @@ export default function App() {
         {/* Main */}
         <div style={{flex:1,display:'flex',flexDirection:'column',minWidth:0}}>
           <Header
-            currentView={currentView} theme={theme}
-            onThemeToggle={()=>setTheme(t=>t==='dark'?'light':'dark')}
-            onCommandPalette={()=>setCmdOpen(true)}
+            currentView={currentView}
             onMobileMenu={()=>setMobileMenu(true)}
-            onHub={()=>navigate('hub')}
-            notifications={notifications}
-            onMarkRead={handleMarkRead}
-            onMarkAllRead={handleMarkAllRead}
             currentUser={currentUser}
             onLogout={handleLogout}
             onAdmin={() => setShowAdmin(true)}
@@ -1326,33 +1323,47 @@ export default function App() {
           <main style={{flex:1,overflowY:'auto'}}>{renderView()}</main>
         </div>
 
-        {isMobile && <MobileNav currentView={currentView} onNavigate={navigate} onRocco={()=>setShowRocco(p=>!p)}/>}
+        {isMobile && <MobileNav
+          onMobileMenu={()=>setMobileMenu(true)}
+          onNavigate={navigate}
+          onRocco={()=>setShowRocco(p=>!p)}
+          onToggleHub={handleToggleHub}
+          hubActive={hubNodesVisible}
+          notifications={notifications}
+          onMarkRead={handleMarkRead}
+          onMarkAllRead={handleMarkAllRead}
+        />}
       </div>
+
+      {/* Hub nodes radiales (solo móvil) */}
+      {isMobile && hubNodesVisible && !mobileMenu && (
+        <HubNodes onNavigate={navigate} onClose={()=>setHubNodesVisible(false)}/>
+      )}
 
       <CommandPalette isOpen={cmdOpen} onClose={()=>setCmdOpen(false)} onNavigate={navigate}/>
 
-      {/* ROCCO floating button */}
-      <button
-        onClick={()=>setShowRocco(p=>!p)}
-        title="ROCCO IA Assistant"
-        style={{
-          position:'fixed', bottom: isMobile ? '88px' : '2rem', right:'2rem',
-          width:56, height:56, borderRadius:'50%',
-          background: showRocco
-            ? 'linear-gradient(135deg,#6D28D9,#7C3AED)'
-            : 'linear-gradient(135deg,#8B5CF6,#C084FC)',
-          border:'2px solid rgba(139,92,246,0.4)',
-          boxShadow: showRocco ? '0 0 30px rgba(139,92,246,0.7)' : '0 0 20px rgba(139,92,246,0.5)',
-          cursor:'pointer', zIndex:998,
-          display:'flex', alignItems:'center', justifyContent:'center',
-          fontSize:22, transition:'all 0.25s',
-          transform: showRocco ? 'scale(0.95)' : 'scale(1)'
-        }}
-        onMouseEnter={e=>{ if(!showRocco){ e.currentTarget.style.transform='scale(1.1)'; e.currentTarget.style.boxShadow='0 0 30px rgba(139,92,246,0.7)' } }}
-        onMouseLeave={e=>{ if(!showRocco){ e.currentTarget.style.transform='scale(1)'; e.currentTarget.style.boxShadow='0 0 20px rgba(139,92,246,0.5)' } }}
-      >
-        {showRocco ? <X size={22} color="white"/> : '🤖'}
-      </button>
+      {/* ROCCO chat - botón solo en desktop */}
+      {!isMobile && (
+        <button
+          onClick={()=>setShowRocco(p=>!p)}
+          title="ROCCO IA Assistant"
+          style={{
+            position:'fixed', bottom:'2rem', right:'2rem',
+            width:56, height:56, borderRadius:'50%',
+            background: showRocco ? 'linear-gradient(135deg,#6D28D9,#7C3AED)' : 'linear-gradient(135deg,#8B5CF6,#C084FC)',
+            border:'2px solid rgba(139,92,246,0.4)',
+            boxShadow: showRocco ? '0 0 30px rgba(139,92,246,0.7)' : '0 0 20px rgba(139,92,246,0.5)',
+            cursor:'pointer', zIndex:998,
+            display:'flex', alignItems:'center', justifyContent:'center',
+            fontSize:22, transition:'all 0.25s',
+            transform: showRocco ? 'scale(0.95)' : 'scale(1)'
+          }}
+          onMouseEnter={e=>{ if(!showRocco){ e.currentTarget.style.transform='scale(1.1)'; e.currentTarget.style.boxShadow='0 0 30px rgba(139,92,246,0.7)' } }}
+          onMouseLeave={e=>{ if(!showRocco){ e.currentTarget.style.transform='scale(1)'; e.currentTarget.style.boxShadow='0 0 20px rgba(139,92,246,0.5)' } }}
+        >
+          {showRocco ? <X size={22} color="white"/> : '🤖'}
+        </button>
+      )}
 
       {/* ROCCO chat panel */}
       <RoccoChat show={showRocco} onClose={()=>setShowRocco(false)}/>
