@@ -168,6 +168,69 @@
       "on_hold": "En pausa"
     }
   },
+  "home": {
+    "greeting": {
+      "morning": "Buenos días",
+      "afternoon": "Buenas tardes",
+      "evening": "Buenas noches"
+    },
+    "today": "HOY",
+    "needsAttention": "Necesita atención",
+    "myNetwork": "Mi Network",
+    "missions": "Misiones",
+    "seeAll": "Ver todas ({n})",
+    "allClear": "Todo en orden. Bien hecho.",
+    "allClearSubtitle": "No tenés acciones pendientes para los próximos 7 días.",
+    "newScouter": "Cargá tu primer influencer",
+    "newScouterSubtitle": "Registrá un creador en menos de 60 segundos.",
+    "tasks": "{n} tareas",
+    "tasksOverdue": "{n} vencidas",
+    "followups": "{n} seguimientos",
+    "followupsOverdue": "{n} vencidos",
+    "loadingGreeting": "Cargando…"
+  },
+  "agenda": {
+    "complete": "Completar",
+    "reschedule": "Reagendar",
+    "completing": "Guardando…",
+    "confirmReschedule": "Confirmar",
+    "cancelReschedule": "Cancelar",
+    "overdue": "Vencida",
+    "today": "Hoy",
+    "tomorrow": "Mañana",
+    "errorComplete": "No se pudo registrar el seguimiento",
+    "errorReschedule": "No se pudo agendar"
+  },
+  "task": {
+    "allDone": "¡Todo al día!",
+    "allDoneSubtitle": "No tenés tareas pendientes.",
+    "pending": "{n} pendientes",
+    "create": "Nueva tarea",
+    "saving": "Guardando…",
+    "groups": {
+      "overdue": "Vencidas",
+      "today": "Hoy",
+      "week": "Esta semana",
+      "later": "Después"
+    },
+    "priorities": {
+      "urgent": "Urgente",
+      "high": "Alta",
+      "normal": "Normal",
+      "low": "Baja"
+    }
+  },
+  "missions": {
+    "points": "{n} pts",
+    "progress": "{current} / {target}",
+    "endsAt": "Vence {date}"
+  },
+  "quickActions": {
+    "whatsapp": "WhatsApp",
+    "instagram": "Instagram",
+    "call": "Llamar",
+    "note": "Nota"
+  },
   "pages": {
     "home": { "title": "Scouter Home", "subtitle": "Tu centro de operaciones", "comingSoonSubtitle": "Scouter Home (Fase 2C): alertas de seguimiento, tareas del día y feed de actividad" },
     "command": { "title": "Command Center", "subtitle": "Vista de dirección", "comingSoonSubtitle": "Command Center (Fase 2D): métricas de la red, alertas y goals por ciudad" },

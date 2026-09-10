@@ -169,6 +169,9 @@ const GlobalStyles = () => (
     .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 64px 32px; text-align: center; }
     @media (max-width: 640px) { .hide-mobile { display: none !important; } }
     @media (min-width: 641px) { .show-mobile-only { display: none !important; } }
+    .nw-home-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
+    @media (min-width: 768px) { .nw-home-grid { grid-template-columns: 1fr 1fr; align-items: start; } }
+    .nw-stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   `}</style>
 )
 

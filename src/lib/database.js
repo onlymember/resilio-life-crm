@@ -351,6 +351,7 @@ const rowToTask = (r) => ({
   priority:        r.priority,
   status:          r.status,
   estadoEfectivo:  r.estado_efectivo || r.status,
+  isOverdue:       r.is_overdue ?? (r.estado_efectivo === 'overdue'),
   dueDate:         r.due_date,
   completedAt:     r.completed_at,
   createdAt:       r.created_at,
@@ -1171,4 +1172,37 @@ export const dbGetActivityLog = async (limit = 100) => {
     seccion:    r.metadata?.seccion || 'admin',
     created_at: r.occurred_at || r.created_at,
   }))
+}
+
+// ═══════════════════════════════════════════════════════════
+// NEXT ACTIONS — wrappers de complete_next_action / set_next_action
+// Usan las RPCs SQL (022) que hacen las dos escrituras atómicas.
+// ═══════════════════════════════════════════════════════════
+
+const friendlyRpc = (error) => {
+  const m = error?.message || ''
+  if (m.includes('no existe o no tenés permiso')) return new Error('El registro no existe o no tenés permiso para modificarlo.')
+  if (m.includes('entity_type inválido'))         return new Error('Tipo de entidad no reconocido.')
+  if (/row-level security/i.test(m))              return new Error('No tenés permiso para esta operación.')
+  return new Error('No se pudo completar la operación. Intentá de nuevo.')
+}
+
+export const dbCompleteNextAction = async (entityType, entityId, note = null) => {
+  const { error } = await supabase.rpc('complete_next_action', {
+    p_entity_type:   entityType,
+    p_entity_id:     entityId,
+    p_activity_type: 'follow_up',
+    p_note:          note,
+  })
+  if (error) throw friendlyRpc(error)
+}
+
+export const dbSetNextAction = async (entityType, entityId, action, at) => {
+  const { error } = await supabase.rpc('set_next_action', {
+    p_entity_type: entityType,
+    p_entity_id:   entityId,
+    p_action:      action,
+    p_at:          at,
+  })
+  if (error) throw friendlyRpc(error)
 }
