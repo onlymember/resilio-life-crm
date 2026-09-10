@@ -6,9 +6,9 @@ import StatTile from '../components/StatTile.jsx'
 import MissionProgress from '../components/MissionProgress.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { t } from '../../i18n/index.js'
+import { useTz } from '../utils/tz.js'
 import { getMyAgenda, getMyNetworkStats, getMyMissions } from '../../lib/metrics.js'
-import { dbCompleteNextAction, dbSetNextAction, dbCompleteTask, dbSaveTask } from '../../lib/database.js'
-import { supabase } from '../../lib/supabase.js'
+import { dbCompleteNextAction, dbSetNextAction, dbCompleteTask } from '../../lib/database.js'
 
 const AGENDA_PREVIEW = 5
 
@@ -21,45 +21,33 @@ function greeting(tz) {
   return t('home.greeting.evening')
 }
 
-async function fetchTimezone(userId) {
-  if (!userId) return null
-  const { data } = await supabase
-    .from('scouters')
-    .select('cities(timezone)')
-    .eq('user_id', userId)
-    .maybeSingle()
-  return data?.cities?.timezone || null
-}
-
 export default function HomePage({ currentUser, onOpenCreate }) {
   const navigate = useNavigate()
+  const tz = useTz()
 
   const [agenda,   setAgenda]   = useState([])
   const [stats,    setStats]    = useState(null)
   const [missions, setMissions] = useState([])
-  const [tz,       setTz]       = useState(null)
   const [loading,  setLoading]  = useState(true)
   const [showAll,  setShowAll]  = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [ag, st, ms, timezone] = await Promise.all([
+      const [ag, st, ms] = await Promise.all([
         getMyAgenda(7),
         getMyNetworkStats(),
         getMyMissions(),
-        fetchTimezone(currentUser?.id),
       ])
       setAgenda(ag)
       setStats(st)
       setMissions(ms)
-      setTz(timezone)
     } catch(e) {
       console.error('HomePage load:', e.message)
     } finally {
       setLoading(false)
     }
-  }, [currentUser?.id])
+  }, [])
 
   useEffect(() => { load() }, [load])
 
@@ -88,7 +76,7 @@ export default function HomePage({ currentUser, onOpenCreate }) {
     ))
   }, [])
 
-  const name = currentUser?.nombre?.split(' ')[0] || currentUser?.username || ''
+  const name  = currentUser?.nombre?.split(' ')[0] || currentUser?.username || ''
   const greet = greeting(tz)
 
   const visible = showAll ? agenda : agenda.slice(0, AGENDA_PREVIEW)

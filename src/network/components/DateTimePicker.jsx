@@ -11,7 +11,7 @@ export default function DateTimePicker({ value, onChange, onConfirm, onCancel })
         style={{
           width: '100%', padding: '8px 12px',
           background: 'rgba(139,92,246,0.08)', border: '1px solid var(--border-violet)',
-          borderRadius: 8, color: 'var(--text-primary)', fontSize: 13,
+          borderRadius: 8, color: 'var(--text-primary)', fontSize: 16,
           colorScheme: 'dark',
         }}
       />

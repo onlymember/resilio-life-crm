@@ -125,11 +125,19 @@ function NetworkSidebar({ currentUser, collapsed, onToggle }) {
 }
 
 export default function NetworkLayout({ currentUser, railContent }) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem('nw_sidebar_collapsed') === 'true')
+
+  const handleToggle = () => {
+    setCollapsed(prev => {
+      const next = !prev
+      localStorage.setItem('nw_sidebar_collapsed', String(next))
+      return next
+    })
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
-      <NetworkSidebar currentUser={currentUser} collapsed={collapsed} onToggle={() => setCollapsed(p => !p)}/>
+      <NetworkSidebar currentUser={currentUser} collapsed={collapsed} onToggle={handleToggle}/>
 
       {/* Workspace */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto' }}>

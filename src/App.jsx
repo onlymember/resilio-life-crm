@@ -121,12 +121,12 @@ const GlobalStyles = () => (
       --nebula-1: none; --nebula-2: none; --nebula-3: none;
     }
     html, body, #root { height: 100%; }
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-primary); color: var(--text-primary); overflow-x: hidden; line-height: 1.5; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-primary); color: var(--text-primary); overflow-x: hidden; line-height: 1.5; -webkit-text-size-adjust: 100%; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg-secondary); }
     ::-webkit-scrollbar-thumb { background: var(--primary-violet-dark); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--primary-violet); }
-    input, textarea, select { font-family: inherit; outline: none; border: none; background: transparent; color: var(--text-primary); }
+    input, textarea, select { font-family: inherit; outline: none; border: none; background: transparent; color: var(--text-primary); font-size: 16px; }
     button { cursor: pointer; font-family: inherit; border: none; background: none; }
     a { text-decoration: none; color: inherit; }
     @keyframes fadeIn     { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -172,6 +172,10 @@ const GlobalStyles = () => (
     .nw-home-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
     @media (min-width: 768px) { .nw-home-grid { grid-template-columns: 1fr 1fr; align-items: start; } }
     .nw-stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .nw-bottom-nav { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid var(--border-violet); }
+    @supports not (backdrop-filter: blur(1px)) { .nw-bottom-nav { background: var(--bg-secondary); } }
+    .nw-save-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 150; background: var(--bg-secondary); border-top: 1px solid var(--border-violet); padding: 12px 20px; padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
+    @media (max-width: 767px) { .nw-save-bar { bottom: calc(60px + env(safe-area-inset-bottom, 0px)); } }
   `}</style>
 )
 

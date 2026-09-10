@@ -1,32 +1,21 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { AlertCircle, Clock, CheckCircle, Calendar } from 'lucide-react'
 import QuickActions from './QuickActions.jsx'
 import DateTimePicker from './DateTimePicker.jsx'
 import { t } from '../../i18n/index.js'
-
-const fmtDue = (iso, isOverdue, isToday) => {
-  if (!iso) return null
-  if (isOverdue) return t('agenda.overdue')
-  if (isToday)   return t('agenda.today')
-  const d   = new Date(iso)
-  const now = new Date()
-  const diffDays = Math.ceil((d - now) / 86400000)
-  if (diffDays === 1) return t('agenda.tomorrow')
-  return d.toLocaleDateString('es', { day: 'numeric', month: 'short' })
-}
-
-const toDatetimeLocal = (iso) => {
-  if (!iso) return ''
-  const d = new Date(iso)
-  const pad = n => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
+import { useTz } from '../utils/tz.js'
+import { fmtDateTime, fmtDateTimeOverdue, isoToDatetimeLocal, datetimeLocalToIso } from '../utils/date.js'
 
 export default function AgendaItem({ item, onComplete, onReschedule, onNote }) {
-  const [completing,    setCompleting]    = useState(false)
-  const [rescheduling,  setRescheduling]  = useState(false)
-  const [newDatetime,   setNewDatetime]   = useState(toDatetimeLocal(item.dueAt))
-  const [error,         setError]         = useState(null)
+  const tz = useTz()
+  const [completing,   setCompleting]   = useState(false)
+  const [rescheduling, setRescheduling] = useState(false)
+  const [newDatetime,  setNewDatetime]  = useState('')
+  const [error,        setError]        = useState(null)
+
+  useEffect(() => {
+    setNewDatetime(isoToDatetimeLocal(item.dueAt, tz))
+  }, [item.dueAt, tz])
 
   const handleComplete = async () => {
     if (completing) return
@@ -44,14 +33,16 @@ export default function AgendaItem({ item, onComplete, onReschedule, onNote }) {
     if (!newDatetime) return
     setError(null)
     try {
-      await onReschedule(item, new Date(newDatetime).toISOString())
+      await onReschedule(item, datetimeLocalToIso(newDatetime, tz))
       setRescheduling(false)
     } catch(e) {
       setError(e.message)
     }
   }
 
-  const dueLabel  = fmtDue(item.dueAt, item.isOverdue, item.isToday)
+  const dueLabel  = item.isOverdue
+    ? fmtDateTimeOverdue(item.dueAt, tz)
+    : fmtDateTime(item.dueAt, tz)
   const borderCol = item.isOverdue ? 'rgba(239,68,68,0.3)' : 'var(--border-violet)'
   const bgCol     = item.isOverdue ? 'rgba(239,68,68,0.06)' : 'var(--glass-bg)'
   const timeCol   = item.isOverdue ? '#F87171' : item.isToday ? '#FBBF24' : 'var(--text-secondary)'
@@ -129,7 +120,7 @@ export default function AgendaItem({ item, onComplete, onReschedule, onNote }) {
             <CheckCircle size={12}/>
             {completing ? t('agenda.completing') : t('agenda.complete')}
           </button>
-          {item.kind === 'next_action' && (
+          {item.kind === 'next_action' && onReschedule && (
             <button
               onClick={() => setRescheduling(true)}
               style={{

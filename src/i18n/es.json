@@ -243,5 +243,49 @@
   "layout": {
     "backToApp": "Salir de Network",
     "toggleRail": "Contexto"
+  },
+  "influencer": {
+    "sections": {
+      "contact": "Contacto",
+      "profile": "Perfil",
+      "relationship": "Relación",
+      "activity": "Actividad"
+    },
+    "fields": {
+      "whatsapp": "WhatsApp",
+      "instagram": "Instagram",
+      "tiktok": "TikTok",
+      "email": "Email",
+      "phone": "Teléfono",
+      "category": "Categoría",
+      "tier": "Tier",
+      "city": "Ciudad",
+      "followers": "Seguidores",
+      "engagement": "Engagement (%)",
+      "averageViews": "Vistas promedio",
+      "relationshipStatus": "Relación",
+      "nextAction": "Próxima acción",
+      "nextActionAt": "Fecha",
+      "notes": "Notas"
+    },
+    "tiers": {
+      "nano": "Nano (1K–10K)",
+      "micro": "Micro (10K–100K)",
+      "mid": "Mid (100K–500K)",
+      "macro": "Macro (500K–1M)",
+      "mega": "Mega (1M+)"
+    },
+    "relationship": {
+      "cold": "Cold",
+      "warm": "Warm",
+      "strong": "Strong",
+      "inactive": "Inactivo"
+    },
+    "save": "Guardar cambios",
+    "saving": "Guardando…",
+    "saved": "Guardado",
+    "unsavedWarning": "Tenés cambios sin guardar. ¿Salir de todos modos?",
+    "cityWarning": "Sin ciudad asignada — algunos filtros no van a funcionar.",
+    "noCityPlaceholder": "Seleccionar ciudad"
   }
 }

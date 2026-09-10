@@ -3,6 +3,8 @@ import { Plus, CheckSquare, X } from 'lucide-react'
 import TaskRow from '../components/TaskRow.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { t } from '../../i18n/index.js'
+import { useTz } from '../utils/tz.js'
+import { defaultDueLocal, datetimeLocalToIso } from '../utils/date.js'
 import { dbGetTasks, dbCompleteTask, dbSaveTask } from '../../lib/database.js'
 
 const PAGE_SIZE = 100
@@ -33,6 +35,7 @@ function groupTasks(rows) {
 const PRIORITY_OPTS = ['urgent', 'high', 'normal', 'low']
 
 export default function TasksPage({ currentUser }) {
+  const tz = useTz()
   const [rows,    setRows]    = useState([])
   const [total,   setTotal]   = useState(0)
   const [loading, setLoading] = useState(true)
@@ -79,14 +82,14 @@ export default function TasksPage({ currentUser }) {
     try {
       const saved = await dbSaveTask({
         title:    newTitle.trim(),
-        dueDate:  newDue || null,
+        dueDate:  newDue ? datetimeLocalToIso(newDue, tz) : null,
         priority: newPrio,
         status:   'todo',
         assignedTo: currentUser?.id || null,
       }, currentUser?.id)
       setRows(prev => [saved, ...prev])
       setTotal(prev => prev + 1)
-      setNewTitle(''); setNewDue(''); setNewPrio('normal')
+      setNewTitle(''); setNewDue(defaultDueLocal(tz)); setNewPrio('normal')
       setCreating(false)
     } catch(e) {
       setSaveError(e.message)
@@ -130,18 +133,18 @@ export default function TasksPage({ currentUser }) {
             value={newTitle}
             onChange={e => setNewTitle(e.target.value)}
             style={{
-              width: '100%', padding: '8px 12px', borderRadius: 8, fontSize: 13,
+              width: '100%', padding: '8px 12px', borderRadius: 8, fontSize: 16,
               background: 'rgba(139,92,246,0.08)', border: '1px solid var(--border-violet)',
               color: 'var(--text-primary)',
             }}
           />
           <div style={{ display: 'flex', gap: 8 }}>
             <input
-              type="date"
-              value={newDue}
+              type="datetime-local"
+              value={newDue || defaultDueLocal(tz)}
               onChange={e => setNewDue(e.target.value)}
               style={{
-                flex: 1, padding: '7px 10px', borderRadius: 8, fontSize: 12,
+                flex: 1, padding: '7px 10px', borderRadius: 8, fontSize: 16,
                 background: 'rgba(139,92,246,0.08)', border: '1px solid var(--border-violet)',
                 color: 'var(--text-primary)', colorScheme: 'dark',
               }}
@@ -150,7 +153,7 @@ export default function TasksPage({ currentUser }) {
               value={newPrio}
               onChange={e => setNewPrio(e.target.value)}
               style={{
-                flex: 1, padding: '7px 10px', borderRadius: 8, fontSize: 12,
+                flex: 1, padding: '7px 10px', borderRadius: 8, fontSize: 16,
                 background: 'rgba(139,92,246,0.08)', border: '1px solid var(--border-violet)',
                 color: 'var(--text-primary)',
               }}

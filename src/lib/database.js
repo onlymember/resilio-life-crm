@@ -897,8 +897,13 @@ const influencerToRow = async (i) => {
     city_id:    i.cityId ?? geo.city_id,
     country_id: i.countryId ?? geo.country_id,
     status:    i.status ?? 'active',
-    next_follow_up: i.nextFollowUp ?? null,
-    notes:     i.notes ?? null,
+    next_follow_up:     i.nextFollowUp ?? null,
+    notes:              i.notes ?? null,
+    relationship_status: i.relationshipStatus ?? 'cold',
+    next_action:        i.nextAction ?? null,
+    next_action_at:     i.nextActionAt ?? null,
+    engagement:         i.engagement ? Number(i.engagement) : null,
+    average_views:      i.averageViews ? Number(i.averageViews) : null,
     // Todo lo que no tiene columna propia, incluido el texto original
     data: {
       ciudad: i.ciudad ?? null, pais: i.pais ?? null, grupo: i.grupo ?? null,
@@ -1024,6 +1029,38 @@ export const dbSaveInfluencer = async (inf) => {
 
 export const dbDeleteInfluencer = async (id) => {
   const { error } = await supabase.from('influencers').delete().eq('id', id)
+  if (error) throw friendly(error)
+}
+
+// Partial update — only sends changed fields. Never touches owner_scouter_id or created_by.
+export const dbPatchInfluencer = async (id, patch) => {
+  const FIELD_MAP = {
+    name:               'name',
+    username:           'username',
+    email:              'email',
+    phone:              'phone',
+    instagram:          'instagram',
+    tiktok:             'tiktok',
+    whatsapp:           'whatsapp',
+    followers:          'followers',
+    category:           'category',
+    tier:               'tier',
+    cityId:             'city_id',
+    countryId:          'country_id',
+    status:             'status',
+    notes:              'notes',
+    relationshipStatus: 'relationship_status',
+    engagement:         'engagement',
+    averageViews:       'average_views',
+    nextAction:         'next_action',
+    nextActionAt:       'next_action_at',
+  }
+  const row = {}
+  for (const [camel, snake] of Object.entries(FIELD_MAP)) {
+    if (camel in patch) row[snake] = patch[camel]
+  }
+  if (Object.keys(row).length === 0) return
+  const { error } = await supabase.from('influencers').update(row).eq('id', id)
   if (error) throw friendly(error)
 }
 

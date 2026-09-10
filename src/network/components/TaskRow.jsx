@@ -1,21 +1,13 @@
 import React, { useRef, useState } from 'react'
 import { t } from '../../i18n/index.js'
+import { useTz } from '../utils/tz.js'
+import { fmtDateTime, fmtDateTimeOverdue } from '../utils/date.js'
 
 const PRIORITY_COLOR = { urgent: '#F87171', high: '#FB923C', normal: '#60A5FA', low: '#9CA3AF' }
 
-const fmtDate = (iso, isOverdue) => {
-  if (!iso) return null
-  const d = new Date(iso)
-  const now = new Date()
-  const diffDays = Math.round((d.setHours(0,0,0,0) - now.setHours(0,0,0,0)) / 86400000)
-  if (isOverdue) return { label: diffDays === 0 ? 'Hoy' : `Hace ${Math.abs(diffDays)}d`, overdue: true }
-  if (diffDays === 0) return { label: 'Hoy', overdue: false }
-  if (diffDays === 1) return { label: t('agenda.tomorrow'), overdue: false }
-  return { label: d.toLocaleDateString('es', { day: 'numeric', month: 'short' }), overdue: false }
-}
-
 export default function TaskRow({ task, onComplete }) {
-  const [done, setDone]       = useState(false)
+  const tz = useTz()
+  const [done,    setDone]    = useState(false)
   const [loading, setLoading] = useState(false)
   const touchX = useRef(null)
 
@@ -36,7 +28,9 @@ export default function TaskRow({ task, onComplete }) {
     if (dx > 80) complete()
   }
 
-  const date   = fmtDate(task.dueDate, task.isOverdue)
+  const dateLabel = task.isOverdue
+    ? fmtDateTimeOverdue(task.dueDate, tz)
+    : fmtDateTime(task.dueDate, tz)
   const pColor = PRIORITY_COLOR[task.priority] || '#9CA3AF'
 
   return (
@@ -79,9 +73,9 @@ export default function TaskRow({ task, onComplete }) {
         <div style={{ fontSize: 13, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: done ? 'line-through' : 'none' }}>
           {task.title}
         </div>
-        {date && (
-          <div style={{ fontSize: 10, color: date.overdue ? '#F87171' : 'var(--text-secondary)', marginTop: 2 }}>
-            {date.label}
+        {dateLabel && (
+          <div style={{ fontSize: 10, color: task.isOverdue ? '#F87171' : 'var(--text-secondary)', marginTop: 2 }}>
+            {dateLabel}
           </div>
         )}
       </div>
