@@ -1,23 +1,25 @@
 import React from 'react'
 import {
   MessageSquare, Phone, Mail, Users, ArrowRight,
-  FileText, CreditCard, Star, Edit3,
+  FileText, CreditCard, Star, Edit3, UserCheck,
 } from 'lucide-react'
 import { t } from '../../i18n/index.js'
 
 const TYPE_ICON = {
-  dm:          { icon: MessageSquare, color: '#8B5CF6' },
-  whatsapp:    { icon: MessageSquare, color: '#34D399' },
-  call:        { icon: Phone,         color: '#60A5FA' },
-  meeting:     { icon: Users,         color: '#FBBF24' },
-  email:       { icon: Mail,          color: '#A78BFA' },
-  follow_up:   { icon: ArrowRight,    color: '#FB923C' },
-  proposal:    { icon: FileText,      color: '#22D3EE' },
-  contract:    { icon: FileText,      color: '#4ADE80' },
-  payment:     { icon: CreditCard,    color: '#FCD34D' },
-  note:        { icon: Edit3,         color: '#9CA3AF' },
-  created:     { icon: Star,          color: '#8B5CF6' },
-  updated:     { icon: Edit3,         color: '#9CA3AF' },
+  dm:           { icon: MessageSquare, color: '#8B5CF6' },
+  whatsapp:     { icon: MessageSquare, color: '#34D399' },
+  call:         { icon: Phone,         color: '#60A5FA' },
+  meeting:      { icon: Users,         color: '#FBBF24' },
+  email:        { icon: Mail,          color: '#A78BFA' },
+  follow_up:    { icon: ArrowRight,    color: '#FB923C' },
+  proposal:     { icon: FileText,      color: '#22D3EE' },
+  contract:     { icon: FileText,      color: '#4ADE80' },
+  payment:      { icon: CreditCard,    color: '#FCD34D' },
+  note:         { icon: Edit3,         color: '#9CA3AF' },
+  created:      { icon: Star,          color: '#8B5CF6' },
+  updated:      { icon: Edit3,         color: '#9CA3AF' },
+  status_change:{ icon: Edit3,         color: '#FBBF24' },
+  reassigned:   { icon: UserCheck,     color: '#A78BFA' },
 }
 
 const timeAgo = (iso) => {

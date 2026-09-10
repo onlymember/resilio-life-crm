@@ -41,6 +41,43 @@
     "strong": "STRONG",
     "inactive": "INACTIVE"
   },
+  "network": {
+    "assign": "Reasignar",
+    "assignTo": "Asignar a",
+    "confirmAssign": "Seleccioná un scouter",
+    "assigning": "Asignando…",
+    "searchScouter": "Buscar scouter…",
+    "scouterCity": "Mi ciudad",
+    "allScouterss": "Todos",
+    "reassigned": "Reasignado"
+  },
+  "brand": {
+    "sections": {
+      "identity": "Identidad",
+      "location": "Ubicación",
+      "relationship": "Relación",
+      "links": "Vínculos",
+      "activity": "Actividad"
+    },
+    "fields": {
+      "name": "Nombre",
+      "category": "Categoría",
+      "website": "Sitio web",
+      "logo": "Logo (URL)",
+      "city": "Ciudad",
+      "potentialValue": "Valor potencial",
+      "notes": "Notas",
+      "relationshipStatus": "Relación",
+      "nextAction": "Próxima acción",
+      "nextActionAt": "Fecha"
+    },
+    "save": "Guardar cambios",
+    "saving": "Guardando…",
+    "saved": "Guardado",
+    "unsavedWarning": "Tenés cambios sin guardar. ¿Salir de todos modos?",
+    "cityWarning": "Sin ciudad asignada — algunos filtros no van a funcionar.",
+    "noCategoryPlaceholder": "Seleccionar categoría"
+  },
   "create": {
     "title": "Agregar",
     "selectType": "¿Qué querés agregar?",
@@ -115,8 +152,14 @@
     "status": "Estado",
     "relationship": "Relación",
     "category": "Categoría",
+    "tier": "Tier",
     "city": "Ciudad",
+    "ownership": "Dueño",
+    "followup": "Seguimiento",
     "all": "Todos",
+    "noOwner": "Sin dueño",
+    "overdueFollowup": "Seguimiento vencido",
+    "orderBy": "Ordenar por",
     "search": "Buscar..."
   },
   "errors": {

@@ -31,11 +31,19 @@ const Section = ({ label, children }) => (
 )
 
 const RELATIONSHIP_OPTIONS = ['cold','warm','strong','inactive']
+const TIER_OPTIONS         = ['nano','micro','mid','macro','mega']
 
-export default function FilterSheet({ isOpen, onClose, filters, onChange, onApply, onClear, cities = [], categories = [] }) {
+export default function FilterSheet({
+  isOpen, onClose, filters, onChange, onApply, onClear,
+  cities = [], categories = [],
+  brandCategories = [],
+  showTier = false,
+  showOverdueFollowup = false,
+}) {
   if (!isOpen) return null
 
   const set = (key, val) => onChange({ ...filters, [key]: val === filters[key] ? null : val })
+  const toggle = (key) => onChange({ ...filters, [key]: !filters[key] })
 
   return (
     <>
@@ -69,6 +77,20 @@ export default function FilterSheet({ isOpen, onClose, filters, onChange, onAppl
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Sin dueño */}
+          <Section label={t('filter.ownership')}>
+            <Chip label={t('filter.all')}      active={!filters.noOwner}  onClick={() => set('noOwner', null)}/>
+            <Chip label={t('filter.noOwner')}  active={!!filters.noOwner} onClick={() => toggle('noOwner')}/>
+          </Section>
+
+          {/* Seguimiento vencido — solo brands */}
+          {showOverdueFollowup && (
+            <Section label={t('filter.followup')}>
+              <Chip label={t('filter.all')}              active={!filters.overdueFollowup}  onClick={() => set('overdueFollowup', null)}/>
+              <Chip label={t('filter.overdueFollowup')}  active={!!filters.overdueFollowup} onClick={() => toggle('overdueFollowup')}/>
+            </Section>
+          )}
+
           {/* Relación */}
           <Section label={t('filter.relationship')}>
             <Chip label={t('filter.all')} active={!filters.relationshipStatus} onClick={() => set('relationshipStatus', null)}/>
@@ -77,22 +99,42 @@ export default function FilterSheet({ isOpen, onClose, filters, onChange, onAppl
             ))}
           </Section>
 
+          {/* Tier — solo influencers */}
+          {showTier && (
+            <Section label={t('filter.tier')}>
+              <Chip label={t('filter.all')} active={!filters.tier} onClick={() => set('tier', null)}/>
+              {TIER_OPTIONS.map(tier => (
+                <Chip key={tier} label={t(`influencer.tiers.${tier}`)} active={filters.tier === tier} onClick={() => set('tier', tier)}/>
+              ))}
+            </Section>
+          )}
+
+          {/* Categoría texto (influencers) */}
+          {categories.length > 0 && (
+            <Section label={t('filter.category')}>
+              <Chip label={t('filter.all')} active={!filters.category} onClick={() => set('category', null)}/>
+              {categories.map(c => (
+                <Chip key={c} label={c} active={filters.category === c} onClick={() => set('category', c)}/>
+              ))}
+            </Section>
+          )}
+
+          {/* Categoría brand (brand_categories por UUID) */}
+          {brandCategories.length > 0 && (
+            <Section label={t('filter.category')}>
+              <Chip label={t('filter.all')} active={!filters.categoryId} onClick={() => set('categoryId', null)}/>
+              {brandCategories.map(c => (
+                <Chip key={c.id} label={c.name} active={filters.categoryId === c.id} onClick={() => set('categoryId', c.id)}/>
+              ))}
+            </Section>
+          )}
+
           {/* Ciudad */}
           {cities.length > 0 && (
             <Section label={t('filter.city')}>
               <Chip label={t('filter.all')} active={!filters.cityId} onClick={() => set('cityId', null)}/>
               {cities.slice(0, 8).map(c => (
                 <Chip key={c.id} label={c.name} active={filters.cityId === c.id} onClick={() => set('cityId', c.id)}/>
-              ))}
-            </Section>
-          )}
-
-          {/* Categoría */}
-          {categories.length > 0 && (
-            <Section label={t('filter.category')}>
-              <Chip label={t('filter.all')} active={!filters.category} onClick={() => set('category', null)}/>
-              {categories.map(c => (
-                <Chip key={c} label={c} active={filters.category === c} onClick={() => set('category', c)}/>
               ))}
             </Section>
           )}

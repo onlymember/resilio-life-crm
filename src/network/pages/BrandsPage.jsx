@@ -3,29 +3,45 @@ import { Building2, Search, SlidersHorizontal } from 'lucide-react'
 import NetworkCard from '../components/NetworkCard.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import FilterSheet from '../components/FilterSheet.jsx'
+import AssignModal from '../components/AssignModal.jsx'
 import { t } from '../../i18n/index.js'
-import { dbGetBrands, dbGetGeography } from '../../lib/database.js'
+import { dbGetBrands, dbGetGeography, dbGetBrandCategories, dbLogContact } from '../../lib/database.js'
 import { useNavigate } from 'react-router-dom'
+import { COMMAND_ROLES } from '../routes.js'
 
 const PAGE_SIZE = 30
 
-export default function BrandsPage({ onOpenCreate }) {
-  const navigate = useNavigate()
-  const [rows,       setRows]       = useState([])
-  const [total,      setTotal]      = useState(0)
-  const [page,       setPage]       = useState(0)
-  const [loading,    setLoading]    = useState(true)
-  const [search,     setSearch]     = useState('')
-  const [filters,    setFilters]    = useState({})
-  const [filterOpen, setFilterOpen] = useState(false)
-  const [cities,     setCities]     = useState([])
-  const [cityMap,    setCityMap]    = useState({})
+const QUICK_CHIPS = [
+  { id: 'all',     label: 'Todas',              filters: {} },
+  { id: 'active',  label: 'Activas',            filters: { status: 'active' } },
+  { id: 'noowner', label: 'Sin dueño',          filters: { noOwner: true } },
+  { id: 'overdue', label: 'Seguimiento vencido', filters: { overdueFollowup: true } },
+]
+
+export default function BrandsPage({ onOpenCreate, currentUser }) {
+  const navigate    = useNavigate()
+  const canReassign = COMMAND_ROLES.includes(currentUser?.rol)
+
+  const [rows,           setRows]           = useState([])
+  const [total,          setTotal]          = useState(0)
+  const [page,           setPage]           = useState(0)
+  const [loading,        setLoading]        = useState(true)
+  const [search,         setSearch]         = useState('')
+  const [filters,        setFilters]        = useState({})
+  const [filterOpen,     setFilterOpen]     = useState(false)
+  const [cities,         setCities]         = useState([])
+  const [cityMap,        setCityMap]        = useState({})
+  const [brandCats,      setBrandCats]      = useState([])
+  const [chipId,         setChipId]         = useState('all')
+  const [assignTarget,   setAssignTarget]   = useState(null)
 
   useEffect(() => {
-    dbGetGeography().then(g => {
-      setCities(g.cities || [])
-      const m = {}; (g.cities||[]).forEach(c => { m[c.id] = c.name }); setCityMap(m)
-    }).catch(() => {})
+    Promise.all([dbGetGeography(), dbGetBrandCategories()])
+      .then(([g, cats]) => {
+        setCities(g.cities || [])
+        const m = {}; (g.cities||[]).forEach(c => { m[c.id] = c.name }); setCityMap(m)
+        setBrandCats(cats)
+      }).catch(() => {})
   }, [])
 
   const load = useCallback(async (pg = 0, s = search, f = filters) => {
@@ -41,11 +57,24 @@ export default function BrandsPage({ onOpenCreate }) {
   useEffect(() => { load(0) }, [])
 
   const handleSearch = (val) => { setSearch(val); load(0, val, filters) }
-  const handleApply  = (f)   => { setFilters(f);  load(0, search, f) }
-  const handleClear  = ()    => { setFilters({});  load(0, search, {}) }
+  const handleApply  = (f)   => { setFilters(f);  load(0, search, f); setChipId('all') }
+  const handleClear  = ()    => { setFilters({});  load(0, search, {}); setChipId('all') }
+  const handleChip   = (chip) => { setChipId(chip.id); setFilters(chip.filters); load(0, search, chip.filters) }
+
+  const handleContact = async (entity, label) => {
+    try {
+      await dbLogContact('brand', entity.id, label)
+      const now = new Date().toISOString()
+      setRows(prev => prev.map(r => r.id === entity.id ? { ...r, lastContactAt: now } : r))
+    } catch(e) { console.error('logContact:', e.message) }
+  }
+
+  const handleAssigned = (entityId, scouter) => {
+    setRows(prev => prev.map(r => r.id === entityId ? { ...r, ownerScouterId: scouter.userId } : r))
+  }
 
   return (
-    <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
         <div>
           <h1 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>{t('pages.brands.title')}</h1>
@@ -58,7 +87,25 @@ export default function BrandsPage({ onOpenCreate }) {
 
       <div style={{ position: 'relative' }}>
         <Search size={14} style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:'var(--text-secondary)' }}/>
-        <input value={search} onChange={e => handleSearch(e.target.value)} placeholder={t('filter.search')} style={{ width:'100%', paddingLeft:34, paddingRight:12, paddingTop:10, paddingBottom:10, background:'rgba(139,92,246,0.07)', border:'1px solid rgba(139,92,246,0.2)', borderRadius:10, color:'var(--text-primary)', fontSize:13, outline:'none' }}/>
+        <input value={search} onChange={e => handleSearch(e.target.value)} placeholder={t('filter.search')} style={{ width:'100%', paddingLeft:34, paddingRight:12, paddingTop:10, paddingBottom:10, background:'rgba(139,92,246,0.07)', border:'1px solid rgba(139,92,246,0.2)', borderRadius:10, color:'var(--text-primary)', fontSize:16, outline:'none' }}/>
+      </div>
+
+      {/* Quick filter chips */}
+      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
+        {QUICK_CHIPS.map(chip => (
+          <button
+            key={chip.id}
+            onClick={() => handleChip(chip)}
+            style={{
+              padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+              background: chipId === chip.id ? 'rgba(139,92,246,0.25)' : 'rgba(139,92,246,0.07)',
+              color: chipId === chip.id ? 'var(--primary-violet-light)' : 'var(--text-secondary)',
+              border: chipId === chip.id ? '1px solid rgba(139,92,246,0.5)' : '1px solid var(--border-violet)',
+            }}
+          >
+            {chip.label}
+          </button>
+        ))}
       </div>
 
       {loading && rows.length === 0 ? (
@@ -70,7 +117,16 @@ export default function BrandsPage({ onOpenCreate }) {
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
           {rows.map(b => (
-            <NetworkCard key={b.id} entity={b} entityType="brand" cityName={cityMap[b.cityId]} onClick={() => navigate(`/network/brands/${b.id}`)}/>
+            <NetworkCard
+              key={b.id}
+              entity={b}
+              entityType="brand"
+              cityName={cityMap[b.cityId]}
+              onClick={() => navigate(`/network/brands/${b.id}`)}
+              onContact={handleContact}
+              canReassign={canReassign}
+              onReassign={setAssignTarget}
+            />
           ))}
           {rows.length < total && (
             <button onClick={() => load(page+1)} disabled={loading} style={{ padding:'12px', borderRadius:10, background:'rgba(139,92,246,0.08)', border:'1px solid var(--border-violet)', color:'var(--text-secondary)', cursor:'pointer', fontSize:13 }}>
@@ -80,7 +136,22 @@ export default function BrandsPage({ onOpenCreate }) {
         </div>
       )}
 
-      <FilterSheet isOpen={filterOpen} onClose={() => setFilterOpen(false)} filters={filters} onChange={setFilters} onApply={handleApply} onClear={handleClear} cities={cities} categories={t('categories')||[]}/>
+      <FilterSheet
+        isOpen={filterOpen} onClose={() => setFilterOpen(false)}
+        filters={filters} onChange={setFilters}
+        onApply={handleApply} onClear={handleClear}
+        cities={cities}
+        brandCategories={brandCats}
+        showOverdueFollowup
+      />
+
+      <AssignModal
+        isOpen={!!assignTarget}
+        onClose={() => setAssignTarget(null)}
+        entity={assignTarget}
+        entityType="brand"
+        onAssigned={handleAssigned}
+      />
     </div>
   )
 }

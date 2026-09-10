@@ -22,24 +22,42 @@ const Btn = ({ href, onClick, icon: Icon, label, color }) => (
   </a>
 )
 
-export default function QuickActions({ whatsapp, instagram, phone, onNote }) {
+export default function QuickActions({ whatsapp, instagram, phone, onNote, onContact }) {
   const wa = whatsapp?.replace(/[+\s\-()]/g, '')
 
   const handleInstagram = (e) => {
     e.preventDefault()
+    e.stopPropagation()
+    if (onContact) onContact('Instagram')
     window.location.href = `instagram://user?username=${instagram}`
     setTimeout(() => window.open(`https://instagram.com/${instagram}`, '_blank'), 900)
+  }
+
+  const handleWhatsApp = (e) => {
+    e.stopPropagation()
+    if (onContact) onContact('WhatsApp')
+  }
+
+  const handleCall = (e) => {
+    e.stopPropagation()
+    if (onContact) onContact('Llamar')
+  }
+
+  const handleNote = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (onNote) onNote()
   }
 
   const hasAny = wa || instagram || phone || onNote
   if (!hasAny) return null
 
   return (
-    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
-      {wa       && <Btn href={`https://wa.me/${wa}`}  icon={MessageCircle} label={t('quickActions.whatsapp')} color="#25D366"/>}
+    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      {wa       && <Btn href={`https://wa.me/${wa}`}  onClick={handleWhatsApp} icon={MessageCircle} label={t('quickActions.whatsapp')} color="#25D366"/>}
       {instagram && <Btn href="#" onClick={handleInstagram} icon={Instagram} label={t('quickActions.instagram')} color="#E1306C"/>}
-      {phone    && <Btn href={`tel:${phone}`}          icon={Phone}         label={t('quickActions.call')}      color="#60A5FA"/>}
-      {onNote   && <Btn href="#" onClick={e => { e.preventDefault(); onNote() }} icon={FileText} label={t('quickActions.note')} color="#A78BFA"/>}
+      {phone    && <Btn href={`tel:${phone}`}          onClick={handleCall}    icon={Phone}         label={t('quickActions.call')}      color="#60A5FA"/>}
+      {onNote   && <Btn href="#" onClick={handleNote}                          icon={FileText}      label={t('quickActions.note')}      color="#A78BFA"/>}
     </div>
   )
 }

@@ -919,6 +919,7 @@ const influencerToRow = async (i) => {
 const rowToBrand = (r) => ({
   ...(r.data || {}),
   id: r.id, name: r.name, category: r.category,
+  categoryId: r.category_id ?? null,
   cityId: r.city_id, countryId: r.country_id, status: r.status,
   potential: r.potential, website: r.website,
   ownerScouterId: r.owner_scouter_id, createdBy: r.created_by,
@@ -976,20 +977,26 @@ const locationToRow = async (l) => {
 // INFLUENCERS
 // ═══════════════════════════════════════════════════════════
 
+// Columnas que admiten NULLS LAST en influencers
+const INF_NULLS_LAST_COLS = new Set(['engagement','last_contact_at','followers','next_action_at'])
+
 // Paginada — Network. Siempre devuelve { rows, total, hasMore }.
 export const dbGetInfluencers = async ({
   page = 0, pageSize = 30,
   search, cityId, countryId, ownerId, status, relationshipStatus, category,
+  noOwner = false,
   orderBy = 'created_at', orderDir = 'desc',
 } = {}) => {
+  const nullsFirst = !INF_NULLS_LAST_COLS.has(orderBy)
   let q = supabase.from('influencers')
     .select('*', { count: 'exact' })
-    .order(orderBy, { ascending: orderDir === 'asc' })
+    .order(orderBy, { ascending: orderDir === 'asc', nullsFirst })
     .range(page * pageSize, (page + 1) * pageSize - 1)
   if (status)             q = q.eq('status', status)
   if (cityId)             q = q.eq('city_id', cityId)
   if (countryId)          q = q.eq('country_id', countryId)
   if (ownerId)            q = q.eq('owner_scouter_id', ownerId)
+  if (noOwner)            q = q.is('owner_scouter_id', null)
   if (relationshipStatus) q = q.eq('relationship_status', relationshipStatus)
   if (category)           q = q.eq('category', category)
   if (search)             q = q.or(`name.ilike.%${search}%,username.ilike.%${search}%`)
@@ -1068,22 +1075,29 @@ export const dbPatchInfluencer = async (id, patch) => {
 // BRANDS
 // ═══════════════════════════════════════════════════════════
 
+const BRAND_NULLS_LAST_COLS = new Set(['last_contact_at','next_action_at','potential_value'])
+
 // Paginada — Network. Siempre devuelve { rows, total, hasMore }.
 export const dbGetBrands = async ({
   page = 0, pageSize = 30,
-  search, cityId, countryId, ownerId, status, relationshipStatus, category,
+  search, cityId, countryId, ownerId, status, relationshipStatus, category, categoryId,
+  noOwner = false, overdueFollowup = false,
   orderBy = 'created_at', orderDir = 'desc',
 } = {}) => {
+  const nullsFirst = !BRAND_NULLS_LAST_COLS.has(orderBy)
   let q = supabase.from('brands')
     .select('*', { count: 'exact' })
-    .order(orderBy, { ascending: orderDir === 'asc' })
+    .order(orderBy, { ascending: orderDir === 'asc', nullsFirst })
     .range(page * pageSize, (page + 1) * pageSize - 1)
   if (status)             q = q.eq('status', status)
   if (cityId)             q = q.eq('city_id', cityId)
   if (countryId)          q = q.eq('country_id', countryId)
   if (ownerId)            q = q.eq('owner_scouter_id', ownerId)
+  if (noOwner)            q = q.is('owner_scouter_id', null)
   if (relationshipStatus) q = q.eq('relationship_status', relationshipStatus)
   if (category)           q = q.eq('category', category)
+  if (categoryId)         q = q.eq('category_id', categoryId)
+  if (overdueFollowup)    q = q.lt('next_action_at', new Date().toISOString())
   if (search)             q = q.ilike('name', `%${search}%`)
   const { data, count, error } = await q
   if (error) throw friendly(error)
@@ -1121,6 +1135,98 @@ export const dbSaveBrand = async (brand) => {
 export const dbDeleteBrand = async (id) => {
   const { error } = await supabase.from('brands').delete().eq('id', id)
   if (error) throw friendly(error)
+}
+
+// Partial update — only sends changed fields. Never touches owner_scouter_id or created_by.
+export const dbPatchBrand = async (id, patch) => {
+  const FIELD_MAP = {
+    name:               'name',
+    categoryId:         'category_id',
+    website:            'website',
+    logo:               'logo',
+    cityId:             'city_id',
+    countryId:          'country_id',
+    status:             'status',
+    notes:              'notes',
+    relationshipStatus: 'relationship_status',
+    potentialValue:     'potential_value',
+    nextAction:         'next_action',
+    nextActionAt:       'next_action_at',
+  }
+  const row = {}
+  for (const [camel, snake] of Object.entries(FIELD_MAP)) {
+    if (camel in patch) row[snake] = patch[camel]
+  }
+  if (Object.keys(row).length === 0) return
+  const { error } = await supabase.from('brands').update(row).eq('id', id)
+  if (error) throw friendly(error)
+}
+
+// ── Brand categories (cache de sesión) ──────────────────────
+let _brandCatsCache = null
+
+export const dbGetBrandCategories = async (force = false) => {
+  if (_brandCatsCache && !force) return _brandCatsCache
+  const { data, error } = await supabase.from('brand_categories')
+    .select('*').eq('active', true).order('sort_order')
+  if (error) throw friendly(error)
+  _brandCatsCache = data || []
+  return _brandCatsCache
+}
+
+// ── Entity timeline (activities + reassignments) ─────────────
+export const dbGetEntityTimeline = async (entityType, entityId) => {
+  const { data, error } = await supabase.rpc('entity_timeline', {
+    p_type: entityType,
+    p_id:   entityId,
+  })
+  if (error) throw friendly(error)
+  return (data || []).map(r => ({
+    id:          r.id,
+    type:        r.type,
+    title:       r.title,
+    description: r.description,
+    occurredAt:  r.occurred_at,
+  }))
+}
+
+// ── Active scouters (for AssignModal) ────────────────────────
+export const dbGetActiveScouters = async (cityId = null) => {
+  let q = supabase.from('scouters').select('user_id, city_id').eq('status', 'active')
+  if (cityId) q = q.eq('city_id', cityId)
+  const { data: scouts, error } = await q
+  if (error) throw friendly(error)
+  if (!scouts?.length) return []
+
+  const userIds = scouts.map(s => s.user_id)
+  const { data: profs, error: pErr } = await supabase
+    .from('profiles').select('id, nombre, sobrenombre, email').in('id', userIds)
+  if (pErr) throw friendly(pErr)
+
+  const profMap = {}
+  for (const p of profs || []) profMap[p.id] = p
+
+  return scouts.map(s => ({
+    userId:      s.user_id,
+    cityId:      s.city_id,
+    nombre:      profMap[s.user_id]?.nombre      || '',
+    sobrenombre: profMap[s.user_id]?.sobrenombre || '',
+    email:       profMap[s.user_id]?.email        || '',
+  }))
+}
+
+// ── Log contact and update last_contact_at via trigger ───────
+const CONTACT_TYPE_MAP = {
+  'Instagram': 'dm',
+  'WhatsApp':  'whatsapp',
+  'Llamar':    'call',
+}
+
+export const dbLogContact = async (entityType, entityId, contactLabel) => {
+  const uid = await myId()
+  if (!uid) return
+  const type = CONTACT_TYPE_MAP[contactLabel] || 'note'
+  await dbLogActivityFor(uid, entityType, entityId, type, contactLabel)
 }
 
 // ═══════════════════════════════════════════════════════════
