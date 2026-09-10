@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
@@ -24,6 +24,7 @@ const CAMP_STATUS = {
   active:    { label: 'Activa',       color: '#4ADE80', bg: 'rgba(74,222,128,0.15)'  },
   completed: { label: 'Completada',   color: '#9CA3AF', bg: 'rgba(156,163,175,0.12)' },
   paused:    { label: 'Pausada',      color: '#FCD34D', bg: 'rgba(252,211,77,0.12)'  },
+  cancelled: { label: 'Cancelada',    color: '#F87171', bg: 'rgba(239,68,68,0.12)'   },
 }
 
 // ─── Brand Quick Add Modal ─────────────────────────
@@ -101,33 +102,137 @@ const InfluencerQuickModal = ({ onSave, onClose }) => {
 }
 
 // ─── Campaign Modal (full) ─────────────────────────
-const CampaignModal = ({ campaign, brands, influencers, onSave, onClose, onAddBrand, onAddInfluencer }) => {
+
+const CI_STATUS = ['proposed','confirmed','in_progress','completed','cancelled']
+
+const CampaignModal = ({
+  campaign, brands, influencers,
+  onSave, onClose, onAddBrand,
+  onGetCampaignInfluencers, onCIAdd, onCIUpdate, onCIRemove, onPatchCampaignInfluencers,
+}) => {
   const [form, setForm] = useState(campaign || {
     brandId: '', name: '', description: '', budget: 0, agencyPct: 20, influencerPct: 80,
-    status: 'planning', startDate: '', endDate: '', schedule: '',
-    influencersAssigned: [], deliverables: []
+    status: 'planning', startDate: '', endDate: '', notes: '', currency: 'ARS',
   })
-  const [brandSearch, setBrandSearch] = useState('')
-  const [infSearch, setInfSearch] = useState('')
+  const [brandSearch, setBrandSearch]   = useState('')
+  const [infSearch,   setInfSearch]     = useState('')
   const [showBrandAdd, setShowBrandAdd] = useState(false)
-  const [showInfAdd, setShowInfAdd] = useState(false)
+  const [ciRows,  setCiRows]  = useState([])   // { influencerId, rate, currency, deliverables, status }
+  const [origIds, setOrigIds] = useState(new Set())
+  const [saving,  setSaving]  = useState(false)
+  const [saveErr, setSaveErr] = useState(null)
+  const [loadingCi, setLoadingCi] = useState(false)
+
   const set = (f, v) => setForm(p => ({ ...p, [f]: v }))
 
-  const agencyEarning = Math.round(form.budget * (form.agencyPct / 100))
-  const infPayment = Math.round(form.budget * (form.influencerPct / 100))
+  // Load existing influencers when editing
+  useEffect(() => {
+    if (campaign?.id && onGetCampaignInfluencers) {
+      setLoadingCi(true)
+      onGetCampaignInfluencers(campaign.id)
+        .then(rows => {
+          setCiRows(rows.map(r => ({
+            influencerId: r.influencerId,
+            rate:         r.rate ?? '',
+            currency:     r.currency || campaign.currency || 'ARS',
+            deliverables: Array.isArray(r.deliverables) ? r.deliverables.join(', ') : '',
+            status:       r.status || 'proposed',
+          })))
+          setOrigIds(new Set(rows.map(r => r.influencerId)))
+        })
+        .catch(() => {})
+        .finally(() => setLoadingCi(false))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [campaign?.id])
+
+  const agencyEarning = Math.round((form.budget || 0) * ((form.agencyPct || 20) / 100))
+  const infPayment    = Math.round((form.budget || 0) * ((form.influencerPct || 80) / 100))
 
   const filteredBrands = brands.filter(b => b.name.toLowerCase().includes(brandSearch.toLowerCase()))
-  const filteredInfs = influencers.filter(i => i.name.toLowerCase().includes(infSearch.toLowerCase()))
+  const availableInfs  = influencers.filter(i =>
+    !ciRows.some(r => r.influencerId === i.id) &&
+    i.name.toLowerCase().includes(infSearch.toLowerCase())
+  )
 
-  const toggleInf = (id) => {
-    const arr = form.influencersAssigned || []
-    set('influencersAssigned', arr.includes(id) ? arr.filter(x => x !== id) : [...arr, id])
+  const addInfluencer = (inf) => {
+    setCiRows(prev => [...prev, {
+      influencerId: inf.id,
+      rate:         '',
+      currency:     form.currency || 'ARS',
+      deliverables: '',
+      status:       'proposed',
+    }])
+    setInfSearch('')
+  }
+
+  const updateCiRow = (infId, field, value) => {
+    setCiRows(prev => prev.map(r => r.influencerId === infId ? { ...r, [field]: value } : r))
+  }
+
+  const removeFromList = (infId) => {
+    setCiRows(prev => prev.filter(r => r.influencerId !== infId))
+  }
+
+  const handleSave = async () => {
+    if (!form.name.trim()) { setSaveErr('El nombre de la campaña es obligatorio'); return }
+    setSaving(true)
+    setSaveErr(null)
+    try {
+      const brand = brands.find(b => b.id === form.brandId)
+      // influencerIds: null → dbSaveCampaign no toca campaign_influencers
+      const saved = await onSave({
+        ...form,
+        brandName:     brand?.name || '',
+        id:            campaign?.id || null,
+        influencerIds: null,
+      })
+
+      const campaignId = saved?.id
+      if (!campaignId) throw new Error('No se pudo obtener el ID de la campaña guardada.')
+
+      const currentIds = new Set(ciRows.map(r => r.influencerId))
+
+      // Remove influencers no longer in list
+      for (const oldId of origIds) {
+        if (!currentIds.has(oldId) && onCIRemove) {
+          await onCIRemove(campaignId, oldId)
+        }
+      }
+
+      // Add new / update existing
+      for (const ci of ciRows) {
+        const fields = {
+          rate:         ci.rate !== '' ? Number(ci.rate) : null,
+          currency:     ci.currency || null,
+          deliverables: ci.deliverables
+            ? ci.deliverables.split(',').map(s => s.trim()).filter(Boolean)
+            : [],
+          status: ci.status || 'proposed',
+        }
+        if (origIds.has(ci.influencerId)) {
+          if (onCIUpdate) await onCIUpdate(campaignId, ci.influencerId, fields)
+        } else {
+          if (onCIAdd) await onCIAdd(campaignId, ci.influencerId, fields)
+        }
+      }
+
+      // Patch local campaign state with final influencerIds
+      if (onPatchCampaignInfluencers) {
+        onPatchCampaignInfluencers(campaignId, ciRows.map(r => r.influencerId))
+      }
+
+      onClose()
+    } catch (e) {
+      setSaveErr(e.message || 'Error al guardar')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
 <>
       {showBrandAdd && <BrandQuickModal onSave={b => { onAddBrand && onAddBrand(b); set('brandId', b.id); setShowBrandAdd(false) }} onClose={() => setShowBrandAdd(false)} />}
-      {showInfAdd && <InfluencerQuickModal onSave={i => { onAddInfluencer && onAddInfluencer(i); setForm(p => ({ ...p, influencersAssigned: [...(p.influencersAssigned || []), i.id] })); setShowInfAdd(false) }} onClose={() => setShowInfAdd(false)} />}
       <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',backdropFilter:'blur(8px)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20 }} onClick={onClose}>
         <div style={{ width:'100%',maxWidth:700,background:'var(--bg-secondary)',border:'1px solid var(--border-violet)',borderRadius:20,maxHeight:'92vh',overflowY:'auto',boxShadow:'var(--glow-violet),0 40px 80px rgba(0,0,0,0.5)',animation:'fadeIn 0.3s ease' }} onClick={e => e.stopPropagation()}>
           <div style={{ padding:'24px 28px',borderBottom:'1px solid var(--border-violet)',display:'flex',alignItems:'center',gap:12 }}>
@@ -137,7 +242,7 @@ const CampaignModal = ({ campaign, brands, influencers, onSave, onClose, onAddBr
           </div>
 
           <div style={{ padding:'24px 28px',display:'flex',flexDirection:'column',gap:20 }}>
-            {/* Marca con búsqueda */}
+            {/* Marca */}
             <div>
               <label style={{ fontSize:12,fontWeight:500,color:'var(--text-secondary)',display:'block',marginBottom:8 }}>Marca *</label>
               <div style={{ position:'relative',display:'flex',gap:8 }}>
@@ -145,17 +250,12 @@ const CampaignModal = ({ campaign, brands, influencers, onSave, onClose, onAddBr
                   <Search size={14} style={{ position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'var(--text-secondary)' }}/>
                   <input className="input-field" style={{ paddingLeft:36 }} value={brandSearch} onChange={e => setBrandSearch(e.target.value)} placeholder="Buscar marca del CRM..."/>
                 </div>
-                <button className="btn btn-ghost" style={{ padding:'9px 14px',flexShrink:0 }} onClick={() => setShowBrandAdd(true)}>
-                  <Plus size={14}/>Nueva
-                </button>
+                <button className="btn btn-ghost" style={{ padding:'9px 14px',flexShrink:0 }} onClick={() => setShowBrandAdd(true)}><Plus size={14}/>Nueva</button>
               </div>
               {brandSearch && (
                 <div style={{ background:'var(--bg-tertiary)',border:'1px solid var(--border-violet)',borderRadius:10,marginTop:4,maxHeight:160,overflowY:'auto' }}>
                   {filteredBrands.length === 0 ? (
-                    <div style={{ padding:'12px 16px',fontSize:12,color:'var(--text-secondary)',display:'flex',alignItems:'center',justifyContent:'space-between' }}>
-                      No encontrada
-                      <button className="btn btn-ghost" style={{ padding:'4px 10px',fontSize:11 }} onClick={()=>setShowBrandAdd(true)}><Plus size={12}/>Crear</button>
-                    </div>
+                    <div style={{ padding:'12px 16px',fontSize:12,color:'var(--text-secondary)',display:'flex',alignItems:'center',justifyContent:'space-between' }}>No encontrada<button className="btn btn-ghost" style={{ padding:'4px 10px',fontSize:11 }} onClick={()=>setShowBrandAdd(true)}><Plus size={12}/>Crear</button></div>
                   ) : filteredBrands.map(b => (
                     <button key={b.id} onClick={() => { set('brandId', b.id); setBrandSearch(b.name) }} style={{ width:'100%',padding:'10px 16px',display:'flex',alignItems:'center',gap:10,fontSize:13,color:'var(--text-primary)',background:form.brandId===b.id?'rgba(139,92,246,0.15)':'transparent',transition:'all 0.15s',cursor:'pointer',textAlign:'left' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(139,92,246,0.1)'} onMouseLeave={e=>e.currentTarget.style.background=form.brandId===b.id?'rgba(139,92,246,0.15)':'transparent'}>
                       <span style={{ fontSize:16 }}>{b.logo}</span>{b.name}
@@ -166,7 +266,6 @@ const CampaignModal = ({ campaign, brands, influencers, onSave, onClose, onAddBr
               )}
               {form.brandId && !brandSearch && (
                 <div style={{ padding:'8px 12px',background:'rgba(139,92,246,0.1)',border:'1px solid var(--border-violet)',borderRadius:8,marginTop:4,fontSize:12,display:'flex',alignItems:'center',gap:8 }}>
-                  <span style={{ fontSize:16 }}>{brands.find(b=>b.id===form.brandId)?.logo}</span>
                   <span>{brands.find(b=>b.id===form.brandId)?.name}</span>
                   <button onClick={()=>{set('brandId','');setBrandSearch('')}} style={{ marginLeft:'auto',color:'var(--text-secondary)' }}><X size={12}/></button>
                 </div>
@@ -182,74 +281,158 @@ const CampaignModal = ({ campaign, brands, influencers, onSave, onClose, onAddBr
               </F>
             </div>
 
-            <F label="Descripción"><textarea className="input-field" value={form.description} onChange={e=>set('description',e.target.value)} placeholder="Descripción de la campaña..." rows={2} style={{ resize:'vertical' }}/></F>
+            <F label="Descripción"><textarea className="input-field" value={form.description||''} onChange={e=>set('description',e.target.value)} placeholder="Descripción de la campaña..." rows={2} style={{ resize:'vertical' }}/></F>
 
             {/* Presupuesto */}
             <div style={{ background:'rgba(139,92,246,0.06)',border:'1px solid var(--border-violet)',borderRadius:12,padding:'16px 18px' }}>
               <div style={{ fontSize:13,fontWeight:700,marginBottom:12,display:'flex',alignItems:'center',gap:8 }}><DollarSign size={15} color="var(--primary-violet-light)"/>Presupuesto y Distribución</div>
-              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12 }}>
-                <F label="Presupuesto Total ($)"><input className="input-field" type="number" value={form.budget} onChange={e=>set('budget',+e.target.value)}/></F>
-                <F label="% Agencia"><input className="input-field" type="number" min={0} max={100} value={form.agencyPct} onChange={e=>{ const v=+e.target.value; set('agencyPct',v); set('influencerPct',100-v) }}/></F>
-                <F label="% Influencer"><input className="input-field" type="number" min={0} max={100} value={form.influencerPct} onChange={e=>{ const v=+e.target.value; set('influencerPct',v); set('agencyPct',100-v) }}/></F>
+              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr 1fr 80px',gap:10 }}>
+                <F label="Total"><input className="input-field" type="number" value={form.budget||0} onChange={e=>set('budget',+e.target.value)}/></F>
+                <F label="% Agencia"><input className="input-field" type="number" min={0} max={100} value={form.agencyPct||20} onChange={e=>{ const v=+e.target.value; set('agencyPct',v); set('influencerPct',100-v) }}/></F>
+                <F label="% Influencer"><input className="input-field" type="number" min={0} max={100} value={form.influencerPct||80} onChange={e=>{ const v=+e.target.value; set('influencerPct',v); set('agencyPct',100-v) }}/></F>
+                <F label="Moneda"><input className="input-field" value={form.currency||'ARS'} onChange={e=>set('currency',e.target.value)} placeholder="ARS" maxLength={5}/></F>
               </div>
-              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginTop:10 }}>
+              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginTop:10 }}>
                 <div style={{ padding:'10px 14px',background:'rgba(74,222,128,0.08)',border:'1px solid rgba(74,222,128,0.25)',borderRadius:10 }}>
                   <div style={{ fontSize:11,color:'var(--text-secondary)' }}>Ganancia Agencia</div>
-                  <div style={{ fontSize:20,fontWeight:800,color:'#4ADE80' }}>{fmtMoney(agencyEarning)}</div>
+                  <div style={{ fontSize:18,fontWeight:800,color:'#4ADE80' }}>{fmtMoney(agencyEarning)}</div>
                 </div>
                 <div style={{ padding:'10px 14px',background:'rgba(139,92,246,0.08)',border:'1px solid var(--border-violet)',borderRadius:10 }}>
                   <div style={{ fontSize:11,color:'var(--text-secondary)' }}>Pago Influencer(s)</div>
-                  <div style={{ fontSize:20,fontWeight:800,color:'var(--primary-violet-light)' }}>{fmtMoney(infPayment)}</div>
+                  <div style={{ fontSize:18,fontWeight:800,color:'var(--primary-violet-light)' }}>{fmtMoney(infPayment)}</div>
                 </div>
               </div>
             </div>
 
-            <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
-              <F label="Ciudad"><input className="input-field" value={form.ciudad||''} onChange={e=>set('ciudad',e.target.value)} placeholder="Buenos Aires"/></F>
-              <F label="País"><input className="input-field" value={form.pais||'Argentina'} onChange={e=>set('pais',e.target.value)} placeholder="Argentina"/></F>
-            </div>
             <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12 }}>
-              <F label="Inicio"><input className="input-field" type="date" value={form.startDate} onChange={e=>set('startDate',e.target.value)}/></F>
-              <F label="Fin"><input className="input-field" type="date" value={form.endDate} onChange={e=>set('endDate',e.target.value)}/></F>
+              <F label="Inicio"><input className="input-field" type="date" value={form.startDate||''} onChange={e=>set('startDate',e.target.value)}/></F>
+              <F label="Fin"><input className="input-field" type="date" value={form.endDate||''} onChange={e=>set('endDate',e.target.value)}/></F>
               <F label="Horario/Schedule"><input className="input-field" value={form.schedule||''} onChange={e=>set('schedule',e.target.value)} placeholder="Lun-Vie 9-18h"/></F>
             </div>
 
-            {/* Influencers asignados */}
+            {/* ── Influencers con rate individual ──────────────── */}
             <div>
-              <label style={{ fontSize:12,fontWeight:500,color:'var(--text-secondary)',display:'block',marginBottom:8 }}>Influencers Asignados</label>
-              <div style={{ display:'flex',gap:8,marginBottom:8 }}>
-                <div style={{ flex:1,position:'relative' }}>
-                  <Search size={14} style={{ position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'var(--text-secondary)' }}/>
-                  <input className="input-field" style={{ paddingLeft:36 }} value={infSearch} onChange={e=>setInfSearch(e.target.value)} placeholder="Buscar influencer..."/>
+              <div style={{ fontSize:12,fontWeight:600,color:'var(--text-secondary)',marginBottom:10,display:'flex',alignItems:'center',gap:8 }}>
+                <Users size={13}/>Influencers asignados
+                {loadingCi && <span style={{ fontSize:11,color:'var(--text-secondary)' }}>Cargando...</span>}
+              </div>
+
+              {/* Buscador para agregar */}
+              <div style={{ position:'relative',marginBottom:10 }}>
+                <Search size={14} style={{ position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'var(--text-secondary)',pointerEvents:'none' }}/>
+                <input
+                  className="input-field" style={{ paddingLeft:36 }}
+                  value={infSearch} onChange={e=>setInfSearch(e.target.value)}
+                  placeholder="Buscar y agregar influencer..."
+                />
+                {infSearch && availableInfs.length > 0 && (
+                  <div style={{ position:'absolute',top:'100%',left:0,right:0,zIndex:10,background:'var(--bg-tertiary)',border:'1px solid var(--border-violet)',borderRadius:10,marginTop:2,maxHeight:180,overflowY:'auto' }}>
+                    {availableInfs.slice(0,8).map(inf => (
+                      <button key={inf.id} onClick={()=>addInfluencer(inf)}
+                        style={{ width:'100%',padding:'10px 14px',display:'flex',alignItems:'center',gap:10,fontSize:13,color:'var(--text-primary)',background:'transparent',transition:'background 0.1s',cursor:'pointer',textAlign:'left' }}
+                        onMouseEnter={e=>e.currentTarget.style.background='rgba(139,92,246,0.12)'}
+                        onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                        <div style={{ width:26,height:26,borderRadius:'50%',background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:'white',flexShrink:0 }}>{inf.name[0]}</div>
+                        <div style={{ flex:1,minWidth:0 }}>
+                          <div style={{ fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{inf.name}</div>
+                          <div style={{ fontSize:11,color:'var(--text-secondary)' }}>{fmtNum(inf.followers||0)} seg. · {inf.category}</div>
+                        </div>
+                        <Plus size={14} color="var(--primary-violet-light)"/>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Lista de influencers asignados con campos editables */}
+              {ciRows.length === 0 ? (
+                <div style={{ padding:'16px',textAlign:'center',fontSize:12,color:'var(--text-secondary)',background:'rgba(139,92,246,0.04)',border:'1px dashed var(--border-violet)',borderRadius:10 }}>
+                  Sin influencers asignados. Buscá uno arriba para agregar.
                 </div>
-                <button className="btn btn-ghost" style={{ padding:'9px 14px',flexShrink:0 }} onClick={()=>setShowInfAdd(true)}><Plus size={14}/>Nueva</button>
-              </div>
-              <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:8,maxHeight:200,overflowY:'auto' }}>
-                {(infSearch ? filteredInfs : influencers).map(inf => {
-                  const sel = (form.influencersAssigned||[]).includes(inf.id)
-                  return (
-                    <button key={inf.id} onClick={()=>toggleInf(inf.id)} style={{ padding:'10px 12px',borderRadius:10,border:`1px solid ${sel?'var(--primary-violet)':'var(--border-violet)'}`,background:sel?'rgba(139,92,246,0.2)':'rgba(139,92,246,0.05)',display:'flex',alignItems:'center',gap:8,transition:'all 0.15s',cursor:'pointer' }}>
-                      <div style={{ width:28,height:28,borderRadius:'50%',background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,color:'white',flexShrink:0 }}>{inf.name[0]}</div>
-                      <div style={{ textAlign:'left',minWidth:0 }}>
-                        <div style={{ fontSize:12,fontWeight:sel?700:400,color:sel?'var(--primary-violet-light)':'var(--text-primary)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{inf.name}</div>
-                        <div style={{ fontSize:10,color:'var(--text-secondary)' }}>{fmtNum(inf.followers||0)} seg.</div>
+              ) : (
+                <div style={{ display:'flex',flexDirection:'column',gap:10 }}>
+                  {ciRows.map(ci => {
+                    const inf = influencers.find(i => i.id === ci.influencerId)
+                    return (
+                      <div key={ci.influencerId} style={{ background:'rgba(139,92,246,0.06)',border:'1px solid var(--border-violet)',borderRadius:12,padding:'12px 14px' }}>
+                        {/* Header row: name + remove */}
+                        <div style={{ display:'flex',alignItems:'center',gap:8,marginBottom:10 }}>
+                          <div style={{ width:28,height:28,borderRadius:'50%',background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,color:'white',flexShrink:0 }}>
+                            {inf ? inf.name[0] : '?'}
+                          </div>
+                          <div style={{ flex:1,minWidth:0 }}>
+                            <div style={{ fontSize:13,fontWeight:700,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{inf?.name || 'Influencer eliminado'}</div>
+                            <div style={{ fontSize:11,color:'var(--text-secondary)' }}>{inf ? fmtNum(inf.followers||0) + ' seg.' : ''}</div>
+                          </div>
+                          <button onClick={()=>removeFromList(ci.influencerId)} style={{ color:'var(--text-secondary)',padding:4,flexShrink:0 }} title="Quitar"><X size={14}/></button>
+                        </div>
+                        {/* Fields: rate · currency · status */}
+                        <div style={{ display:'grid',gridTemplateColumns:'1fr 70px 1fr',gap:8,marginBottom:8 }}>
+                          <div>
+                            <div style={{ fontSize:10,color:'var(--text-secondary)',marginBottom:4,fontWeight:500 }}>Rate ($)</div>
+                            <input
+                              className="input-field" type="number" min={0}
+                              value={ci.rate}
+                              onChange={e=>updateCiRow(ci.influencerId,'rate',e.target.value)}
+                              placeholder="0"
+                              style={{ padding:'7px 10px',fontSize:13 }}
+                            />
+                          </div>
+                          <div>
+                            <div style={{ fontSize:10,color:'var(--text-secondary)',marginBottom:4,fontWeight:500 }}>Moneda</div>
+                            <input
+                              className="input-field"
+                              value={ci.currency}
+                              onChange={e=>updateCiRow(ci.influencerId,'currency',e.target.value.toUpperCase())}
+                              placeholder="ARS" maxLength={5}
+                              style={{ padding:'7px 8px',fontSize:12,textAlign:'center' }}
+                            />
+                          </div>
+                          <div>
+                            <div style={{ fontSize:10,color:'var(--text-secondary)',marginBottom:4,fontWeight:500 }}>Estado</div>
+                            <select
+                              className="select-field"
+                              value={ci.status}
+                              onChange={e=>updateCiRow(ci.influencerId,'status',e.target.value)}
+                              style={{ padding:'7px 10px',fontSize:12 }}
+                            >
+                              {CI_STATUS.map(s=><option key={s} value={s}>{s}</option>)}
+                            </select>
+                          </div>
+                        </div>
+                        {/* Deliverables */}
+                        <div>
+                          <div style={{ fontSize:10,color:'var(--text-secondary)',marginBottom:4,fontWeight:500 }}>Deliverables (separados por coma)</div>
+                          <input
+                            className="input-field"
+                            value={ci.deliverables}
+                            onChange={e=>updateCiRow(ci.influencerId,'deliverables',e.target.value)}
+                            placeholder="1 reel, 3 stories, 1 post..."
+                            style={{ padding:'7px 10px',fontSize:12 }}
+                          />
+                        </div>
                       </div>
-                      {sel && <CheckCircle size={14} color="var(--primary-violet-light)" style={{ marginLeft:'auto',flexShrink:0 }}/>}
-                    </button>
-                  )
-                })}
-              </div>
-              {(form.influencersAssigned||[]).length > 0 && (
+                    )
+                  })}
+                </div>
+              )}
+
+              {ciRows.length > 0 && (
                 <div style={{ marginTop:8,fontSize:12,color:'var(--primary-violet-light)' }}>
-                  {form.influencersAssigned.length} influencer(s) asignado(s)
+                  {ciRows.length} influencer{ciRows.length !== 1 ? 's' : ''} asignado{ciRows.length !== 1 ? 's' : ''}
                 </div>
               )}
             </div>
           </div>
 
-          <div style={{ padding:'16px 28px',borderTop:'1px solid var(--border-violet)',display:'flex',gap:10,justifyContent:'flex-end' }}>
-            <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
-            <button className="btn btn-primary" onClick={()=>{ if(!form.name.trim())return; const brand=brands.find(b=>b.id===form.brandId); onSave({...form,brandName:brand?.name||'',id:campaign?.id||generateId(),createdAt:campaign?.createdAt||new Date().toISOString()}) }}><Save size={14}/>{campaign?'Guardar':'Crear Campaña'}</button>
+          <div style={{ padding:'16px 28px',borderTop:'1px solid var(--border-violet)',display:'flex',flexDirection:'column',gap:8 }}>
+            {saveErr && <div style={{ fontSize:12,color:'#F87171',textAlign:'center' }}>{saveErr}</div>}
+            <div style={{ display:'flex',gap:10,justifyContent:'flex-end' }}>
+              <button className="btn btn-ghost" onClick={onClose} disabled={saving}>Cancelar</button>
+              <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+                <Save size={14}/>{saving ? 'Guardando...' : campaign ? 'Guardar' : 'Crear Campaña'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -676,206 +859,191 @@ const AgencyDashboard = ({ campaigns, influencers, collaborations }) => {
   )
 }
 
-// ─── Collaborations Panel ────────────────────────────
-const COLLAB_CATS = [
-  { id:'life',     label:'LIFE',     color:'#8B5CF6' },
-  { id:'estandar', label:'ESTÁNDAR', color:'#4ADE80' },
-  { id:'especial', label:'ESPECIAL', color:'#FCD34D' },
-]
+// ─── Collaboration Modal ────────────────────────────
+const COLLAB_STATUS_OPTS = ['proposed','confirmed','in_progress','content_pending','completed']
+const COLLAB_STATUS_LABELS = {
+  proposed: 'Propuesto', confirmed: 'Confirmado', in_progress: 'En Progreso',
+  content_pending: 'Pendiente contenido', completed: 'Completado',
+}
+const COLLAB_STATUS_COLORS = {
+  proposed: '#A78BFA', confirmed: '#06B6D4', in_progress: '#4ADE80',
+  content_pending: '#FCD34D', completed: '#9CA3AF',
+}
 
-const DEMO_COLLAB_BRANDS = [
-  { id:'cb1', nombre:'Café Palermo', ciudad:'Buenos Aires', cat:'life', nota:'Cliente VIP. Muy activa en publicaciones.', influencers:[] },
-  { id:'cb2', nombre:'Studio Fit', ciudad:'Córdoba', cat:'estandar', nota:'Pagos puntuales.', influencers:[] },
-  { id:'cb3', nombre:'Modas Luna', ciudad:'Rosario', cat:'especial', nota:'Campaña estacional. Revisar marzo.', influencers:[] },
-  { id:'cb4', nombre:'TechHub BA', ciudad:'Buenos Aires', cat:'life', nota:'', influencers:[] },
-  { id:'cb5', nombre:'Bella Estética', ciudad:'Mendoza', cat:'estandar', nota:'', influencers:[] },
-]
+const CollabModal = ({ collab, activationTypes, influencers, brands, defaultActivationTypeId, onSave, onClose, onDelete }) => {
+  const [form, setForm] = useState(collab || {
+    influencerId: '', brandId: '', activationTypeId: defaultActivationTypeId || '',
+    status: 'proposed', amount: '', currency: '', notes: '', startDate: '', endDate: '',
+  })
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState(null)
+  const set = (f, v) => setForm(p => ({ ...p, [f]: v }))
 
-const CollabsPanel = ({ influencers, brands }) => {
-  const [activeTab, setActiveTab] = useState('life')
-  const [collabBrands, setCollabBrands] = useState(DEMO_COLLAB_BRANDS)
-  const [filterCiudad, setFilterCiudad] = useState('all')
-  const [selectedBrand, setSelectedBrand] = useState(null)
-  const [editingNota, setEditingNota] = useState(false)
-  const [notaTemp, setNotaTemp] = useState('')
-  const [dragOverCat, setDragOverCat] = useState(null)
-  const [draggingBrand, setDraggingBrand] = useState(null)
-
-  const ciudades = [...new Set(collabBrands.map(b=>b.ciudad).filter(Boolean))]
-  const filtered = collabBrands.filter(b => b.cat === activeTab && (filterCiudad === 'all' || b.ciudad === filterCiudad))
-
-  const moveBrand = (brandId, newCat) => {
-    setCollabBrands(p => p.map(b => b.id===brandId ? {...b, cat:newCat} : b))
+  const handleSave = async () => {
+    if (!form.influencerId) { setErr('Seleccioná un influencer'); return }
+    setSaving(true); setErr(null)
+    try {
+      await onSave({ ...form, id: collab?.id || null })
+    } catch (e) {
+      setErr(e.message || 'Error al guardar')
+    } finally { setSaving(false) }
   }
 
-  const toggleInfluencer = (brandId, infId) => {
-    setCollabBrands(p => p.map(b => {
-      if (b.id !== brandId) return b
-      const infs = b.influencers || []
-      return { ...b, influencers: infs.includes(infId) ? infs.filter(i=>i!==infId) : [...infs, infId] }
-    }))
-  }
-
-  const saveNota = (brandId, nota) => {
-    setCollabBrands(p => p.map(b => b.id===brandId ? {...b, nota} : b))
-    setEditingNota(false)
+  const handleDelete = async () => {
+    setSaving(true)
+    try { await onDelete() } catch (e) { setErr(e.message || 'Error') } finally { setSaving(false) }
   }
 
   return (
-    <div style={{ animation:'fadeIn 0.3s ease' }}>
-      {/* Category tabs */}
-      <div style={{ display:'flex', gap:4, marginBottom:16, background:'rgba(139,92,246,0.06)', borderRadius:12, padding:4, width:'fit-content' }}>
-        {COLLAB_CATS.map(cat => (
-          <button key={cat.id} onClick={() => setActiveTab(cat.id)}
-            style={{ padding:'8px 24px', borderRadius:8, fontSize:13, fontWeight:700, border:'none', background:activeTab===cat.id?`${cat.color}25`:'transparent', color:activeTab===cat.id?cat.color:'var(--text-secondary)', borderBottom:activeTab===cat.id?`2px solid ${cat.color}`:'2px solid transparent', transition:'all 0.2s', cursor:'pointer' }}>
-            {cat.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Filters */}
-      <div style={{ display:'flex', gap:10, marginBottom:16 }}>
-        <select className="select-field" style={{ width:'auto', minWidth:140 }} value={filterCiudad} onChange={e=>setFilterCiudad(e.target.value)}>
-          <option value="all">Todas las ciudades</option>
-          {ciudades.map(c=><option key={c}>{c}</option>)}
-        </select>
-        <div style={{ fontSize:12, color:'var(--text-secondary)', display:'flex', alignItems:'center' }}>
-          💡 Arrastra las cards entre pestañas para mover marcas
+    <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.75)',backdropFilter:'blur(8px)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20 }} onClick={onClose}>
+      <div style={{ width:'100%',maxWidth:540,background:'var(--bg-secondary)',border:'1px solid var(--border-violet)',borderRadius:20,maxHeight:'90vh',overflowY:'auto',boxShadow:'var(--glow-violet),0 40px 80px rgba(0,0,0,0.5)',animation:'fadeIn 0.3s ease' }} onClick={e=>e.stopPropagation()}>
+        <div style={{ padding:'20px 24px',borderBottom:'1px solid var(--border-violet)',display:'flex',alignItems:'center',gap:12 }}>
+          <h2 style={{ fontSize:16,fontWeight:700,flex:1 }}>{collab ? 'Editar Colaboración' : 'Nueva Colaboración'}</h2>
+          <button onClick={onClose} style={{ color:'var(--text-secondary)',padding:4 }}><X size={18}/></button>
+        </div>
+        <div style={{ padding:'20px 24px',display:'flex',flexDirection:'column',gap:14 }}>
+          {err && <div style={{ padding:'10px 14px',background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:10,color:'#F87171',fontSize:13 }}>{err}</div>}
+          <F label="Influencer *">
+            <select className="select-field" value={form.influencerId} onChange={e=>set('influencerId',e.target.value)}>
+              <option value="">Seleccionar influencer...</option>
+              {influencers.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
+            </select>
+          </F>
+          <F label="Marca">
+            <select className="select-field" value={form.brandId} onChange={e=>set('brandId',e.target.value)}>
+              <option value="">Sin marca (opcional)</option>
+              {brands.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+          </F>
+          {activationTypes.length > 0 && (
+            <div>
+              <label style={{ fontSize:12,fontWeight:500,color:'var(--text-secondary)',display:'block',marginBottom:8 }}>Tipo de activación</label>
+              <div style={{ display:'flex',gap:8,flexWrap:'wrap' }}>
+                {activationTypes.map(at=>(
+                  <button key={at.id} onClick={()=>set('activationTypeId',at.id)}
+                    style={{ flex:'1 1 80px',padding:'8px 12px',borderRadius:10,fontSize:12,fontWeight:600,cursor:'pointer',
+                      border:`1px solid ${form.activationTypeId===at.id?at.color:'var(--border-violet)'}`,
+                      background:form.activationTypeId===at.id?`${at.color}25`:'transparent',
+                      color:form.activationTypeId===at.id?at.color:'var(--text-secondary)',transition:'all 0.2s' }}>
+                    {at.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+            <F label="Estado">
+              <select className="select-field" value={form.status} onChange={e=>set('status',e.target.value)}>
+                {COLLAB_STATUS_OPTS.map(s=><option key={s} value={s}>{COLLAB_STATUS_LABELS[s]}</option>)}
+              </select>
+            </F>
+            <F label="Monto"><input className="input-field" type="number" value={form.amount} onChange={e=>set('amount',e.target.value)} placeholder="0"/></F>
+          </div>
+          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+            <F label="Inicio"><input className="input-field" type="date" value={form.startDate||''} onChange={e=>set('startDate',e.target.value)}/></F>
+            <F label="Fin"><input className="input-field" type="date" value={form.endDate||''} onChange={e=>set('endDate',e.target.value)}/></F>
+          </div>
+          <F label="Notas"><textarea className="input-field" value={form.notes||''} onChange={e=>set('notes',e.target.value)} rows={3} style={{ resize:'vertical' }} placeholder="Notas internas..."/></F>
+        </div>
+        <div style={{ padding:'14px 24px',borderTop:'1px solid var(--border-violet)',display:'flex',gap:10,justifyContent:'flex-end' }}>
+          {onDelete && <button onClick={handleDelete} className="btn btn-danger" style={{ marginRight:'auto' }} disabled={saving}><Trash2 size={13}/>Cancelar collab</button>}
+          <button onClick={onClose} className="btn btn-ghost">Cerrar</button>
+          <button onClick={handleSave} className="btn btn-primary" disabled={saving}><Save size={14}/>{saving?'Guardando...':(collab?'Guardar':'Crear')}</button>
         </div>
       </div>
+    </div>
+  )
+}
 
-      {/* Drop zones hint */}
-      {draggingBrand && (
-        <div style={{ display:'flex', gap:8, marginBottom:14 }}>
-          {COLLAB_CATS.filter(c=>c.id!==activeTab).map(cat => (
-            <div key={cat.id}
-              onDragOver={e=>{e.preventDefault();setDragOverCat(cat.id)}}
-              onDragLeave={()=>setDragOverCat(null)}
-              onDrop={e=>{e.preventDefault();moveBrand(draggingBrand,cat.id);setDraggingBrand(null);setDragOverCat(null)}}
-              style={{ flex:1, padding:'16px', borderRadius:12, border:`2px dashed ${dragOverCat===cat.id?cat.color:'rgba(139,92,246,0.3)'}`, background:dragOverCat===cat.id?`${cat.color}15`:'rgba(139,92,246,0.04)', textAlign:'center', fontSize:13, fontWeight:600, color:dragOverCat===cat.id?cat.color:'var(--text-secondary)', transition:'all 0.2s' }}>
-              ⬇ Mover a {cat.label}
-            </div>
+// ─── Collaborations Panel ────────────────────────────
+const CollabsPanel = ({ collaborations, activationTypes, influencers, brands, onSave, onDelete }) => {
+  const [activeTab, setActiveTab] = useState('')
+  const [selected, setSelected] = useState(null)
+  const [showCreate, setShowCreate] = useState(false)
+
+  React.useEffect(() => {
+    if (activationTypes.length > 0 && !activeTab) setActiveTab(activationTypes[0].id)
+  }, [activationTypes, activeTab])
+
+  const filtered = collaborations.filter(c => c.activationTypeId === activeTab)
+
+  const closeModal = () => { setSelected(null); setShowCreate(false) }
+
+  return (
+    <div style={{ animation:'fadeIn 0.3s ease' }}>
+      {/* Activation type tabs — desde DB */}
+      {activationTypes.length === 0 ? (
+        <div style={{ color:'var(--text-secondary)',fontSize:13,padding:'16px 0' }}>Cargando tipos de activación...</div>
+      ) : (
+        <div style={{ display:'flex',gap:4,marginBottom:16,background:'rgba(139,92,246,0.06)',borderRadius:12,padding:4,width:'fit-content' }}>
+          {activationTypes.map(at=>(
+            <button key={at.id} onClick={()=>setActiveTab(at.id)}
+              style={{ padding:'8px 24px',borderRadius:8,fontSize:13,fontWeight:700,border:'none',
+                background:activeTab===at.id?`${at.color}25`:'transparent',
+                color:activeTab===at.id?at.color:'var(--text-secondary)',
+                borderBottom:activeTab===at.id?`2px solid ${at.color}`:'2px solid transparent',
+                transition:'all 0.2s',cursor:'pointer' }}>
+              {at.name}
+            </button>
           ))}
         </div>
       )}
 
-      {/* Brand cards */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:14 }}>
-        {filtered.map(brand => {
-          const assignedInfs = influencers.filter(i=>(brand.influencers||[]).includes(i.id))
+      <div style={{ display:'flex',justifyContent:'flex-end',marginBottom:16 }}>
+        <button className="btn btn-primary" onClick={()=>setShowCreate(true)}><Plus size={14}/>Nueva Colaboración</button>
+      </div>
+
+      <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:14 }}>
+        {filtered.map(collab => {
+          const inf   = influencers.find(i=>i.id===collab.influencerId)
+          const brand = brands.find(b=>b.id===collab.brandId)
+          const actType = activationTypes.find(a=>a.id===collab.activationTypeId)
+          const statusColor = COLLAB_STATUS_COLORS[collab.status] || '#A78BFA'
           return (
-            <div key={brand.id}
-              draggable
-              onDragStart={()=>setDraggingBrand(brand.id)}
-              onDragEnd={()=>{setDraggingBrand(null);setDragOverCat(null)}}
-              onClick={() => setSelectedBrand(brand)}
-              className="card"
-              style={{ padding:18, cursor:'grab', transition:'all 0.2s' }}>
-              <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:10 }}>
-                <div>
-                  <h3 style={{ fontSize:14, fontWeight:700 }}>{brand.nombre}</h3>
-                  {brand.ciudad && <div style={{ fontSize:11, color:'var(--text-secondary)', display:'flex', alignItems:'center', gap:4, marginTop:2 }}><MapPin size={9}/>{brand.ciudad}</div>}
+            <div key={collab.id} className="card" style={{ padding:18,cursor:'pointer' }} onClick={()=>setSelected(collab)}>
+              <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:10 }}>
+                <div style={{ minWidth:0,flex:1 }}>
+                  <h3 style={{ fontSize:14,fontWeight:700,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{inf?.name||'Influencer eliminado'}</h3>
+                  {brand && <div style={{ fontSize:12,color:'var(--text-secondary)',marginTop:2 }}>🏢 {brand.name}</div>}
                 </div>
-                <div style={{ padding:'3px 10px', borderRadius:10, fontSize:10, fontWeight:700, background:`${COLLAB_CATS.find(c=>c.id===brand.cat)?.color||'#8B5CF6'}22`, color:COLLAB_CATS.find(c=>c.id===brand.cat)?.color||'#8B5CF6' }}>
-                  {COLLAB_CATS.find(c=>c.id===brand.cat)?.label}
-                </div>
+                <span style={{ padding:'3px 10px',borderRadius:10,fontSize:10,fontWeight:700,flexShrink:0,marginLeft:8,background:`${statusColor}22`,color:statusColor }}>
+                  {COLLAB_STATUS_LABELS[collab.status]||collab.status}
+                </span>
               </div>
-              {brand.nota && <p style={{ fontSize:12, color:'var(--text-secondary)', lineHeight:1.5, marginBottom:10, fontStyle:'italic' }}>{brand.nota}</p>}
-              {assignedInfs.length > 0 && (
-                <div style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
-                  {assignedInfs.map(i=>(
-                    <span key={i.id} style={{ padding:'2px 8px', borderRadius:20, fontSize:10, fontWeight:600, background:'rgba(139,92,246,0.15)', color:'var(--primary-violet-light)', border:'1px solid var(--border-violet)' }}>{i.name.split(' ')[0]}</span>
-                  ))}
+              {collab.amount > 0 && (
+                <div style={{ fontSize:18,fontWeight:800,color:'#4ADE80',marginBottom:6 }}>
+                  ${Number(collab.amount).toLocaleString()}{collab.currency?` ${collab.currency}`:''}
                 </div>
               )}
-              {assignedInfs.length === 0 && <div style={{ fontSize:11, color:'var(--text-secondary)', opacity:0.6 }}>Sin influencers asignadas</div>}
+              {collab.notes && <p style={{ fontSize:12,color:'var(--text-secondary)',lineHeight:1.5,fontStyle:'italic' }}>{collab.notes}</p>}
             </div>
           )
         })}
         {filtered.length === 0 && (
-          <div style={{ gridColumn:'1/-1', textAlign:'center', padding:'40px', color:'var(--text-secondary)', fontSize:13 }}>Sin marcas en {COLLAB_CATS.find(c=>c.id===activeTab)?.label}</div>
+          <div style={{ gridColumn:'1/-1',textAlign:'center',padding:'40px',color:'var(--text-secondary)',fontSize:13 }}>
+            Sin colaboraciones en {activationTypes.find(a=>a.id===activeTab)?.name||'...'}
+          </div>
         )}
       </div>
 
-      {/* Brand detail modal */}
-      {selectedBrand && (() => {
-        const brand = collabBrands.find(b=>b.id===selectedBrand.id)||selectedBrand
-        const assignedInfs = influencers.filter(i=>(brand.influencers||[]).includes(i.id))
-        return (
-          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.75)', backdropFilter:'blur(8px)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }} onClick={() => { setSelectedBrand(null); setEditingNota(false) }}>
-            <div style={{ width:'100%', maxWidth:560, background:'var(--bg-secondary)', border:'1px solid rgba(139,92,246,0.4)', borderRadius:20, maxHeight:'90vh', overflowY:'auto', animation:'fadeIn 0.3s ease' }} onClick={e=>e.stopPropagation()}>
-              <div style={{ padding:'20px 24px', borderBottom:'1px solid var(--border-violet)', display:'flex', alignItems:'center', gap:12 }}>
-                <div style={{ width:44, height:44, borderRadius:14, background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>🏢</div>
-                <div>
-                  <h2 style={{ fontSize:17, fontWeight:700 }}>{brand.nombre}</h2>
-                  <p style={{ fontSize:12, color:'var(--text-secondary)' }}>{brand.ciudad}</p>
-                </div>
-                <button onClick={() => setSelectedBrand(null)} style={{ marginLeft:'auto', color:'var(--text-secondary)', padding:6, borderRadius:8 }}><X size={18}/></button>
-              </div>
-              <div style={{ padding:'20px 24px', display:'flex', flexDirection:'column', gap:18 }}>
-                {/* Mover entre categorías */}
-                <div>
-                  <label style={{ fontSize:12, fontWeight:600, color:'var(--text-secondary)', display:'block', marginBottom:8 }}>Categoría</label>
-                  <div style={{ display:'flex', gap:8 }}>
-                    {COLLAB_CATS.map(cat => (
-                      <button key={cat.id} onClick={() => { moveBrand(brand.id, cat.id); setSelectedBrand({...selectedBrand, cat:cat.id}) }}
-                        style={{ flex:1, padding:'7px', borderRadius:10, fontSize:12, fontWeight:600, border:`1px solid ${brand.cat===cat.id?cat.color:'var(--border-violet)'}`, background:brand.cat===cat.id?`${cat.color}20`:'transparent', color:brand.cat===cat.id?cat.color:'var(--text-secondary)', transition:'all 0.2s' }}>
-                        {cat.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {/* Nota interna */}
-                <div>
-                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
-                    <label style={{ fontSize:12, fontWeight:600, color:'var(--text-secondary)' }}>Nota interna</label>
-                    <button onClick={() => { setEditingNota(true); setNotaTemp(brand.nota||'') }} style={{ width:26, height:26, borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(139,92,246,0.1)', border:'1px solid var(--border-violet)', color:'var(--primary-violet-light)' }}><Edit3 size={11}/></button>
-                  </div>
-                  {editingNota ? (
-                    <div>
-                      <textarea className="input-field" value={notaTemp} onChange={e=>setNotaTemp(e.target.value)} rows={3} style={{ resize:'vertical', fontSize:13 }}/>
-                      <div style={{ display:'flex', gap:8, marginTop:8 }}>
-                        <button onClick={() => saveNota(brand.id, notaTemp)} style={{ padding:'6px 14px', borderRadius:8, fontSize:12, fontWeight:600, background:'rgba(74,222,128,0.15)', color:'#4ADE80', border:'1px solid rgba(74,222,128,0.4)' }}>Guardar</button>
-                        <button onClick={() => setEditingNota(false)} style={{ padding:'6px 10px', borderRadius:8, fontSize:12, color:'var(--text-secondary)', border:'1px solid var(--border-violet)' }}>Cancelar</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <p style={{ fontSize:13, color:'var(--text-secondary)', lineHeight:1.6, fontStyle:brand.nota?'normal':'italic', cursor:'pointer', minHeight:36 }} onClick={() => { setEditingNota(true); setNotaTemp(brand.nota||'') }}>
-                      {brand.nota || 'Click para agregar una nota...'}
-                    </p>
-                  )}
-                </div>
-                {/* Influencers asignadas */}
-                <div>
-                  <label style={{ fontSize:12, fontWeight:600, color:'var(--text-secondary)', display:'block', marginBottom:10 }}>Influencers Asignadas</label>
-                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, maxHeight:200, overflowY:'auto' }}>
-                    {influencers.map(inf => {
-                      const sel = (brand.influencers||[]).includes(inf.id)
-                      return (
-                        <button key={inf.id} onClick={() => toggleInfluencer(brand.id, inf.id)}
-                          style={{ padding:'8px 10px', borderRadius:10, border:`1px solid ${sel?'var(--primary-violet)':'var(--border-violet)'}`, background:sel?'rgba(139,92,246,0.15)':'rgba(139,92,246,0.04)', display:'flex', alignItems:'center', gap:8, transition:'all 0.15s', cursor:'pointer' }}>
-                          <div style={{ width:26, height:26, borderRadius:'50%', background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:700, color:'white', flexShrink:0 }}>{inf.name[0]}</div>
-                          <div style={{ textAlign:'left', minWidth:0, flex:1 }}>
-                            <div style={{ fontSize:12, fontWeight:sel?700:400, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', color:sel?'var(--primary-violet-light)':'var(--text-primary)' }}>{inf.name}</div>
-                            {inf.instagram && <div style={{ fontSize:10, color:'var(--text-secondary)' }}>{inf.instagram}</div>}
-                          </div>
-                          {sel && <CheckCircle size={13} color="var(--primary-violet)" style={{ flexShrink:0 }}/>}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
+      {(showCreate || selected) && (
+        <CollabModal
+          collab={selected}
+          activationTypes={activationTypes}
+          influencers={influencers}
+          brands={brands}
+          defaultActivationTypeId={activeTab}
+          onSave={async (data) => { await onSave(data); closeModal() }}
+          onClose={closeModal}
+          onDelete={selected ? async () => { await onDelete(selected.id); closeModal() } : null}
+        />
+      )}
     </div>
   )
 }
 
 // ─── Main Export ────────────────────────────────────
-export default function InfluencerAgencyView({ campaigns, collaborations, influencers, brands, onSaveCampaign, onDeleteCampaign, onSaveInfluencer, onDeleteInfluencer, defaultTab }) {
+export default function InfluencerAgencyView({ campaigns, collaborations, activationTypes, influencers, brands, onSaveCampaign, onDeleteCampaign, onSaveCollaboration, onDeleteCollaboration, onSaveInfluencer, onDeleteInfluencer, onGetCampaignInfluencers, onCIAdd, onCIUpdate, onCIRemove, onPatchCampaignInfluencers, defaultTab }) {
   const [tab, setTab] = useState(defaultTab || 'dashboard')
   const [modal, setModal] = useState(null)
   const [localBrands, setLocalBrands] = useState(brands || [])
@@ -945,7 +1113,7 @@ export default function InfluencerAgencyView({ campaigns, collaborations, influe
             <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))',gap:14 }}>
               {filtered.map(camp=>{
                 const cfg = CAMP_STATUS[camp.status] || CAMP_STATUS.planning
-                const assignedInfs = (influencers||[]).filter(i=>(camp.influencersAssigned||[]).includes(i.id))
+                const assignedInfs = (influencers||[]).filter(i=>(camp.influencerIds||[]).includes(i.id))
                 const agencyEarn = Math.round((camp.budget||0)*(camp.agencyPct||20)/100)
                 return (
                   <div key={camp.id} className="card" style={{ padding:18 }}>
@@ -999,7 +1167,14 @@ export default function InfluencerAgencyView({ campaigns, collaborations, influe
       )}
 
       {tab === 'collabs' && (
-        <CollabsPanel influencers={influencers||[]} brands={brands||[]}/>
+        <CollabsPanel
+          collaborations={collaborations||[]}
+          activationTypes={activationTypes||[]}
+          influencers={influencers||[]}
+          brands={brands||[]}
+          onSave={onSaveCollaboration||(()=>{})}
+          onDelete={onDeleteCollaboration||(()=>{})}
+        />
       )}
 
       {modal && (
@@ -1007,10 +1182,14 @@ export default function InfluencerAgencyView({ campaigns, collaborations, influe
           campaign={modal==='create'?null:modal}
           brands={allBrands}
           influencers={influencers||[]}
-          onSave={data=>{onSaveCampaign&&onSaveCampaign(data);setModal(null)}}
+          onSave={onSaveCampaign||(async()=>null)}
           onClose={()=>setModal(null)}
           onAddBrand={b=>setLocalBrands(p=>[...p,b])}
-          onAddInfluencer={i=>onSaveInfluencer&&onSaveInfluencer(i)}
+          onGetCampaignInfluencers={onGetCampaignInfluencers}
+          onCIAdd={onCIAdd}
+          onCIUpdate={onCIUpdate}
+          onCIRemove={onCIRemove}
+          onPatchCampaignInfluencers={onPatchCampaignInfluencers}
         />
       )}
     </div>

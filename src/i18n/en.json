@@ -1,0 +1,184 @@
+{
+  "brand": "RESILIO NETWORK",
+  "soon": "Soon",
+  "nav": {
+    "home": "Inicio",
+    "influencers": "Influencers",
+    "brands": "Marcas",
+    "opportunities": "Oportunidades",
+    "collaborations": "Colaboraciones",
+    "tasks": "Tareas",
+    "calendar": "Calendario",
+    "followUps": "Seguimiento",
+    "notes": "Notas",
+    "command": "Command Center",
+    "missions": "Misiones",
+    "roadmap": "Hoja de Ruta",
+    "rewards": "Premios",
+    "manual": "Manual",
+    "back": "Volver",
+    "more": "Más",
+    "network": "Network",
+    "sections": {
+      "inicio": "INICIO",
+      "network": "NETWORK",
+      "operation": "OPERACIÓN",
+      "growth": "GROWTH",
+      "intelligence": "INTELLIGENCE",
+      "manual": "MANUAL"
+    }
+  },
+  "loading": {
+    "generic": "Cargando…",
+    "session": "Cargando sesión…"
+  },
+  "label": {
+    "loadMore": "Ver más ({n} restantes)"
+  },
+  "relationship": {
+    "cold": "COLD",
+    "warm": "WARM",
+    "strong": "STRONG",
+    "inactive": "INACTIVE"
+  },
+  "create": {
+    "title": "Agregar",
+    "selectType": "¿Qué querés agregar?",
+    "followUp": "Seguimiento",
+    "task": "Tarea",
+    "collaboration": "Colaboración",
+    "note": "Nota",
+    "influencer": {
+      "label": "Influencer",
+      "namePlaceholder": "Florencia García",
+      "usernamePlaceholder": "flor_garcia"
+    },
+    "brand": {
+      "label": "Marca",
+      "namePlaceholder": "Nike Argentina"
+    },
+    "opportunity": {
+      "label": "Oportunidad",
+      "titlePlaceholder": "Campaña verano 2026",
+      "nextActionPlaceholder": "Llamar al responsable de marketing"
+    }
+  },
+  "form": {
+    "username": "Usuario (sin @)",
+    "name": "Nombre",
+    "city": "Ciudad",
+    "category": "Categoría",
+    "owner": "Dueño",
+    "brand": "Marca",
+    "title": "Título",
+    "estimatedValue": "Valor estimado",
+    "nextAction": "Próxima acción",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "saving": "Guardando...",
+    "optional": "(opcional)",
+    "required": "Campo requerido",
+    "selectCity": "Seleccionar ciudad",
+    "selectBrand": "Seleccionar marca",
+    "selectCategory": "Seleccionar categoría"
+  },
+  "empty": {
+    "noInfluencers": "Sin influencers todavía",
+    "noBrands": "Sin marcas todavía",
+    "noOpportunities": "Sin oportunidades todavía",
+    "noTasks": "Sin tareas pendientes",
+    "noCollaborations": "Sin colaboraciones activas",
+    "noResults": "Sin resultados para ese filtro",
+    "noData": "Sin datos",
+    "addInfluencer": "Agregar influencer",
+    "addBrand": "Agregar marca",
+    "addOpportunity": "Agregar oportunidad",
+    "comingSoon2C": "El contenido llega en la Fase 2C"
+  },
+  "comingSoon": {
+    "title": "Módulo en preparación",
+    "subtitle": "Este módulo está siendo construido."
+  },
+  "nextAction": {
+    "label": "Próxima acción",
+    "complete": "Completar",
+    "overdue": "Vencida",
+    "noAction": "Sin próxima acción",
+    "schedule": "Agendar acción",
+    "daysLeft": "{n} días",
+    "daysOverdue": "{n} días de atraso"
+  },
+  "filter": {
+    "title": "Filtros",
+    "apply": "Aplicar",
+    "clear": "Limpiar",
+    "status": "Estado",
+    "relationship": "Relación",
+    "category": "Categoría",
+    "city": "Ciudad",
+    "all": "Todos",
+    "search": "Buscar..."
+  },
+  "errors": {
+    "notFound": "No encontrado o sin acceso",
+    "notFoundAccess": "Verificá que tengas acceso a este registro.",
+    "noAccess": "No tenés acceso a esta sección",
+    "noAccessSubtitle": "Esta sección es solo para el equipo de Dirección.",
+    "loading": "Error al cargar datos",
+    "saving": "No se pudo guardar",
+    "network": "Sin conexión. El formulario no se perdió, intentá de nuevo."
+  },
+  "contextRail": {
+    "title": "Contexto",
+    "owner": "Dueño",
+    "lastContact": "Último contacto",
+    "recentActivity": "Actividad reciente",
+    "noActivity": "Sin actividad reciente",
+    "toggle": "Ocultar"
+  },
+  "activityTypes": {
+    "dm": "DM",
+    "whatsapp": "WhatsApp",
+    "call": "Llamada",
+    "meeting": "Reunión",
+    "email": "Email",
+    "follow_up": "Seguimiento",
+    "proposal": "Propuesta",
+    "contract": "Contrato",
+    "payment": "Pago",
+    "note": "Nota",
+    "created": "Creado",
+    "updated": "Actualizado"
+  },
+  "categories": [
+    "Lifestyle", "Deportes", "Gastronomía", "Moda", "Fitness",
+    "Tecnología", "Viajes", "Música", "Entretenimiento", "Otros"
+  ],
+  "opportunities": {
+    "status": {
+      "new": "Nuevo",
+      "qualifying": "Calificando",
+      "contacted": "Contactado",
+      "in_conversation": "En conversación",
+      "qualified": "Calificado",
+      "proposal": "Propuesta",
+      "negotiation": "Negociación",
+      "won": "Ganado",
+      "lost": "Perdido",
+      "on_hold": "En pausa"
+    }
+  },
+  "pages": {
+    "home": { "title": "Scouter Home", "subtitle": "Tu centro de operaciones", "comingSoonSubtitle": "Scouter Home (Fase 2C): alertas de seguimiento, tareas del día y feed de actividad" },
+    "command": { "title": "Command Center", "subtitle": "Vista de dirección", "comingSoonSubtitle": "Command Center (Fase 2D): métricas de la red, alertas y goals por ciudad" },
+    "influencers": { "title": "Influencers", "subtitle": "Tu cartera de talentos" },
+    "brands": { "title": "Marcas", "subtitle": "Clientes y prospectos" },
+    "opportunities": { "title": "Oportunidades", "subtitle": "Pipeline activo" },
+    "collaborations": { "title": "Colaboraciones", "subtitle": "Activaciones" },
+    "tasks": { "title": "Tareas", "subtitle": "Tus pendientes" }
+  },
+  "layout": {
+    "backToApp": "Salir de Network",
+    "toggleRail": "Contexto"
+  }
+}

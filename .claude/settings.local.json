@@ -11,7 +11,12 @@
       "Bash(git *)",
       "Bash(gh *)",
       "Bash(node --input-type=module)",
-      "Bash(curl -s http://localhost:5174)"
+      "Bash(curl -s http://localhost:5174)",
+      "Bash(ping -n 4 127.0.0.1)",
+      "Bash(curl -s https://tbmtqhecdpqavutopdmu.supabase.co/auth/v1/token?grant_type=password -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRibXRxaGVjZHBxYXZ1dG9wZG11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNDA5MDMsImV4cCI6MjA5MzYxNjkwM30.WiMEKbNlLqhExWDjtd2Z59L0KjcVt3oCwlS0eJ89irU' -H 'Content-Type: application/json' -d '{\"email\":\"lucajcazzoli@gmail.com\",\"password\":\"admin123\"}' -o /tmp/auth.json)",
+      "Read(//tmp/**)",
+      "Bash(npx playwright *)",
+      "Bash(echo \"EXIT:$?\")"
     ]
   }
 }

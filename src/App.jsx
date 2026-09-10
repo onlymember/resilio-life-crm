@@ -9,33 +9,45 @@ import {
   AlertCircle, ChevronLeft, Save, Award,
   Building, CreditCard, Activity, Palette, FileText, Ticket,
   Target, Radio, Crown, Megaphone, PhoneCall, Home, Map,
-  Settings, LogOut
+  Settings, LogOut,
+  Briefcase, CheckSquare, BookOpen, ArrowRight,
 } from 'lucide-react'
 
 import LoginScreen from './components/Auth/LoginScreen.jsx'
 import AdminPanel  from './components/Admin/AdminPanel.jsx'
+import { supabase } from './lib/supabase.js'
 import {
-  getSession, clearSession, logActivity, canDo, hasEcoAccess, isAdmin,
+  signOut, isAdmin,
+  canAccessView, defaultViewFor, hasAnyAccess,
   getAdminNotifs, markNotifRead, markAllNotifsRead,
 } from './lib/auth.js'
 import {
-  dbGetBrands, dbSaveBrand, dbDeleteBrand,
+  dbListAllBrands, dbSaveBrand, dbDeleteBrand,
   dbGetLocations, dbSaveLocation, dbDeleteLocation,
-  dbGetInfluencers, dbSaveInfluencer, dbDeleteInfluencer,
+  dbListAllInfluencers, dbSaveInfluencer, dbDeleteInfluencer,
+  dbGetCurrentUser,
+  fetchUserById,
+  dbGetCampaigns, dbSaveCampaign, dbDeleteCampaign,
+  dbGetCampaignInfluencers, dbAddInfluencerToCampaign,
+  dbUpdateCampaignInfluencer, dbRemoveInfluencerFromCampaign,
+  dbGetCollaborations, dbSaveCollaboration, dbDeleteCollaboration,
+  dbGetActivationTypes,
+  dbGetMissions,
 } from './lib/database.js'
 
 import {
-  DEMO_BRANDS, DEMO_LOCATIONS, DEMO_INFLUENCERS, DEMO_BENEFITS,
+  DEMO_BENEFITS,
   DEMO_CODES, DEMO_CODE_USAGES, DEMO_MEMBERSHIPS, DEMO_USERS,
   DEMO_CREATIVE_CLIENTS, DEMO_CREATIVE_PROJECTS,
-  DEMO_INF_CAMPAIGNS, DEMO_COLLABORATIONS,
   DEMO_EVENTS, DEMO_SPONSORS, DEMO_TICKETS,
   DEMO_ELEVARE_ASSETS, DEMO_ELEVARE_LEADS, DEMO_ELEVARE_CONTRACTS,
   DEMO_TEAM_MEMBERS,
-  DEMO_MISSIONS, DEMO_NOTIFICATIONS
+  DEMO_NOTIFICATIONS
 } from './data/demo.js'
 
 import VideoPortal from './components/VideoPortal/VideoPortal.jsx'
+import NetworkApp   from './network/NetworkApp.jsx'
+import { COMMAND_ROLES } from './network/routes.js'
 
 import DashboardView         from './views/DashboardView.jsx'
 import InfluencersView       from './views/InfluencersView.jsx'
@@ -179,7 +191,7 @@ const useLocalStorage = (key, initial) => {
 // COMMAND PALETTE
 // ═══════════════════════════════════════════════
 
-const CommandPalette = ({ isOpen, onClose, onNavigate }) => {
+const CommandPalette = ({ isOpen, onClose, onNavigate, currentUser }) => {
   const [query, setQuery] = useState('')
   const inputRef = useRef(null)
 
@@ -216,7 +228,10 @@ const CommandPalette = ({ isOpen, onClose, onNavigate }) => {
     { id: 'cap_contactos',   label: '📞 Contactos CRM',    icon: Users,            action: () => onNavigate('cap_contactos')   },
   ]
 
-  const filtered = commands.filter(c => c.label.toLowerCase().includes(query.toLowerCase()))
+  // Solo comandos que el rol puede abrir (ver auth.js — es UX, no seguridad).
+  const filtered = commands
+    .filter(c => canAccessView(currentUser, c.id))
+    .filter(c => c.label.toLowerCase().includes(query.toLowerCase()))
 
   useEffect(() => { if (isOpen) { setQuery(''); setTimeout(() => inputRef.current?.focus(), 50) } }, [isOpen])
   useEffect(() => { const h = (e) => { if (e.key === 'Escape') onClose() }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [onClose])
@@ -299,13 +314,29 @@ const Sidebar = ({ currentView, onNavigate, collapsed, onToggle, currentUser }) 
       ]
     },
     {
-      id: 'infagency', label: 'Agencia Influencers', icon: Star, collapsible: true,
+      id: 'infagency', label: 'RESILIO NETWORK', icon: Star, collapsible: true,
       open: agencyOpen, onToggle: () => setAgencyOpen(p => !p),
       items: [
-        { id: 'inf_dashboard',label: 'Dashboard',       icon: BarChart3  },
-        { id: 'inf_campaigns',label: 'Campañas',         icon: Megaphone  },
-        { id: 'inf_crm',      label: 'Influencers CRM', icon: Users      },
-        { id: 'inf_collabs',  label: 'Colaboraciones',  icon: CheckCircle},
+        { id: 'nw_lbl_inicio',     subLabel: 'INICIO',       viewId: 'network' },
+        { id: 'nw_home',           viewId: 'network', label: 'Inicio',         icon: Home,        networkPath: '/network/home' },
+        { id: 'nw_lbl_network',    subLabel: 'NETWORK',      viewId: 'network' },
+        { id: 'nw_influencers',    viewId: 'network', label: 'Influencers',    icon: Users,       networkPath: '/network/influencers' },
+        { id: 'nw_brands',         viewId: 'network', label: 'Marcas',         icon: Building2,   networkPath: '/network/brands' },
+        { id: 'nw_opportunities',  viewId: 'network', label: 'Oportunidades',  icon: Briefcase,   networkPath: '/network/opportunities' },
+        { id: 'nw_collaborations', viewId: 'network', label: 'Colaboraciones', icon: CheckCircle, networkPath: '/network/collaborations' },
+        { id: 'nw_lbl_operation',  subLabel: 'OPERACIÓN',    viewId: 'network' },
+        { id: 'nw_tasks',          viewId: 'network', label: 'Tareas',         icon: CheckSquare, networkPath: '/network/tasks' },
+        { id: 'nw_calendar',       viewId: 'network', label: 'Calendario',     icon: Calendar,    networkPath: '/network/calendar',    disabled: true },
+        { id: 'nw_followups',      viewId: 'network', label: 'Seguimiento',    icon: ArrowRight,  networkPath: '/network/follow-ups',  disabled: true },
+        { id: 'nw_notes',          viewId: 'network', label: 'Notas',          icon: FileText,    networkPath: '/network/notes',       disabled: true },
+        { id: 'nw_lbl_growth',     subLabel: 'GROWTH',       viewId: 'network' },
+        { id: 'nw_missions',       viewId: 'network', label: 'Misiones',       icon: Target,      networkPath: '/network/missions',    disabled: true },
+        { id: 'nw_roadmap',        viewId: 'network', label: 'Hoja de Ruta',   icon: Map,         networkPath: '/network/roadmap',     disabled: true },
+        { id: 'nw_rewards',        viewId: 'network', label: 'Premios',        icon: Award,       networkPath: '/network/rewards',     disabled: true },
+        { id: 'nw_lbl_intel',      subLabel: 'INTELLIGENCE', viewId: 'network', commandOnly: true },
+        { id: 'nw_command',        viewId: 'network', label: 'Estadísticas',   icon: BarChart3,   networkPath: '/network/command',     commandOnly: true },
+        { id: 'nw_lbl_manual',     subLabel: 'MANUAL',       viewId: 'network' },
+        { id: 'nw_manual',         viewId: 'network', label: 'Manual',         icon: BookOpen,    networkPath: '/network/manual',      disabled: true },
       ]
     },
     {
@@ -354,6 +385,11 @@ const Sidebar = ({ currentView, onNavigate, collapsed, onToggle, currentUser }) 
     },
   ]
 
+  // Filtra ítems y secciones según el rol. Una sección sin ítems no se renderiza.
+  const visibleSections = sections
+    .map(s => ({ ...s, items: s.items.filter(i => canAccessView(currentUser, i.viewId || i.id)) }))
+    .filter(s => s.items.length > 0)
+
   return (
     <aside style={{
       position:'sticky',top:0,height:'100vh',width:collapsed?72:260,
@@ -375,9 +411,9 @@ const Sidebar = ({ currentView, onNavigate, collapsed, onToggle, currentUser }) 
         </button>
       </div>
 
-      {/* Nav */}
+      {/* Nav — filtrado por rol (ver auth.js: es UX, no seguridad) */}
       <nav style={{ flex:1,overflowY:'auto',padding:'12px 8px' }}>
-        {sections.map(section=>(
+        {visibleSections.map(section=>(
           <div key={section.id} style={{ marginBottom:8 }}>
             {section.label&&!collapsed&&(
               section.collapsible ? (
@@ -391,9 +427,30 @@ const Sidebar = ({ currentView, onNavigate, collapsed, onToggle, currentUser }) 
               )
             )}
             {(!section.collapsible||section.open)&&section.items.map(item=>{
-              const isActive = currentView===item.id
+              // Ítems solo para roles de dirección
+              if (item.commandOnly && !COMMAND_ROLES.includes(currentUser?.rol)) return null
+              // Sub-etiquetas de sección (no clickeables)
+              if (item.subLabel) {
+                return collapsed ? null : (
+                  <div key={item.id} style={{ padding:'8px 8px 2px 10px',color:'rgba(139,92,246,0.55)',fontSize:9,fontWeight:700,letterSpacing:1.2,textTransform:'uppercase',marginTop:6 }}>
+                    {item.subLabel}
+                  </div>
+                )
+              }
+              const isActive = item.networkPath
+                ? (currentView==='network' && window.location.pathname===item.networkPath)
+                : currentView===item.id
+              const handleClick = () => {
+                if (item.disabled) return
+                if (item.networkPath) {
+                  window.history.pushState({}, '', item.networkPath)
+                  onNavigate('network')
+                } else {
+                  onNavigate(item.id)
+                }
+              }
               return (
-                <button key={item.id} onClick={()=>!item.disabled&&onNavigate(item.id)} title={collapsed?item.label:undefined} style={{
+                <button key={item.id} onClick={handleClick} title={collapsed?item.label:undefined} style={{
                   width:'100%',display:'flex',alignItems:'center',gap:10,
                   padding:collapsed?'10px':'9px 10px',
                   justifyContent:collapsed?'center':'flex-start',
@@ -445,7 +502,7 @@ const Sidebar = ({ currentView, onNavigate, collapsed, onToggle, currentUser }) 
 
 const Header = ({ currentView, onMobileMenu, currentUser, onLogout, onAdmin, adminNotifCount }) => {
   const [avatarOpen, setAvatarOpen] = useState(false)
-  const labels = { dashboard:'Dashboard General',rl_dashboard:'Resilio Life · Dashboard',brands:'Marcas',locations:'Locales',influencers:'Influencers',benefits:'Beneficios',codes:'Códigos',memberships:'Membresías',users:'Usuarios',unregistered:'Usuarios No Registrados',tracking:'Tracking Real-Time',analytics:'Analytics',reports:'Reportes',creative:'Agencia Creativa',creative_projects:'Proyectos',creative_clients:'Clientes Creativos',creative_equipo:'Equipo Creativo',inf_dashboard:'Agencia Influencers · Dashboard',inf_campaigns:'Campañas',inf_crm:'Influencers CRM',inf_collabs:'Colaboraciones',prod_dashboard:'Productora · Dashboard',events:'Eventos',tickets:'Tickets',only_members:'⭐ Only Members',rrpp:'Relaciones Públicas',elevare:'💎 Elevare · Dashboard',elevare_bienes:'💎 Elevare · Bienes',elevare_leads:'💎 Elevare · Leads',elevare_contratos:'💎 Elevare · Contratos',elevare_contenido:'💎 Elevare · Contenido',elevare_hosp:'💎 Elevare · Hospitality',missions:'🎯 Misiones',team:'Team Management',advanced:'Features Avanzadas',cap_pipeline:'📞 Captación · Pipeline',cap_busqueda:'📞 Captación · Búsqueda',cap_speeches:'📞 Captación · Speeches',cap_provincias:'📞 Captación · Expansión',cap_seguimiento:'📞 Captación · Seguimiento',cap_contactos:'📞 Captación · Contactos',hub:'Hub Central' }
+  const labels = { dashboard:'Dashboard General',rl_dashboard:'Resilio Life · Dashboard',brands:'Marcas',locations:'Locales',influencers:'Influencers',benefits:'Beneficios',codes:'Códigos',memberships:'Membresías',users:'Usuarios',unregistered:'Usuarios No Registrados',tracking:'Tracking Real-Time',analytics:'Analytics',reports:'Reportes',creative:'Agencia Creativa',creative_projects:'Proyectos',creative_clients:'Clientes Creativos',creative_equipo:'Equipo Creativo',inf_dashboard:'RESILIO NETWORK · Dashboard',inf_campaigns:'Campañas',inf_crm:'Influencers CRM',inf_collabs:'Colaboraciones',prod_dashboard:'Productora · Dashboard',events:'Eventos',tickets:'Tickets',only_members:'⭐ Only Members',rrpp:'Relaciones Públicas',elevare:'💎 Elevare · Dashboard',elevare_bienes:'💎 Elevare · Bienes',elevare_leads:'💎 Elevare · Leads',elevare_contratos:'💎 Elevare · Contratos',elevare_contenido:'💎 Elevare · Contenido',elevare_hosp:'💎 Elevare · Hospitality',missions:'🎯 Misiones',team:'Team Management',advanced:'Features Avanzadas',cap_pipeline:'📞 Captación · Pipeline',cap_busqueda:'📞 Captación · Búsqueda',cap_speeches:'📞 Captación · Speeches',cap_provincias:'📞 Captación · Expansión',cap_seguimiento:'📞 Captación · Seguimiento',cap_contactos:'📞 Captación · Contactos',hub:'Hub Central' }
   const displayName = currentUser?.sobrenombre || currentUser?.nombre || 'Usuario'
   const roleLabel = { super_admin:'Super Admin', admin:'Admin', editor:'Editor', viewer:'Viewer', custom:'Custom' }
 
@@ -780,16 +837,17 @@ const EMPRESA_NODOS = [
   { id:'gestion',  icon:'🎯', label:'Gestión',     color:'#FCBAD3', view:'missions'      },
 ]
 
-const HubNodes = ({ onNavigate, onClose }) => {
+const HubNodes = ({ onNavigate, onClose, currentUser }) => {
   const R = 120
   const angles = [30, 54, 78, 102, 126, 150]
   const nodeSize = 54
+  const nodos = EMPRESA_NODOS.filter(n => canAccessView(currentUser, n.view))
 
   return (
     <>
       <div onClick={onClose} style={{ position:'fixed',inset:0,zIndex:195,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(8px)',WebkitBackdropFilter:'blur(8px)' }}/>
       <div style={{ position:'fixed',bottom:32,left:'50%',zIndex:196,pointerEvents:'none' }}>
-        {EMPRESA_NODOS.map((nodo, i) => {
+        {nodos.map((nodo, i) => {
           const θ = angles[i] * Math.PI / 180
           const x = R * Math.cos(θ)
           const y = R * Math.sin(θ)
@@ -1007,48 +1065,129 @@ const RoccoChat = ({ show, onClose }) => {
 }
 
 // ═══════════════════════════════════════════════
+// SPLASH LOADING
+// ═══════════════════════════════════════════════
+
+const SplashLoading = () => (
+  <div style={{ minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg-primary)' }}>
+    <div style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:16 }}>
+      <div style={{ width:52,height:52,borderRadius:16,background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',display:'flex',alignItems:'center',justifyContent:'center',animation:'pulse-glow 1.5s ease-in-out infinite' }}>
+        <img src="/logoresilio.png" alt="" style={{ width:32,height:32,filter:'brightness(0) invert(1)' }}/>
+      </div>
+      <div style={{ fontSize:13,color:'var(--text-secondary)' }}>Cargando...</div>
+    </div>
+  </div>
+)
+
+// ═══════════════════════════════════════════════
 // APP ROOT
 // ═══════════════════════════════════════════════
 
 export default function App() {
   // ── Auth state ──────────────────────────────────
-  const [currentUser,  setCurrentUser]  = useState(() => getSession())
-  const [showAdmin,    setShowAdmin]    = useState(false)
-  const [adminNotifs,  setAdminNotifs]  = useState(() => getAdminNotifs())
+  const [currentUser,   setCurrentUser]   = useState(null)
+  const [authReady,     setAuthReady]     = useState(false)
+  const [passwordReset, setPasswordReset] = useState(false)
+  const [showAdmin,     setShowAdmin]     = useState(false)
+  const [adminNotifs,   setAdminNotifs]   = useState(() => getAdminNotifs())
 
   const handleLogin = (user) => {
     setCurrentUser(user)
     setShowPortal(true)
-    setCurrentView('hub')
+    setCurrentView(defaultViewFor(user))
   }
 
-  const handleLogout = () => {
-    if (currentUser) logActivity({ userId:currentUser.id, userName:currentUser.nombre, accion:'logout', detalle:'Cerró sesión', seccion:'sistema' })
-    clearSession()
-    setCurrentUser(null)
-    setShowPortal(true)
+  const handleLogout = async () => {
+    await signOut()
   }
 
   const refreshAdminNotifs = () => setAdminNotifs(getAdminNotifs())
 
+  // ── Sesión ──────────────────────────────────────────────────
+  // ⚠️ REGLA CRÍTICA: NUNCA llamar supabase.auth.* dentro del callback de
+  // onAuthStateChange. supabase-js sostiene un lock de auth mientras
+  // despacha el callback; llamar getUser()/getSession() ahí adentro
+  // produce un deadlock: la promesa nunca resuelve, authReady nunca se
+  // pone en true, y la app queda cargando para siempre al recargar.
+  // La sesión inicial se lee FUERA, y el callback usa el `session` que
+  // ya recibe por parámetro.
+  useEffect(() => {
+    let alive = true
+
+    const loadProfile = async (userId, { isSignIn = false } = {}) => {
+      try {
+        const user = await fetchUserById(userId)
+        if (!alive) return
+        setCurrentUser(user)
+        if (isSignIn && user) {
+          setShowPortal(true)
+          setCurrentView(defaultViewFor(user))
+        }
+      } catch (e) {
+        console.error('Auth — no se pudo cargar el perfil:', e)
+        if (alive) setCurrentUser(null)
+      } finally {
+        if (alive) setAuthReady(true)
+      }
+    }
+
+    // 1) Sesión inicial, fuera de cualquier callback
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!alive) return
+      if (!session?.user) { setCurrentUser(null); setAuthReady(true); return }
+      loadProfile(session.user.id)
+    })
+
+    // 2) Cambios posteriores. El setTimeout(0) saca el trabajo del frame
+    //    del callback y libera el lock de auth antes de tocar la base.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!alive) return
+      if (event === 'PASSWORD_RECOVERY') {
+        setPasswordReset(true); setCurrentUser(null); setAuthReady(true); return
+      }
+      if (event === 'TOKEN_REFRESHED') return   // misma sesión, no recargar
+      if (!session?.user) {
+        setCurrentUser(null); setShowPortal(false); setAuthReady(true); return
+      }
+      setTimeout(() => {
+        if (alive) loadProfile(session.user.id, { isSignIn: event === 'SIGNED_IN' })
+      }, 0)
+    })
+
+    return () => { alive = false; subscription.unsubscribe() }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // ── CRM state ────────────────────────────────────
   const [theme,            setTheme]           = useLocalStorage('crm_theme', 'dark')
   const [currentView,      setCurrentView]      = useLocalStorage('crm_view', 'dashboard')
+
+  // Deep link: si la URL apunta a /network/* al montar, activar el módulo Network
+  useEffect(() => {
+    if (window.location.pathname.startsWith('/network') && currentView !== 'network') {
+      setCurrentView('network')
+    } else if (!window.location.pathname.startsWith('/network') && currentView === 'network') {
+      // Stale: salió de Network, volver al hub
+      setCurrentView('hub')
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const [sidebarCollapsed, setSidebarCollapsed] = useLocalStorage('crm_sidebar', false)
-  const [brands,      setBrands]      = useState(DEMO_BRANDS)
-  const [locations,   setLocations]   = useState(DEMO_LOCATIONS)
-  const [influencers, setInfluencers] = useState(DEMO_INFLUENCERS)
+  const [brands,      setBrands]      = useState([])
+  const [locations,   setLocations]   = useState([])
+  const [influencers, setInfluencers] = useState([])
   const [benefits,    setBenefits]    = useLocalStorage('crm_benefits',    DEMO_BENEFITS)
   const [codes,       setCodes]       = useLocalStorage('crm_codes',       DEMO_CODES)
   const [codeUsages,  setCodeUsages]  = useLocalStorage('crm_usages',      DEMO_CODE_USAGES)
   const [memberships, setMemberships] = useLocalStorage('crm_memberships', DEMO_MEMBERSHIPS)
   const [users,       setUsers]       = useLocalStorage('crm_users',       DEMO_USERS)
   // Phase 3 state
-  const [creativeProjects, setCreativeProjects] = useLocalStorage('crm_cr_projects',  DEMO_CREATIVE_PROJECTS)
-  const [creativeClients,  setCreativeClients]  = useLocalStorage('crm_cr_clients',   DEMO_CREATIVE_CLIENTS)
-  const [infCampaigns,     setInfCampaigns]     = useLocalStorage('crm_inf_camps_v2', DEMO_INF_CAMPAIGNS)
-  const [collaborations,   setCollaborations]   = useLocalStorage('crm_collabs',      DEMO_COLLABORATIONS)
-  const [events,           setEvents]           = useLocalStorage('crm_events',       DEMO_EVENTS)
+  const [creativeProjects, setCreativeProjects] = useLocalStorage('crm_cr_projects', DEMO_CREATIVE_PROJECTS)
+  const [creativeClients,  setCreativeClients]  = useLocalStorage('crm_cr_clients',  DEMO_CREATIVE_CLIENTS)
+  const [infCampaigns,     setInfCampaigns]     = useState([])
+  const [collaborations,   setCollaborations]   = useState([])
+  const [activationTypes,  setActivationTypes]  = useState([])
+  const [events,           setEvents]           = useLocalStorage('crm_events', DEMO_EVENTS)
   const [sponsors,         setSponsors]         = useLocalStorage('crm_sponsors',     DEMO_SPONSORS)
   const [tickets,          setTickets]          = useLocalStorage('crm_tickets',      DEMO_TICKETS)
   // Phase 4 state
@@ -1058,10 +1197,10 @@ export default function App() {
   const [teamMembers,      setTeamMembers]      = useLocalStorage('crm_team',         DEMO_TEAM_MEMBERS)
 
   // Phase 5 state
-  const [missions,       setMissions]       = useLocalStorage('crm_missions_v1',     DEMO_MISSIONS)
-  const [notifications,  setNotifications]  = useLocalStorage('crm_notifs_v1',       DEMO_NOTIFICATIONS)
+  const [missions,       setMissions]       = useState([])
+  const [notifications,  setNotifications]  = useLocalStorage('crm_notifs_v1', DEMO_NOTIFICATIONS)
   const [portalSeen,     setPortalSeen]     = useLocalStorage('crm_portal_seen', false)
-  const [showPortal,     setShowPortal]     = useState(() => Boolean(getSession()))
+  const [showPortal,     setShowPortal]     = useState(false)
 
   const [cmdOpen,            setCmdOpen]            = useState(false)
   const [mobileMenu,         setMobileMenu]         = useState(false)
@@ -1081,12 +1220,31 @@ export default function App() {
     else { setHubNodesVisible(nodesBeforeSidebar) }
   }, [mobileMenu])
 
-  // Load shared CRM data from Supabase (fallback to demo data if empty)
+  const [dataError, setDataError] = useState(null)
+
+  // Load shared CRM data whenever the authenticated user is available
   useEffect(() => {
-    dbGetBrands().then(data => { if (data.length > 0) setBrands(data) }).catch(() => {})
-    dbGetLocations().then(data => { if (data.length > 0) setLocations(data) }).catch(() => {})
-    dbGetInfluencers().then(data => { if (data.length > 0) setInfluencers(data) }).catch(() => {})
-  }, [])
+    if (!currentUser) return
+    setDataError(null)
+    Promise.all([
+      dbListAllBrands(),
+      dbGetLocations(),
+      dbListAllInfluencers(),
+      dbGetCampaigns(),
+      dbGetCollaborations(),
+      dbGetActivationTypes(),
+      dbGetMissions(),
+    ]).then(([b, l, i, camps, collabs, actTypes, miss]) => {
+      setBrands(b)
+      setLocations(l)
+      setInfluencers(i)
+      setInfCampaigns(camps)
+      setCollaborations(collabs)
+      setActivationTypes(actTypes)
+      setMissions(miss)
+    }).catch(e => setDataError(e?.message || 'Error al cargar datos. Revisá tu conexión.'))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id])
 
   const isMobile = windowWidth < 640
   const isTablet = windowWidth >= 640 && windowWidth < 1024
@@ -1096,34 +1254,73 @@ export default function App() {
   const upsert = (setter) => (item) => setter(prev => prev.find(x=>x.id===item.id) ? prev.map(x=>x.id===item.id?item:x) : [...prev,item])
 
   // Brands — Supabase + local state
-  const handleSaveBrand = useCallback((brand) => {
-    setBrands(prev => prev.find(x=>x.id===brand.id) ? prev.map(x=>x.id===brand.id?brand:x) : [...prev,brand])
-    dbSaveBrand(brand).catch(e => console.warn('saveBrand error:', e))
+  // DB-first: el id lo genera Postgres. Si se actualiza el estado primero,
+  // el registro queda con el id falso del frontend y el próximo guardado
+  // crea un duplicado en vez de editar.
+  const handleSaveBrand = useCallback(async (brand) => {
+    try {
+      const saved = await dbSaveBrand(brand)
+      setBrands(prev => prev.find(x=>x.id===saved.id) ? prev.map(x=>x.id===saved.id?saved:x) : [...prev,saved])
+      setDataError(null)
+    } catch (e) {
+      console.error('saveBrand:', e)
+      setDataError(e.message || 'No se pudo guardar la marca')
+    }
   }, [])
-  const handleDeleteBrand = useCallback((id) => {
-    setBrands(p=>p.filter(x=>x.id!==id))
-    setLocations(p=>p.filter(x=>x.brandId!==id))
-    dbDeleteBrand(id).catch(e => console.warn('deleteBrand error:', e))
+  const handleDeleteBrand = useCallback(async (id) => {
+    try {
+      await dbDeleteBrand(id)
+      setBrands(p=>p.filter(x=>x.id!==id))
+      setLocations(p=>p.filter(x=>x.brandId!==id))
+      setDataError(null)
+    } catch (e) {
+      console.error('deleteBrand:', e)
+      setDataError(e.message || 'No se pudo borrar la marca')
+    }
   }, [])
 
   // Locations — Supabase + local state
-  const handleSaveLocation = useCallback((loc) => {
-    setLocations(prev => prev.find(x=>x.id===loc.id) ? prev.map(x=>x.id===loc.id?loc:x) : [...prev,loc])
-    dbSaveLocation(loc).catch(e => console.warn('saveLocation error:', e))
+  const handleSaveLocation = useCallback(async (loc) => {
+    try {
+      const saved = await dbSaveLocation(loc)
+      setLocations(prev => prev.find(x=>x.id===saved.id) ? prev.map(x=>x.id===saved.id?saved:x) : [...prev,saved])
+      setDataError(null)
+    } catch (e) {
+      console.error('saveLocation:', e)
+      setDataError(e.message || 'No se pudo guardar el local')
+    }
   }, [])
-  const handleDeleteLocation = useCallback((id) => {
-    setLocations(p=>p.filter(x=>x.id!==id))
-    dbDeleteLocation(id).catch(e => console.warn('deleteLocation error:', e))
+  const handleDeleteLocation = useCallback(async (id) => {
+    try {
+      await dbDeleteLocation(id)
+      setLocations(p=>p.filter(x=>x.id!==id))
+      setDataError(null)
+    } catch (e) {
+      console.error('deleteLocation:', e)
+      setDataError(e.message || 'No se pudo borrar el local')
+    }
   }, [])
 
-  // Influencers — Supabase + local state
-  const handleSaveInfluencer = useCallback((inf) => {
-    setInfluencers(prev => prev.find(x=>x.id===inf.id) ? prev.map(x=>x.id===inf.id?inf:x) : [...prev,inf])
-    dbSaveInfluencer(inf).catch(e => console.warn('saveInfluencer error:', e))
+  // Influencers — DB-first (Postgres generates UUID for new records)
+  const handleSaveInfluencer = useCallback(async (inf) => {
+    try {
+      const saved = await dbSaveInfluencer(inf)
+      setInfluencers(prev => prev.find(x=>x.id===saved.id) ? prev.map(x=>x.id===saved.id?saved:x) : [...prev,saved])
+      setDataError(null)
+    } catch (e) {
+      console.error('saveInfluencer:', e)
+      setDataError(e.message || 'No se pudo guardar el influencer')
+    }
   }, [])
-  const handleDeleteInfluencer = useCallback((id) => {
-    setInfluencers(p=>p.filter(x=>x.id!==id))
-    dbDeleteInfluencer(id).catch(e => console.warn('deleteInfluencer error:', e))
+  const handleDeleteInfluencer = useCallback(async (id) => {
+    try {
+      await dbDeleteInfluencer(id)
+      setInfluencers(p=>p.filter(x=>x.id!==id))
+      setDataError(null)
+    } catch (e) {
+      console.error('deleteInfluencer:', e)
+      setDataError(e.message || 'No se pudo borrar el influencer')
+    }
   }, [])
 
   const handleSaveBenefit  =useCallback(upsert(setBenefits),[setBenefits])
@@ -1138,8 +1335,53 @@ export default function App() {
   const handleDeleteCreativeProject= useCallback((id)=>setCreativeProjects(p=>p.filter(x=>x.id!==id)),[setCreativeProjects])
   const handleSaveCreativeClient   = useCallback(upsert(setCreativeClients),  [setCreativeClients])
   const handleDeleteCreativeClient = useCallback((id)=>setCreativeClients(p=>p.filter(x=>x.id!==id)),[setCreativeClients])
-  const handleSaveInfCampaign      = useCallback(upsert(setInfCampaigns),     [setInfCampaigns])
-  const handleDeleteInfCampaign    = useCallback((id)=>setInfCampaigns(p=>p.filter(x=>x.id!==id)),[setInfCampaigns])
+  const handleSaveInfCampaign = useCallback(async (camp) => {
+    try {
+      const saved = await dbSaveCampaign(camp, currentUser?.id)
+      setInfCampaigns(prev => prev.find(x=>x.id===saved.id) ? prev.map(x=>x.id===saved.id?saved:x) : [...prev,saved])
+      setDataError(null)
+    } catch (e) {
+      setDataError(e.message || 'No se pudo guardar la campaña')
+    }
+  }, [currentUser?.id])
+  const handleDeleteInfCampaign = useCallback(async (id) => {
+    try {
+      await dbDeleteCampaign(id)
+      setInfCampaigns(p => p.filter(x => x.id !== id))
+      setDataError(null)
+    } catch (e) {
+      setDataError(e.message || 'No se pudo archivar la campaña')
+    }
+  }, [])
+
+  // Patch the influencerIds on an existing campaign in local state after CI ops
+  const handlePatchCampaignInfluencers = useCallback((campaignId, influencerIds) => {
+    setInfCampaigns(prev => prev.map(c => c.id === campaignId ? { ...c, influencerIds } : c))
+  }, [])
+
+  const handleGetCampaignInfluencers = useCallback((campaignId) => dbGetCampaignInfluencers(campaignId), [])
+  const handleCIAdd    = useCallback((campId, infId, fields) => dbAddInfluencerToCampaign(campId, infId, fields), [])
+  const handleCIUpdate = useCallback((campId, infId, fields) => dbUpdateCampaignInfluencer(campId, infId, fields), [])
+  const handleCIRemove = useCallback((campId, infId) => dbRemoveInfluencerFromCampaign(campId, infId), [])
+
+  const handleSaveCollaboration = useCallback(async (collab) => {
+    try {
+      const saved = await dbSaveCollaboration(collab, currentUser?.id)
+      setCollaborations(prev => prev.find(x=>x.id===saved.id) ? prev.map(x=>x.id===saved.id?saved:x) : [...prev,saved])
+      setDataError(null)
+    } catch (e) {
+      setDataError(e.message || 'No se pudo guardar la colaboración')
+    }
+  }, [currentUser?.id])
+  const handleDeleteCollaboration = useCallback(async (id) => {
+    try {
+      await dbDeleteCollaboration(id)
+      setCollaborations(p => p.filter(x => x.id !== id))
+      setDataError(null)
+    } catch (e) {
+      setDataError(e.message || 'No se pudo cancelar la colaboración')
+    }
+  }, [])
   const handleSaveEvent            = useCallback(upsert(setEvents),           [setEvents])
   const handleDeleteEvent          = useCallback((id)=>setEvents(p=>p.filter(x=>x.id!==id)),[setEvents])
   // Phase 4 CRUD
@@ -1159,15 +1401,38 @@ export default function App() {
   const navigate = useCallback((v) => {
     setCurrentView(v)
     setMobileMenu(false)
-    if (currentUser) {
-      logActivity({ userId:currentUser.id, userName:currentUser.nombre, accion:'cambiar_seccion', detalle:`Navegó a ${v}`, seccion:v })
-    }
-  }, [setCurrentView, currentUser])
+  }, [setCurrentView])
 
   const handleToggleHub = useCallback(() => setHubNodesVisible(p => !p), [])
 
+  // ── Guard de vista por rol ───────────────────────────────
+  // Si `crm_view` (localStorage, manipulable) apunta a una vista que el rol no
+  // puede abrir, se cae a la vista por defecto. La corrección se calcula fuera
+  // del render y se persiste en un efecto, para no hacer setState durante el render.
+  const allowedView = canAccessView(currentUser, currentView)
+    ? currentView
+    : defaultViewFor(currentUser)
+
+  useEffect(() => {
+    if (allowedView !== currentView) setCurrentView(allowedView)
+  }, [allowedView, currentView, setCurrentView])
+
   const renderView = () => {
-    switch (currentView) {
+    if (!hasAnyAccess(currentUser)) {
+      return (
+        <div style={{ padding:'80px 24px', textAlign:'center', maxWidth:420, margin:'0 auto' }}>
+          <div style={{ fontSize:40, marginBottom:16 }}>🔒</div>
+          <h2 style={{ fontSize:18, fontWeight:600, marginBottom:8 }}>Tu cuenta todavía no tiene accesos asignados</h2>
+          <p style={{ fontSize:14, color:'var(--text-secondary)' }}>
+            Contactá al administrador para que te asigne un rol.
+          </p>
+        </div>
+      )
+    }
+    switch (allowedView) {
+      case 'network':
+        // Renderizado con layout propio — ver el bypass en el return principal
+        return null
       case 'hub':
         return <HubView onNavigate={navigate}/>
       case 'dashboard':
@@ -1204,13 +1469,13 @@ export default function App() {
       case 'creative_equipo':
         return <CreativeAgencyView key="equipo" projects={creativeProjects} clients={creativeClients} onSaveProject={handleSaveCreativeProject} onDeleteProject={handleDeleteCreativeProject} onSaveClient={handleSaveCreativeClient} onDeleteClient={handleDeleteCreativeClient} defaultTab="equipo"/>
       case 'inf_dashboard':
-        return <InfluencerAgencyView key="dashboard" campaigns={infCampaigns} collaborations={collaborations} influencers={influencers} brands={brands} onSaveCampaign={handleSaveInfCampaign} onDeleteCampaign={handleDeleteInfCampaign} onSaveInfluencer={handleSaveInfluencer} onDeleteInfluencer={handleDeleteInfluencer} defaultTab="dashboard"/>
+        return <InfluencerAgencyView key="dashboard" campaigns={infCampaigns} collaborations={collaborations} activationTypes={activationTypes} influencers={influencers} brands={brands} onSaveCampaign={handleSaveInfCampaign} onDeleteCampaign={handleDeleteInfCampaign} onSaveCollaboration={handleSaveCollaboration} onDeleteCollaboration={handleDeleteCollaboration} onSaveInfluencer={handleSaveInfluencer} onDeleteInfluencer={handleDeleteInfluencer} onGetCampaignInfluencers={handleGetCampaignInfluencers} onCIAdd={handleCIAdd} onCIUpdate={handleCIUpdate} onCIRemove={handleCIRemove} onPatchCampaignInfluencers={handlePatchCampaignInfluencers} defaultTab="dashboard"/>
       case 'inf_campaigns':
-        return <InfluencerAgencyView key="campaigns" campaigns={infCampaigns} collaborations={collaborations} influencers={influencers} brands={brands} onSaveCampaign={handleSaveInfCampaign} onDeleteCampaign={handleDeleteInfCampaign} onSaveInfluencer={handleSaveInfluencer} onDeleteInfluencer={handleDeleteInfluencer} defaultTab="campaigns"/>
+        return <InfluencerAgencyView key="campaigns" campaigns={infCampaigns} collaborations={collaborations} activationTypes={activationTypes} influencers={influencers} brands={brands} onSaveCampaign={handleSaveInfCampaign} onDeleteCampaign={handleDeleteInfCampaign} onSaveCollaboration={handleSaveCollaboration} onDeleteCollaboration={handleDeleteCollaboration} onSaveInfluencer={handleSaveInfluencer} onDeleteInfluencer={handleDeleteInfluencer} onGetCampaignInfluencers={handleGetCampaignInfluencers} onCIAdd={handleCIAdd} onCIUpdate={handleCIUpdate} onCIRemove={handleCIRemove} onPatchCampaignInfluencers={handlePatchCampaignInfluencers} defaultTab="campaigns"/>
       case 'inf_crm':
-        return <InfluencerAgencyView key="crm" campaigns={infCampaigns} collaborations={collaborations} influencers={influencers} brands={brands} onSaveCampaign={handleSaveInfCampaign} onDeleteCampaign={handleDeleteInfCampaign} onSaveInfluencer={handleSaveInfluencer} onDeleteInfluencer={handleDeleteInfluencer} defaultTab="crm"/>
+        return <InfluencerAgencyView key="crm" campaigns={infCampaigns} collaborations={collaborations} activationTypes={activationTypes} influencers={influencers} brands={brands} onSaveCampaign={handleSaveInfCampaign} onDeleteCampaign={handleDeleteInfCampaign} onSaveCollaboration={handleSaveCollaboration} onDeleteCollaboration={handleDeleteCollaboration} onSaveInfluencer={handleSaveInfluencer} onDeleteInfluencer={handleDeleteInfluencer} onGetCampaignInfluencers={handleGetCampaignInfluencers} onCIAdd={handleCIAdd} onCIUpdate={handleCIUpdate} onCIRemove={handleCIRemove} onPatchCampaignInfluencers={handlePatchCampaignInfluencers} defaultTab="crm"/>
       case 'inf_collabs':
-        return <InfluencerAgencyView key="collabs" campaigns={infCampaigns} collaborations={collaborations} influencers={influencers} brands={brands} onSaveCampaign={handleSaveInfCampaign} onDeleteCampaign={handleDeleteInfCampaign} onSaveInfluencer={handleSaveInfluencer} onDeleteInfluencer={handleDeleteInfluencer} defaultTab="collabs"/>
+        return <InfluencerAgencyView key="collabs" campaigns={infCampaigns} collaborations={collaborations} activationTypes={activationTypes} influencers={influencers} brands={brands} onSaveCampaign={handleSaveInfCampaign} onDeleteCampaign={handleDeleteInfCampaign} onSaveCollaboration={handleSaveCollaboration} onDeleteCollaboration={handleDeleteCollaboration} onSaveInfluencer={handleSaveInfluencer} onDeleteInfluencer={handleDeleteInfluencer} onGetCampaignInfluencers={handleGetCampaignInfluencers} onCIAdd={handleCIAdd} onCIUpdate={handleCIUpdate} onCIRemove={handleCIRemove} onPatchCampaignInfluencers={handlePatchCampaignInfluencers} defaultTab="collabs"/>
       case 'prod_dashboard':
       case 'events':
         return <EventsView events={events} sponsors={sponsors} tickets={tickets} onSaveEvent={handleSaveEvent} onDeleteEvent={handleDeleteEvent}/>
@@ -1267,6 +1532,20 @@ export default function App() {
   })()
 
   // ── Auth gate ──────────────────────────────────
+  if (!authReady) {
+    return <><GlobalStyles/><SplashLoading/></>
+  }
+
+  const isResetUrl = new URLSearchParams(window.location.search).get('reset') === '1'
+  if (passwordReset || (isResetUrl && !currentUser)) {
+    return (
+      <>
+        <GlobalStyles/>
+        <LoginScreen onLogin={handleLogin} passwordResetMode/>
+      </>
+    )
+  }
+
   if (!currentUser) {
     return (
       <>
@@ -1281,9 +1560,19 @@ export default function App() {
       <>
         <GlobalStyles/>
         <VideoPortal
-          onEnter={() => { setShowPortal(false); setCurrentView('hub') }}
+          onEnter={() => { setShowPortal(false); setCurrentView(defaultViewFor(currentUser)) }}
           userName={currentUser?.sobrenombre || currentUser?.nombre || 'Usuario'}
         />
+      </>
+    )
+  }
+
+  // RESILIO NETWORK — layout propio, sin sidebar/header del sistema principal
+  if (allowedView === 'network' && window.location.pathname.startsWith('/network')) {
+    return (
+      <>
+        <GlobalStyles/>
+        <NetworkApp currentUser={currentUser}/>
       </>
     )
   }
@@ -1296,16 +1585,16 @@ export default function App() {
         background:`var(--nebula-1), var(--nebula-2), var(--nebula-3), var(--bg-primary)`
       }}>
         {/* Desktop sidebar — oculto en Hub */}
-        {!isMobile && currentView !== 'hub' && (
-          <Sidebar currentView={currentView} onNavigate={navigate} collapsed={effectiveCollapsed} onToggle={()=>setSidebarCollapsed(p=>!p)} currentUser={currentUser}/>
+        {!isMobile && allowedView !== 'hub' && (
+          <Sidebar currentView={allowedView} onNavigate={navigate} collapsed={effectiveCollapsed} onToggle={()=>setSidebarCollapsed(p=>!p)} currentUser={currentUser}/>
         )}
 
         {/* Mobile sidebar overlay */}
-        {isMobile && mobileMenu && currentView !== 'hub' && (
+        {isMobile && mobileMenu && allowedView !== 'hub' && (
           <>
             <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(4px)',zIndex:199}} onClick={()=>setMobileMenu(false)}/>
             <div style={{position:'fixed',top:0,left:0,height:'100vh',zIndex:200}}>
-              <Sidebar currentView={currentView} onNavigate={navigate} collapsed={false} onToggle={()=>setMobileMenu(false)} currentUser={currentUser}/>
+              <Sidebar currentView={allowedView} onNavigate={navigate} collapsed={false} onToggle={()=>setMobileMenu(false)} currentUser={currentUser}/>
             </div>
           </>
         )}
@@ -1313,13 +1602,19 @@ export default function App() {
         {/* Main */}
         <div style={{flex:1,display:'flex',flexDirection:'column',minWidth:0}}>
           <Header
-            currentView={currentView}
+            currentView={allowedView}
             onMobileMenu={()=>setMobileMenu(true)}
             currentUser={currentUser}
             onLogout={handleLogout}
             onAdmin={() => setShowAdmin(true)}
             adminNotifCount={adminNotifs.filter(n=>!n.read).length}
           />
+          {dataError && (
+            <div style={{ padding:'10px 20px',background:'rgba(239,68,68,0.1)',borderBottom:'1px solid rgba(239,68,68,0.3)',color:'#F87171',fontSize:13,display:'flex',alignItems:'center',gap:8 }}>
+              <AlertCircle size={14}/>{dataError}
+              <button onClick={()=>setDataError(null)} style={{ marginLeft:'auto',color:'#F87171',background:'none',border:'none',cursor:'pointer',fontSize:18,lineHeight:1 }}>×</button>
+            </div>
+          )}
           <main style={{flex:1,overflowY:'auto'}}>{renderView()}</main>
         </div>
 
@@ -1337,10 +1632,10 @@ export default function App() {
 
       {/* Hub nodes radiales (solo móvil) */}
       {isMobile && hubNodesVisible && !mobileMenu && (
-        <HubNodes onNavigate={navigate} onClose={()=>setHubNodesVisible(false)}/>
+        <HubNodes onNavigate={navigate} onClose={()=>setHubNodesVisible(false)} currentUser={currentUser}/>
       )}
 
-      <CommandPalette isOpen={cmdOpen} onClose={()=>setCmdOpen(false)} onNavigate={navigate}/>
+      <CommandPalette isOpen={cmdOpen} onClose={()=>setCmdOpen(false)} onNavigate={navigate} currentUser={currentUser}/>
 
       {/* ROCCO chat - botón solo en desktop */}
       {!isMobile && (

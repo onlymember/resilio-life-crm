@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { login, register, saveSession, notifyNewUser } from '../../lib/auth.js'
+import { login, register, notifyNewUser, requestPasswordReset, updatePassword } from '../../lib/auth.js'
 
 // ── Inline styles ──────────────────────────────────────────
 const s = {
@@ -63,7 +63,7 @@ const PendingScreen = ({ onBack }) => (
 )
 
 // ── Main Login Screen ──────────────────────────────────────
-export default function LoginScreen({ onLogin }) {
+export default function LoginScreen({ onLogin, passwordResetMode = false }) {
   const [tab,         setTab]         = useState('login')
   const [loading,     setLoading]     = useState(false)
   const [error,       setError]       = useState('')
@@ -82,9 +82,72 @@ export default function LoginScreen({ onLogin }) {
   const [rPass,   setRPass]   = useState('')
   const [rPass2,  setRPass2]  = useState('')
 
+  // Forgot password fields
+  const [fpEmail, setFpEmail] = useState('')
+
+  // Reset password fields (passwordResetMode)
+  const [rpPass,  setRpPass]  = useState('')
+  const [rpPass2, setRpPass2] = useState('')
+
   useEffect(() => { setError(''); setSuccess('') }, [tab])
 
   const switchTab = (t) => { setTab(t); setError(''); setSuccess('') }
+
+  // ── Password reset form (Supabase magic link landed) ──────
+  if (passwordResetMode) {
+    const handleUpdatePassword = async (e) => {
+      e.preventDefault()
+      setError('')
+      if (rpPass.length < 6) return setError('La contraseña debe tener mínimo 6 caracteres')
+      if (rpPass !== rpPass2) return setError('Las contraseñas no coinciden')
+      setLoading(true)
+      try {
+        await updatePassword(rpPass)
+        setSuccess('Contraseña actualizada. Iniciando sesión...')
+      } catch (err) {
+        setError(err.message || 'Error al actualizar la contraseña')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    return (
+      <div style={s.wrap}>
+        <style>{kf}</style>
+        <div style={s.nebula1}/><div style={s.nebula2}/>
+        <div style={s.card}>
+          <div style={s.logo}>
+            <img src="/logoresilio.png" alt="Resilio Life" style={s.logoImg} onError={e=>{e.target.style.display='none'}}/>
+            <div style={s.logoTitle}>RESILIO LIFE</div>
+            <div style={s.logoSub}>NUEVA CONTRASEÑA</div>
+          </div>
+          <form style={s.form} onSubmit={handleUpdatePassword} autoComplete="off">
+            {error   && <div style={s.err}>{error}</div>}
+            {success && <div style={s.ok}>{success}</div>}
+            <div style={s.field}>
+              <label style={s.label}>🔒 Nueva contraseña</label>
+              <div style={s.inputWrap}>
+                <input style={{...s.input,paddingRight:42}} type={showPass?'text':'password'}
+                  placeholder="Mínimo 6 caracteres" value={rpPass} onChange={e=>setRpPass(e.target.value)}/>
+                <button type="button" style={s.eyeBtn} onClick={()=>setShowPass(p=>!p)}>{showPass?'🙈':'👁️'}</button>
+              </div>
+            </div>
+            <div style={s.field}>
+              <label style={s.label}>🔒 Confirmar contraseña</label>
+              <div style={s.inputWrap}>
+                <input style={{...s.input,paddingRight:42}} type={showPass2?'text':'password'}
+                  placeholder="Repetí tu contraseña" value={rpPass2} onChange={e=>setRpPass2(e.target.value)}/>
+                <button type="button" style={s.eyeBtn} onClick={()=>setShowPass2(p=>!p)}>{showPass2?'🙈':'👁️'}</button>
+              </div>
+            </div>
+            <button type="submit" className="auth-btn" style={{...s.btn,opacity:loading?0.7:1}} disabled={loading}>
+              {loading ? 'Guardando...' : 'Actualizar contraseña'}
+            </button>
+          </form>
+        </div>
+      </div>
+    )
+  }
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -94,7 +157,6 @@ export default function LoginScreen({ onLogin }) {
     setLoading(true)
     try {
       const user = await login(lEmail, lPass)
-      saveSession(user)
       onLogin(user)
     } catch (err) {
       const msg = err.message || ''
@@ -109,23 +171,34 @@ export default function LoginScreen({ onLogin }) {
   const handleRegister = async (e) => {
     e.preventDefault()
     setError('')
-    if (!rNombre.trim())                           return setError('Ingresá tu nombre completo')
+    if (!rNombre.trim())                                return setError('Ingresá tu nombre completo')
     if (!rEmail.trim() || !/\S+@\S+\.\S+/.test(rEmail)) return setError('Ingresá un email válido')
-    if (rPass.length < 6)                          return setError('La contraseña debe tener mínimo 6 caracteres')
-    if (rPass !== rPass2)                          return setError('Las contraseñas no coinciden')
+    if (rPass.length < 6)                               return setError('La contraseña debe tener mínimo 6 caracteres')
+    if (rPass !== rPass2)                               return setError('Las contraseñas no coinciden')
     setLoading(true)
     try {
       const r = await register(rNombre, rEmail, rPass)
       if (!r.success) return setError(r.error)
-      if (r.directAccess) {
-        saveSession(r.user)
-        return onLogin(r.user)
-      }
-      // Notify admin (local notification)
-      notifyNewUser(rNombre, rEmail, r.user?.id)
+      notifyNewUser(rNombre, rEmail, null)
       setShowPending(true)
     } catch (err) {
       setError(err.message || 'Error al registrar')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault()
+    setError('')
+    if (!fpEmail.trim() || !/\S+@\S+\.\S+/.test(fpEmail)) return setError('Ingresá un email válido')
+    setLoading(true)
+    try {
+      await requestPasswordReset(fpEmail)
+      setSuccess('Si existe una cuenta con ese email, recibirás un enlace para restablecer tu contraseña.')
+    } catch {
+      // Generic message to avoid email enumeration
+      setSuccess('Si existe una cuenta con ese email, recibirás un enlace para restablecer tu contraseña.')
     } finally {
       setLoading(false)
     }
@@ -150,10 +223,11 @@ export default function LoginScreen({ onLogin }) {
         <div style={s.tabs}>
           <button style={s.tab(tab==='login')}    onClick={() => switchTab('login')}>Iniciar Sesión</button>
           <button style={s.tab(tab==='register')} onClick={() => switchTab('register')}>Registrarse</button>
+          <button style={s.tab(tab==='forgot')}   onClick={() => switchTab('forgot')}>Recuperar</button>
         </div>
 
         {/* Login form */}
-        {tab === 'login' ? (
+        {tab === 'login' && (
           <form style={s.form} onSubmit={handleLogin} autoComplete="off">
             {error   && <div style={s.err}>{error}</div>}
             {success && <div style={s.ok}>{success}</div>}
@@ -179,11 +253,14 @@ export default function LoginScreen({ onLogin }) {
               {loading ? 'Verificando...' : 'Iniciar Sesión'}
             </button>
 
-            <div style={s.link} onClick={() => setError('Contactá al administrador para recuperar tu contraseña.')}>
+            <div style={s.link} onClick={() => switchTab('forgot')}>
               ¿Olvidaste tu contraseña?
             </div>
           </form>
-        ) : (
+        )}
+
+        {/* Register form */}
+        {tab === 'register' && (
           <form style={s.form} onSubmit={handleRegister} autoComplete="off">
             {error   && <div style={s.err}>{error}</div>}
             {success && <div style={s.ok}>{success}</div>}
@@ -225,6 +302,32 @@ export default function LoginScreen({ onLogin }) {
             <button type="submit" className="auth-btn" style={{...s.btn,opacity:loading?0.7:1}} disabled={loading}>
               {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
             </button>
+          </form>
+        )}
+
+        {/* Forgot password form */}
+        {tab === 'forgot' && (
+          <form style={s.form} onSubmit={handleForgotPassword} autoComplete="off">
+            {error   && <div style={s.err}>{error}</div>}
+            {success && <div style={s.ok}>{success}</div>}
+
+            <p style={{ fontSize:12,color:'rgba(196,181,253,0.7)',marginBottom:18,lineHeight:1.6 }}>
+              Ingresá tu email y te enviaremos un enlace para restablecer tu contraseña.
+            </p>
+
+            <div style={s.field}>
+              <label style={s.label}>📧 Email</label>
+              <input style={s.input} type="email" placeholder="email@ejemplo.com"
+                value={fpEmail} onChange={e=>setFpEmail(e.target.value)} autoComplete="email"/>
+            </div>
+
+            <button type="submit" className="auth-btn" style={{...s.btn,opacity:loading?0.7:1}} disabled={loading || !!success}>
+              {loading ? 'Enviando...' : 'Enviar enlace'}
+            </button>
+
+            <div style={s.link} onClick={() => switchTab('login')}>
+              Volver al inicio de sesión
+            </div>
           </form>
         )}
       </div>

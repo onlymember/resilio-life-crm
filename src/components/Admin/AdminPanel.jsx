@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import {
   getUsers, getActivityLog, getAdminNotifs, markNotifRead, markAllNotifsRead,
   getSystemConfig, saveSystemConfig, approveUser, blockUser, unblockUser, updateUser,
-  deleteUser, getRolePerms, logActivity, timeAgo, hashPwd, genId, SUPER_ADMIN_EMAIL
+  deleteUser, getRolePerms, logActivity, timeAgo, genId, getGeography,
 } from '../../lib/auth.js'
 
 // ─── Constants ────────────────────────────────────────────────
@@ -24,10 +24,10 @@ const ALL_ACTIONS = [
   { id:'analytics', label:'Ver analytics' },
   { id:'equipo',    label:'Gestionar equipo' },
 ]
-const ROLES = ['super_admin','admin','editor','viewer','custom']
+const ROLES = ['super_admin','admin','editor','viewer','custom','scouter']
 
-const ROLE_LABEL = { super_admin:'Super Admin', admin:'Admin', editor:'Editor', viewer:'Viewer', custom:'Custom' }
-const ROLE_COLOR = { super_admin:'#F59E0B', admin:'#8B5CF6', editor:'#3B82F6', viewer:'#6B7280', custom:'#EC4899' }
+const ROLE_LABEL = { super_admin:'Super Admin', admin:'Admin', editor:'Editor', viewer:'Viewer', custom:'Custom', scouter:'Scouter' }
+const ROLE_COLOR = { super_admin:'#F59E0B', admin:'#8B5CF6', editor:'#3B82F6', viewer:'#6B7280', custom:'#EC4899', scouter:'#06B6D4' }
 const ESTADO_COLOR = { aprobado:'#10B981', pendiente:'#F59E0B', bloqueado:'#EF4444', suspendido:'#6B7280' }
 const ESTADO_LABEL = { aprobado:'Aprobado', pendiente:'Pendiente', bloqueado:'Bloqueado', suspendido:'Suspendido' }
 const ACTION_ICON = { crear:'🟢', editar:'🔵', borrar:'🔴', login:'⚪', logout:'⚪', cambiar_seccion:'🟣', exportar:'🟠', aprobar_usuario:'🟡', login_fallido:'🔴' }
@@ -96,7 +96,6 @@ const EditUserModal = ({ user, onSave, onClose, currentUser }) => {
     acciones:      { ...(user.permisos?.acciones||{}) },
   })
   const [tab, setTab] = useState('info')
-  const [pwd, setPwd] = useState('')
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
@@ -127,11 +126,10 @@ const EditUserModal = ({ user, onSave, onClose, currentUser }) => {
       notas_admin: form.notas_admin,
       permisos: { ecosistemas: form.ecosistemas, acciones: form.acciones },
     }
-    if (pwd.length >= 6) changes.password = hashPwd(pwd)
     onSave(user.id, changes)
   }
 
-  const isSA = user.rol === 'super_admin' && user.email === SUPER_ADMIN_EMAIL
+  const isSA = user.rol === 'super_admin'
   const tabStyle = (t) => ({
     padding:'8px 14px', borderRadius:8, fontSize:12, fontWeight:600, border:'none', cursor:'pointer',
     background: tab===t ? 'rgba(139,92,246,0.25)' : 'transparent',
@@ -189,12 +187,6 @@ const EditUserModal = ({ user, onSave, onClose, currentUser }) => {
                   </select>
                 </div>
               </div>
-              {currentUser?.rol === 'super_admin' && (
-                <div>
-                  <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:6 }}>Nueva contraseña (dejar vacío para no cambiar)</label>
-                  <input type="password" value={pwd} onChange={e=>setPwd(e.target.value)} placeholder="Mínimo 6 caracteres" style={{ width:'100%', padding:'9px 12px', background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.25)', borderRadius:8, color:'#F9FAFB', fontSize:13, outline:'none', boxSizing:'border-box' }}/>
-                </div>
-              )}
             </div>
           )}
 
@@ -315,6 +307,8 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
   const [delText,     setDelText]      = useState('')
   const [approveModal,setApproveModal] = useState(null)
   const [approveRol,  setApproveRol]   = useState('viewer')
+  const [approveScopeId, setApproveScopeId] = useState('')
+  const [geography,   setGeography]    = useState({ regions:[], countries:[], cities:[] })
 
   useEffect(() => { setUsers(initialUsers) }, [initialUsers])
 
@@ -323,6 +317,10 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
     setUsers(u)
     onRefresh(u)
   }
+
+  useEffect(() => {
+    getGeography().then(setGeography).catch(() => {})
+  }, [])
 
   const filtered = users.filter(u => {
     const q = search.toLowerCase()
@@ -333,9 +331,12 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
   })
 
   const handleApprove = async () => {
-    await approveUser(approveModal.id, approveRol)
+    const needsScope = approveRol === 'scouter'
+    const scopeId = needsScope ? (approveScopeId || null) : null
+    await approveUser(approveModal.id, approveRol, { scope: needsScope ? 'city' : 'global', scopeId })
     logActivity({ userId:currentUser?.id||'admin', userName:currentUser?.nombre||'Admin', accion:'aprobar_usuario', detalle:`Aprobó a ${approveModal.nombre} con rol ${approveRol}`, seccion:'admin' })
     setApproveModal(null)
+    setApproveScopeId('')
     refresh()
   }
 
@@ -360,7 +361,7 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
   }
 
   const handleDelete = async () => {
-    if (delText !== 'ELIMINAR') return
+    if (delText !== 'DESACTIVAR') return
     const r = await deleteUser(delConfirm.id)
     if (!r?.success) return
     setDelConfirm(null); setDelText('')
@@ -423,7 +424,7 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
               )}
               <button onClick={() => setEditUser(u)} style={{ padding:'6px 12px', borderRadius:7, background:'rgba(139,92,246,0.12)', border:'1px solid rgba(139,92,246,0.3)', color:'#A78BFA', fontSize:11, fontWeight:700, cursor:'pointer' }}>✏️ Editar</button>
               {u.rol !== 'super_admin' && currentUser?.rol === 'super_admin' && (
-                <button onClick={() => { setDelConfirm(u); setDelText('') }} style={{ padding:'6px 10px', borderRadius:7, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', color:'#F87171', fontSize:11, cursor:'pointer' }}>🗑️</button>
+                <button onClick={() => { setDelConfirm(u); setDelText('') }} style={{ padding:'6px 10px', borderRadius:7, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', color:'#F87171', fontSize:11, cursor:'pointer' }} title="Desactivar usuario">🚫</button>
               )}
             </div>
           </div>
@@ -433,13 +434,24 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
       {/* Approve Modal */}
       {approveModal && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)', zIndex:4000, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }} onClick={() => setApproveModal(null)}>
-          <div style={{ background:'rgba(18,10,40,0.97)', border:'1px solid rgba(139,92,246,0.4)', borderRadius:16, padding:28, width:'100%', maxWidth:360 }} onClick={e=>e.stopPropagation()}>
+          <div style={{ background:'rgba(18,10,40,0.97)', border:'1px solid rgba(139,92,246,0.4)', borderRadius:16, padding:28, width:'100%', maxWidth:400 }} onClick={e=>e.stopPropagation()}>
             <h4 style={{ fontSize:16, fontWeight:700, marginBottom:8, color:'#F9FAFB' }}>Aprobar usuario</h4>
             <p style={{ fontSize:13, color:'rgba(196,181,253,0.7)', marginBottom:16 }}>Aprobando a <strong style={{color:'#A78BFA'}}>{approveModal.nombre}</strong></p>
             <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:6 }}>Asignar rol inicial</label>
-            <select style={{...inpStyle, width:'100%', marginBottom:18, cursor:'pointer'}} value={approveRol} onChange={e=>setApproveRol(e.target.value)}>
-              {['admin','editor','viewer','custom'].map(r=><option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+            <select style={{...inpStyle, width:'100%', marginBottom: approveRol==='scouter' ? 12 : 18, cursor:'pointer'}}
+              value={approveRol} onChange={e=>{ setApproveRol(e.target.value); setApproveScopeId('') }}>
+              {['admin','editor','viewer','custom','scouter'].map(r=><option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
             </select>
+            {approveRol === 'scouter' && (
+              <>
+                <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:6 }}>Ciudad asignada (scope)</label>
+                <select style={{...inpStyle, width:'100%', marginBottom:18, cursor:'pointer'}}
+                  value={approveScopeId} onChange={e=>setApproveScopeId(e.target.value)}>
+                  <option value="">Sin ciudad específica</option>
+                  {geography.cities.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </>
+            )}
             <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
               <button onClick={() => setApproveModal(null)} style={{...inpStyle, cursor:'pointer'}}>Cancelar</button>
               <button onClick={handleApprove} style={{ padding:'9px 20px', borderRadius:8, background:'linear-gradient(135deg,#10B981,#059669)', border:'none', color:'white', fontWeight:700, cursor:'pointer' }}>Aprobar</button>
@@ -463,16 +475,16 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
         </div>
       )}
 
-      {/* Delete Confirm */}
+      {/* Deactivate Confirm */}
       {delConfirm && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)', zIndex:4000, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }} onClick={() => setDelConfirm(null)}>
           <div style={{ background:'rgba(18,10,40,0.97)', border:'1px solid rgba(239,68,68,0.3)', borderRadius:16, padding:28, width:'100%', maxWidth:380 }} onClick={e=>e.stopPropagation()}>
-            <h4 style={{ fontSize:16, fontWeight:700, marginBottom:8, color:'#F87171' }}>⚠️ Eliminar usuario</h4>
-            <p style={{ fontSize:13, color:'rgba(196,181,253,0.7)', marginBottom:16 }}>Escribí <strong style={{color:'#F87171'}}>ELIMINAR</strong> para confirmar la eliminación de <strong style={{color:'#F9FAFB'}}>{delConfirm.nombre}</strong></p>
-            <input value={delText} onChange={e=>setDelText(e.target.value)} placeholder="ELIMINAR" style={{...inpStyle, width:'100%', marginBottom:16, boxSizing:'border-box'}}/>
+            <h4 style={{ fontSize:16, fontWeight:700, marginBottom:8, color:'#F87171' }}>⚠️ Desactivar usuario</h4>
+            <p style={{ fontSize:13, color:'rgba(196,181,253,0.7)', marginBottom:16 }}>Escribí <strong style={{color:'#F87171'}}>DESACTIVAR</strong> para confirmar. El usuario quedará bloqueado y sin roles activos. <strong style={{color:'#F9FAFB'}}>{delConfirm.nombre}</strong></p>
+            <input value={delText} onChange={e=>setDelText(e.target.value)} placeholder="DESACTIVAR" style={{...inpStyle, width:'100%', marginBottom:16, boxSizing:'border-box'}}/>
             <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
               <button onClick={() => setDelConfirm(null)} style={{...inpStyle, cursor:'pointer'}}>Cancelar</button>
-              <button onClick={handleDelete} disabled={delText!=='ELIMINAR'} style={{ padding:'9px 20px', borderRadius:8, background:'linear-gradient(135deg,#EF4444,#DC2626)', border:'none', color:'white', fontWeight:700, cursor:delText==='ELIMINAR'?'pointer':'not-allowed', opacity:delText==='ELIMINAR'?1:0.4 }}>Eliminar</button>
+              <button onClick={handleDelete} disabled={delText!=='DESACTIVAR'} style={{ padding:'9px 20px', borderRadius:8, background:'linear-gradient(135deg,#EF4444,#DC2626)', border:'none', color:'white', fontWeight:700, cursor:delText==='DESACTIVAR'?'pointer':'not-allowed', opacity:delText==='DESACTIVAR'?1:0.4 }}>Desactivar</button>
             </div>
           </div>
         </div>
