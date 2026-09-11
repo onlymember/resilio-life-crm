@@ -47,6 +47,12 @@ export default function CollaborationsPage({ onOpenCreate }) {
 
   useEffect(() => { load(0) }, [])
 
+  useEffect(() => {
+    const h = (e) => { if (e.detail?.type === 'collaboration') load(0) }
+    window.addEventListener('network:created', h)
+    return () => window.removeEventListener('network:created', h)
+  }, [load])
+
   const handleChip = (chip) => {
     setChipId(chip.id)
     setFilters(chip.filters)

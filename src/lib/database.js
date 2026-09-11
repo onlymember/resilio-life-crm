@@ -1007,6 +1007,10 @@ const rowToBrand = (r) => ({
   nextAction:        r.next_action ?? null,
   nextActionAt:      r.next_action_at ?? null,
   lastContactAt:     r.last_contact_at ?? null,
+  whatsapp:          r.whatsapp   ?? null,
+  instagram:         r.instagram  ?? null,
+  phone:             r.phone      ?? null,
+  email:             r.email      ?? null,
 })
 
 const brandToRow = async (b) => {
@@ -1022,6 +1026,10 @@ const brandToRow = async (b) => {
     website:  b.website ?? null,
     next_follow_up: b.nextFollowUp ?? null,
     notes:    b.notes ?? null,
+    whatsapp:  b.whatsapp  ?? null,
+    instagram: b.instagram ?? null,
+    phone:     b.phone     ?? null,
+    email:     b.email     ?? null,
     data:     rest,
   }
 }
@@ -1227,6 +1235,10 @@ export const dbPatchBrand = async (id, patch) => {
     potentialValue:     'potential_value',
     nextAction:         'next_action',
     nextActionAt:       'next_action_at',
+    whatsapp:           'whatsapp',
+    instagram:          'instagram',
+    phone:              'phone',
+    email:              'email',
   }
   const row = {}
   for (const [camel, snake] of Object.entries(FIELD_MAP)) {
@@ -1513,4 +1525,27 @@ export const dbPatchManual = async (id, patch) => {
   if (Object.keys(row).length === 0) return
   const { error } = await supabase.from('manual_sections').update(row).eq('id', id)
   if (error) throw friendly(error)
+}
+
+// ═══════════════════════════════════════════════════════════
+// CALENDARIO (029 migration)
+// SECURITY INVOKER — cada usuario ve su propio alcance.
+// ═══════════════════════════════════════════════════════════
+
+const mapCalendarRow = (r) => ({
+  kind:       r.kind,
+  entityType: r.entity_type,
+  entityId:   r.entity_id,
+  title:      r.title,
+  subtitle:   r.subtitle,
+  dueAt:      r.due_at,
+  priority:   r.priority,
+  isOverdue:  r.is_overdue,
+  isToday:    r.is_today,
+})
+
+export const dbGetCalendarRange = async (from, to) => {
+  const { data, error } = await supabase.rpc('my_calendar_range', { p_from: from, p_to: to })
+  if (error) throw friendly(error)
+  return (data || []).map(mapCalendarRow)
 }

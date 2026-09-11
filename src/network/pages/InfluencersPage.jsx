@@ -85,6 +85,12 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
 
   useEffect(() => { load(0) }, [])
 
+  useEffect(() => {
+    const h = (e) => { if (e.detail?.type === 'influencer') load(0) }
+    window.addEventListener('network:created', h)
+    return () => window.removeEventListener('network:created', h)
+  }, [load])
+
   const handleSearch  = (val) => { setSearch(val); load(0, val, filters, orderBy) }
   const handleApply   = (f)   => { setFilters(f);  load(0, search, f, orderBy); setChipId('all') }
   const handleClear   = ()    => { setFilters({});  load(0, search, {}, orderBy); setChipId('all') }

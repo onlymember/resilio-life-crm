@@ -17,6 +17,7 @@ import TasksPage from './pages/TasksPage.jsx'
 import CommandPage from './pages/CommandPage.jsx'
 import ScoutersPage from './pages/ScoutersPage.jsx'
 import ComingSoonPage from './pages/ComingSoonPage.jsx'
+import CalendarPage from './pages/CalendarPage.jsx'
 import CreateSheet from './components/CreateSheet.jsx'
 import EmptyState from './components/EmptyState.jsx'
 import { Shield } from 'lucide-react'
@@ -63,7 +64,7 @@ export default function NetworkApp({ currentUser }) {
   const [createOpen, setCreateOpen] = useState(false)
 
   const handleCreated = useCallback((type, entity) => {
-    // Las páginas de listado hacen su propio refresh. Aquí solo logueamos.
+    window.dispatchEvent(new CustomEvent('network:created', { detail: { type, entity } }))
     if (import.meta.env.DEV) console.info('[Network] created', type, entity?.id)
   }, [])
 
@@ -124,7 +125,7 @@ export default function NetworkApp({ currentUser }) {
               <ScoutersPage currentUser={currentUser}/>
             </RoleGuard>
           }/>
-          <Route path="calendar"    element={<ComingSoonPage/>}/>
+          <Route path="calendar"    element={<CalendarPage currentUser={currentUser}/>}/>
           <Route path="follow-ups"  element={<FollowUpsPage currentUser={currentUser}/>}/>
           <Route path="notes"       element={<ComingSoonPage/>}/>
           <Route path="missions"    element={<ComingSoonPage/>}/>

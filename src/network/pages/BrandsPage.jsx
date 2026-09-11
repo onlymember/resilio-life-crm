@@ -74,6 +74,12 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
 
   useEffect(() => { load(0) }, [])
 
+  useEffect(() => {
+    const h = (e) => { if (e.detail?.type === 'brand') load(0) }
+    window.addEventListener('network:created', h)
+    return () => window.removeEventListener('network:created', h)
+  }, [load])
+
   const handleSearch = (val) => { setSearch(val); load(0, val, filters) }
   const handleApply  = (f)   => { setFilters(f);  load(0, search, f); setChipId('all') }
   const handleClear  = ()    => { setFilters({});  load(0, search, {}); setChipId('all') }

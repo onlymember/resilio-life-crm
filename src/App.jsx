@@ -172,10 +172,10 @@ const GlobalStyles = () => (
     .nw-home-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
     @media (min-width: 768px) { .nw-home-grid { grid-template-columns: 1fr 1fr; align-items: start; } }
     .nw-stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-    .nw-bottom-nav { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid var(--border-violet); }
+    .nw-bottom-nav { background: var(--glass-bg); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); border: 1px solid var(--border-violet); border-radius: 24px; box-shadow: var(--glow-violet-sm), 0 12px 32px rgba(0,0,0,0.45); }
     @supports not (backdrop-filter: blur(1px)) { .nw-bottom-nav { background: var(--bg-secondary); } }
     .nw-save-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 150; background: var(--bg-secondary); border-top: 1px solid var(--border-violet); padding: 12px 20px; padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
-    @media (max-width: 767px) { .nw-save-bar { bottom: calc(60px + env(safe-area-inset-bottom, 0px)); } }
+    @media (max-width: 767px) { .nw-save-bar { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); } }
   `}</style>
 )
 

@@ -181,7 +181,7 @@ export default function MobileLayout({ currentUser, onCreated }) {
   useEffect(() => () => { document.body.style.overflow = '' }, [])
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', paddingBottom: 'calc(96px + env(safe-area-inset-bottom, 0px))' }}>
       <MobileHeader currentUser={currentUser} onOpenDrawer={openDrawer}/>
 
       {drawerOpen && <NavDrawer currentUser={currentUser} onClose={closeDrawer}/>}
@@ -191,7 +191,7 @@ export default function MobileLayout({ currentUser, onCreated }) {
       </main>
 
       {/* Bottom Nav with glassmorphism */}
-      <nav className="nw-bottom-nav" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: 'calc(60px + env(safe-area-inset-bottom, 0px))', display: 'flex', alignItems: 'center', zIndex: 100, paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <nav className="nw-bottom-nav" style={{ position: 'fixed', bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', left: 16, right: 16, height: 64, display: 'flex', alignItems: 'center', zIndex: 100 }}>
         <NavBtn to="/network/home"   icon={Home}        label={t('nav.home')}        exactActive/>
         <NavBtn to="/network/tasks"  icon={CheckSquare} label={t('nav.tasks')}/>
 

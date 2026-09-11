@@ -169,6 +169,12 @@ export default function OpportunitiesPage({ onOpenCreate, currentUser }) {
 
   useEffect(() => { load() }, [load])
 
+  useEffect(() => {
+    const h = (e) => { if (e.detail?.type === 'opportunity') load() }
+    window.addEventListener('network:created', h)
+    return () => window.removeEventListener('network:created', h)
+  }, [load])
+
   // Group rows by status for kanban
   const byStatus = {}
   STATUSES.forEach(s => { byStatus[s] = [] })

@@ -31,7 +31,7 @@ export const NAV_SECTIONS = [
     roles: null,
     items: [
       { path: '/network/tasks',       labelKey: 'nav.tasks',      icon: CheckSquare, soon: false, roles: null },
-      { path: '/network/calendar',    labelKey: 'nav.calendar',   icon: Calendar,    soon: true,  roles: null },
+      { path: '/network/calendar',    labelKey: 'nav.calendar',   icon: Calendar,    soon: false, roles: null },
       { path: '/network/follow-ups',  labelKey: 'nav.followUps',  icon: ArrowRight,  soon: false, roles: null },
       { path: '/network/notes',       labelKey: 'nav.notes',      icon: FileText,    soon: true,  roles: null },
     ],

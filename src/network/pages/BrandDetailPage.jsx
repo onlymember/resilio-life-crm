@@ -227,6 +227,22 @@ export default function BrandDetailPage({ currentUser }) {
           </div>
         </div>
 
+        {/* CONTACTO */}
+        <div style={sectionStyle}>
+          <SectionHeader label={t('brand.sections.contact')} fields={['whatsapp','instagram','phone','email']} dirty={dirty}/>
+          {!get('whatsapp') && !get('instagram') && !get('phone') && !get('email') && (
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 10, fontStyle: 'italic' }}>
+              {t('brand.contactEmpty')}
+            </div>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <Field label={t('brand.fields.whatsapp')} value={get('whatsapp')} onChange={v => set('whatsapp', v)} placeholder="+54 9 11 1234 5678"/>
+            <Field label={t('brand.fields.instagram')} value={get('instagram')} onChange={v => set('instagram', v)} placeholder="@marca"/>
+            <Field label={t('brand.fields.phone')} value={get('phone')} onChange={v => set('phone', v)} type="tel" placeholder="+54 11 1234 5678"/>
+            <Field label={t('brand.fields.email')} value={get('email')} onChange={v => set('email', v)} type="email" placeholder="contacto@marca.com"/>
+          </div>
+        </div>
+
         {/* UBICACIÓN */}
         <div style={sectionStyle}>
           <SectionHeader label={t('brand.sections.location')} fields={['cityId','countryId']} dirty={dirty}/>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { X, Users, Building2, Briefcase, ChevronLeft, AlertCircle } from 'lucide-react'
+import { X, Users, Building2, Briefcase, Handshake, ChevronLeft, AlertCircle } from 'lucide-react'
 import { t } from '../../i18n/index.js'
-import { dbGetGeography, dbListAllBrands, dbSaveInfluencer, dbSaveBrand, dbSaveOpportunity } from '../../lib/database.js'
+import { dbGetGeography, dbListAllBrands, dbListAllInfluencers, dbSaveInfluencer, dbSaveBrand, dbSaveOpportunity, dbSaveCollaboration, dbGetActivationTypes } from '../../lib/database.js'
 
 const CATEGORIES = t('categories') // array desde es.json
 
@@ -150,6 +150,51 @@ function OpportunityForm({ brands, onSave, saving, error }) {
   )
 }
 
+// ─── Formulario Colaboración ──────────────────────────────────────────────────
+
+function CollaborationForm({ influencers, brands, activationTypes, onSave, saving, error }) {
+  const [form, setForm] = useState({ influencerId: '', brandId: '', activationTypeId: '', startDate: '' })
+  const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
+
+  return (
+    <form onSubmit={e => { e.preventDefault(); onSave(form) }} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <Field label={t('form.influencer')} required>
+        <select value={form.influencerId} onChange={e => set('influencerId', e.target.value)} style={SELECT_STYLE}>
+          <option value="">{t('create.collaboration.selectInfluencer')}</option>
+          {influencers.map(i => <option key={i.id} value={i.id}>{i.name || i.username}</option>)}
+        </select>
+      </Field>
+      <Field label={t('form.brand')}>
+        <select value={form.brandId} onChange={e => set('brandId', e.target.value)} style={SELECT_STYLE}>
+          <option value="">{t('form.selectBrand')}</option>
+          {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+        </select>
+      </Field>
+      <Field label={t('form.activationType')}>
+        {activationTypes.length === 0 ? (
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', padding: '8px 0' }}>
+            {t('create.collaboration.emptyActivationTypes')}
+          </div>
+        ) : (
+          <select value={form.activationTypeId} onChange={e => set('activationTypeId', e.target.value)} style={SELECT_STYLE}>
+            <option value="">{t('create.collaboration.selectActivationType')}</option>
+            {activationTypes.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+          </select>
+        )}
+      </Field>
+      <Field label={t('form.estimatedDate')}>
+        <input
+          type="date" value={form.startDate} onChange={e => set('startDate', e.target.value)}
+          style={{ ...INPUT_STYLE, colorScheme: 'dark' }}
+          onFocus={e => e.target.style.border = '1px solid rgba(139,92,246,0.6)'}
+          onBlur={e => e.target.style.border = '1px solid rgba(139,92,246,0.25)'}
+        />
+      </Field>
+      <SaveButton saving={saving} error={error}/>
+    </form>
+  )
+}
+
 // ─── Botón Guardar ────────────────────────────────────────────────────────────
 
 function SaveButton({ saving, error }) {
@@ -203,17 +248,21 @@ function TypeButton({ icon: Icon, label, color, onClick }) {
 // ─── Sheet principal ──────────────────────────────────────────────────────────
 
 export default function CreateSheet({ isOpen, onClose, currentUser, onCreated }) {
-  const [step,     setStep]    = useState('select') // 'select' | 'influencer' | 'brand' | 'opportunity'
-  const [saving,   setSaving]  = useState(false)
-  const [error,    setError]   = useState(null)
-  const [cities,   setCities]  = useState([])
-  const [brands,   setBrands]  = useState([])
+  const [step,           setStep]           = useState('select') // 'select' | 'influencer' | 'brand' | 'opportunity' | 'collaboration'
+  const [saving,         setSaving]         = useState(false)
+  const [error,          setError]          = useState(null)
+  const [cities,         setCities]         = useState([])
+  const [brands,         setBrands]         = useState([])
+  const [influencers,    setInfluencers]    = useState([])
+  const [activationTypes,setActivationTypes]= useState([])
 
   useEffect(() => {
     if (!isOpen) return
     setStep('select'); setError(null)
     dbGetGeography().then(g => setCities(g.cities || [])).catch(() => {})
     dbListAllBrands().then(b => setBrands(b)).catch(() => {})
+    dbListAllInfluencers().then(i => setInfluencers(i)).catch(() => {})
+    dbGetActivationTypes().then(a => setActivationTypes(a)).catch(() => {})
   }, [isOpen])
 
   const handleSaveInfluencer = useCallback(async (form) => {
@@ -272,12 +321,33 @@ export default function CreateSheet({ isOpen, onClose, currentUser, onCreated })
     }
   }, [onClose, onCreated, currentUser?.id])
 
+  const handleSaveCollaboration = useCallback(async (form) => {
+    if (!form.influencerId) { setError(t('form.required')); return }
+    setSaving(true); setError(null)
+    try {
+      const saved = await dbSaveCollaboration({
+        influencerId:     form.influencerId || null,
+        brandId:          form.brandId          || null,
+        activationTypeId: form.activationTypeId || null,
+        startDate:        form.startDate        || null,
+        status:           'proposed',
+      }, currentUser?.id)
+      onCreated?.('collaboration', saved)
+      onClose()
+    } catch (e) {
+      setError(e.message || t('errors.saving'))
+    } finally {
+      setSaving(false)
+    }
+  }, [onClose, onCreated, currentUser?.id])
+
   if (!isOpen) return null
 
   const FORM_TITLE = {
-    influencer:  `+ ${t('create.influencer.label')}`,
-    brand:       `+ ${t('create.brand.label')}`,
-    opportunity: `+ ${t('create.opportunity.label')}`,
+    influencer:    `+ ${t('create.influencer.label')}`,
+    brand:         `+ ${t('create.brand.label')}`,
+    opportunity:   `+ ${t('create.opportunity.label')}`,
+    collaboration: `+ ${t('create.collaboration.label')}`,
   }
 
   return (
@@ -313,15 +383,17 @@ export default function CreateSheet({ isOpen, onClose, currentUser, onCreated })
         {/* Selector de tipo */}
         {step === 'select' && (
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', paddingBottom: 8 }}>
-            <TypeButton icon={Users}     label={t('create.influencer.label')}   color="#8B5CF6" onClick={() => setStep('influencer')}/>
-            <TypeButton icon={Building2} label={t('create.brand.label')}        color="#22D3EE" onClick={() => setStep('brand')}/>
-            <TypeButton icon={Briefcase} label={t('create.opportunity.label')}  color="#FBBF24" onClick={() => setStep('opportunity')}/>
+            <TypeButton icon={Users}      label={t('create.influencer.label')}   color="#8B5CF6" onClick={() => setStep('influencer')}/>
+            <TypeButton icon={Building2}  label={t('create.brand.label')}        color="#22D3EE" onClick={() => setStep('brand')}/>
+            <TypeButton icon={Briefcase}  label={t('create.opportunity.label')}  color="#FBBF24" onClick={() => setStep('opportunity')}/>
+            <TypeButton icon={Handshake}  label={t('create.collaboration.label')} color="#34D399" onClick={() => setStep('collaboration')}/>
           </div>
         )}
 
-        {step === 'influencer'  && <InfluencerForm  cities={cities} onSave={handleSaveInfluencer}  saving={saving} error={error}/>}
-        {step === 'brand'       && <BrandForm        cities={cities} onSave={handleSaveBrand}        saving={saving} error={error}/>}
-        {step === 'opportunity' && <OpportunityForm  brands={brands} onSave={handleSaveOpportunity}  saving={saving} error={error}/>}
+        {step === 'influencer'    && <InfluencerForm    cities={cities} onSave={handleSaveInfluencer}    saving={saving} error={error}/>}
+        {step === 'brand'         && <BrandForm          cities={cities} onSave={handleSaveBrand}          saving={saving} error={error}/>}
+        {step === 'opportunity'   && <OpportunityForm    brands={brands} onSave={handleSaveOpportunity}    saving={saving} error={error}/>}
+        {step === 'collaboration' && <CollaborationForm  influencers={influencers} brands={brands} activationTypes={activationTypes} onSave={handleSaveCollaboration} saving={saving} error={error}/>}
       </div>
     </>
   )

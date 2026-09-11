@@ -57,6 +57,7 @@
       "identity": "Identidad",
       "location": "Ubicación",
       "relationship": "Relación",
+      "contact": "Contacto",
       "links": "Vínculos",
       "activity": "Actividad"
     },
@@ -70,8 +71,13 @@
       "notes": "Notas",
       "relationshipStatus": "Relación",
       "nextAction": "Próxima acción",
-      "nextActionAt": "Fecha"
+      "nextActionAt": "Fecha",
+      "whatsapp": "WhatsApp",
+      "instagram": "Instagram",
+      "phone": "Teléfono",
+      "email": "Email"
     },
+    "contactEmpty": "Sin datos de contacto. Completá para habilitar acceso rápido desde la lista.",
     "save": "Guardar cambios",
     "saving": "Guardando…",
     "saved": "Guardado",
@@ -84,7 +90,13 @@
     "selectType": "¿Qué querés agregar?",
     "followUp": "Seguimiento",
     "task": "Tarea",
-    "collaboration": "Colaboración",
+    "collaboration": {
+      "label": "Colaboración",
+      "selectInfluencer": "Seleccionar influencer",
+      "selectActivationType": "Tipo de activación (opcional)",
+      "emptyActivationTypes": "Sin tipos disponibles",
+      "estimatedDate": "Fecha estimada (opcional)"
+    },
     "note": "Nota",
     "influencer": {
       "label": "Influencer",
@@ -118,7 +130,10 @@
     "required": "Campo requerido",
     "selectCity": "Seleccionar ciudad",
     "selectBrand": "Seleccionar marca",
-    "selectCategory": "Seleccionar categoría"
+    "selectCategory": "Seleccionar categoría",
+    "influencer": "Influencer",
+    "activationType": "Tipo de activación",
+    "estimatedDate": "Fecha estimada"
   },
   "empty": {
     "noInfluencers": "Sin influencers todavía",
@@ -466,6 +481,16 @@
       "pitch":     "Pitch & Objections",
       "sistema":   "Using the System"
     }
+  },
+  "calendar": {
+    "title": "Calendario",
+    "subtitle": "Tu agenda del mes",
+    "today": "Hoy",
+    "empty": "Sin eventos este mes",
+    "emptyCta": "Agendá tu próximo seguimiento desde un influencer u oportunidad.",
+    "more": "+{n} más",
+    "days": ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
+    "months": ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
   },
   "followups": {
     "title":        "Follow-ups",
