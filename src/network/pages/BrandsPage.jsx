@@ -4,10 +4,21 @@ import NetworkCard from '../components/NetworkCard.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import FilterSheet from '../components/FilterSheet.jsx'
 import AssignModal from '../components/AssignModal.jsx'
+import BulkBar from '../components/BulkBar.jsx'
 import { t } from '../../i18n/index.js'
 import { dbGetBrands, dbGetGeography, dbGetBrandCategories, dbLogContact } from '../../lib/database.js'
 import { useNavigate } from 'react-router-dom'
 import { COMMAND_ROLES } from '../routes.js'
+
+const useIsDesktop = () => {
+  const [desktop, setDesktop] = useState(window.innerWidth >= 640)
+  useEffect(() => {
+    const h = () => setDesktop(window.innerWidth >= 640)
+    window.addEventListener('resize', h)
+    return () => window.removeEventListener('resize', h)
+  }, [])
+  return desktop
+}
 
 const PAGE_SIZE = 30
 
@@ -20,6 +31,7 @@ const QUICK_CHIPS = [
 
 export default function BrandsPage({ onOpenCreate, currentUser }) {
   const navigate    = useNavigate()
+  const isDesktop   = useIsDesktop()
   const canReassign = COMMAND_ROLES.includes(currentUser?.rol)
 
   const [rows,           setRows]           = useState([])
@@ -34,6 +46,12 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
   const [brandCats,      setBrandCats]      = useState([])
   const [chipId,         setChipId]         = useState('all')
   const [assignTarget,   setAssignTarget]   = useState(null)
+  const [selected,       setSelected]       = useState(new Set())
+
+  const toggleSelect = (id) => setSelected(prev => {
+    const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next
+  })
+  const clearSelect = () => setSelected(new Set())
 
   useEffect(() => {
     Promise.all([dbGetGeography(), dbGetBrandCategories()])
@@ -117,16 +135,28 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
           {rows.map(b => (
-            <NetworkCard
-              key={b.id}
-              entity={b}
-              entityType="brand"
-              cityName={cityMap[b.cityId]}
-              onClick={() => navigate(`/network/brands/${b.id}`)}
-              onContact={handleContact}
-              canReassign={canReassign}
-              onReassign={setAssignTarget}
-            />
+            <div key={b.id} style={{ position:'relative' }}>
+              {isDesktop && canReassign && (
+                <input
+                  type="checkbox"
+                  checked={selected.has(b.id)}
+                  onChange={() => toggleSelect(b.id)}
+                  onClick={e => e.stopPropagation()}
+                  style={{ position:'absolute', left:14, top:18, zIndex:2, cursor:'pointer', accentColor:'var(--primary-violet)', width:14, height:14 }}
+                />
+              )}
+              <div style={isDesktop && canReassign ? { paddingLeft:34 } : {}}>
+                <NetworkCard
+                  entity={b}
+                  entityType="brand"
+                  cityName={cityMap[b.cityId]}
+                  onClick={() => navigate(`/network/brands/${b.id}`)}
+                  onContact={handleContact}
+                  canReassign={canReassign}
+                  onReassign={setAssignTarget}
+                />
+              </div>
+            </div>
           ))}
           {rows.length < total && (
             <button onClick={() => load(page+1)} disabled={loading} style={{ padding:'12px', borderRadius:10, background:'rgba(139,92,246,0.08)', border:'1px solid var(--border-violet)', color:'var(--text-secondary)', cursor:'pointer', fontSize:13 }}>
@@ -152,6 +182,16 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
         entityType="brand"
         onAssigned={handleAssigned}
       />
+
+      {isDesktop && canReassign && (
+        <BulkBar
+          selected={selected}
+          rows={rows}
+          entityType="brand"
+          onClear={clearSelect}
+          onRefresh={() => load(0)}
+        />
+      )}
     </div>
   )
 }

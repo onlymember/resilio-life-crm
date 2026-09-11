@@ -12,6 +12,7 @@
     "followUps": "Seguimiento",
     "notes": "Notas",
     "command": "Command Center",
+    "scouters": "Scouters",
     "missions": "Misiones",
     "roadmap": "Hoja de Ruta",
     "rewards": "Premios",
@@ -275,13 +276,24 @@
     "note": "Nota"
   },
   "pages": {
-    "home": { "title": "Scouter Home", "subtitle": "Tu centro de operaciones", "comingSoonSubtitle": "Scouter Home (Fase 2C): alertas de seguimiento, tareas del día y feed de actividad" },
-    "command": { "title": "Command Center", "subtitle": "Vista de dirección", "comingSoonSubtitle": "Command Center (Fase 2D): métricas de la red, alertas y goals por ciudad" },
-    "influencers": { "title": "Influencers", "subtitle": "Tu cartera de talentos" },
-    "brands": { "title": "Marcas", "subtitle": "Clientes y prospectos" },
-    "opportunities": { "title": "Oportunidades", "subtitle": "Pipeline activo" },
-    "collaborations": { "title": "Colaboraciones", "subtitle": "Activaciones" },
-    "tasks": { "title": "Tareas", "subtitle": "Tus pendientes" }
+    "home":    { "title": "Scouter Home",    "subtitle": "Tu centro de operaciones",  "comingSoonSubtitle": "Scouter Home (Fase 2C): alertas de seguimiento, tareas del día y feed de actividad" },
+    "command": {
+      "title": "Command Center",
+      "subtitle": "Vista de dirección",
+      "comingSoonSubtitle": "Command Center (Fase 2D): métricas de la red, alertas y goals por ciudad",
+      "sections": {
+        "alerts":   "Alertas",
+        "network":  "La Red",
+        "scouters": "Necesitan atención",
+        "goals":    "Objetivos"
+      }
+    },
+    "scouters":       { "title": "Scouters",      "subtitle": "La red completa" },
+    "influencers":    { "title": "Influencers",   "subtitle": "Tu cartera de talentos" },
+    "brands":         { "title": "Marcas",         "subtitle": "Clientes y prospectos" },
+    "opportunities":  { "title": "Oportunidades", "subtitle": "Pipeline activo" },
+    "collaborations": { "title": "Colaboraciones","subtitle": "Activaciones" },
+    "tasks":          { "title": "Tareas",         "subtitle": "Tus pendientes" }
   },
   "layout": {
     "backToApp": "Salir de Network",
@@ -330,5 +342,251 @@
     "unsavedWarning": "Tenés cambios sin guardar. ¿Salir de todos modos?",
     "cityWarning": "Sin ciudad asignada — algunos filtros no van a funcionar.",
     "noCityPlaceholder": "Seleccionar ciudad"
+  },
+  "command": {
+    "allAlertsClear":    "Todo al día",
+    "allAlertsClearSub": "Sin alertas activas.",
+    "allScoutersClear":  "Todos los Scouters al día",
+    "viewAll":           "Ver todos ({n})",
+    "newScouter":        "Nuevo Scouter",
+    "refresh":           "Actualizar",
+    "alerts": {
+      "assign":    "Asignar",
+      "reschedule":"Reagendar",
+      "goTo":      "Ver",
+      "alta":      "Alta",
+      "media":     "Media",
+      "types": {
+        "task_overdue":        "Tarea vencida",
+        "action_overdue":      "Acción vencida",
+        "brand_stale":         "Sin seguimiento",
+        "opportunity_stalled": "Oportunidad estancada",
+        "unassigned":          "Sin dueño",
+        "scouter_inactive":    "Scouter inactivo",
+        "goal_behind":         "Objetivo atrasado"
+      }
+    },
+    "unassigned": {
+      "title":        "Reparto pendiente",
+      "influencers":  "influencers sin dueño",
+      "brands":       "marcas sin dueño",
+      "noCityInf":    "influencers sin ciudad",
+      "noCityBrands": "marcas sin ciudad",
+      "usersNoRole":  "usuarios sin rol"
+    },
+    "goals": {
+      "behind":  "Atrasado",
+      "onTrack": "En ritmo",
+      "noGoals": "Sin objetivos activos",
+      "progress":"{current} / {target}",
+      "pct":     "{n}%"
+    },
+    "net": {
+      "scouters":       "Scouters",
+      "scoutersActive": "Activos",
+      "countries":      "Países",
+      "cities":         "Ciudades",
+      "influencers":    "Influencers",
+      "brands":         "Marcas",
+      "opportunities":  "Oportunidades",
+      "collaborations": "Colaboraciones",
+      "tasksOpen":      "Tareas abiertas",
+      "tasksOverdue":   "Vencidas"
+    }
+  },
+  "bulk": {
+    "selected":    "{n} seleccionados",
+    "assign":      "Asignar en lote",
+    "clear":       "Limpiar selección",
+    "assigning":   "{done}/{total} asignados…",
+    "resultTitle": "Resultado del lote",
+    "resultOk":    "{n} asignados",
+    "resultFailed":"{n} fallaron",
+    "close":       "Cerrar",
+    "cityMismatch":"{n} de los seleccionados no son de la ciudad de {scouter}. ¿Continuar?",
+    "confirm":     "Confirmar",
+    "cancel":      "Cancelar",
+    "pickScouter": "¿A quién asignar?"
+  },
+  "scouter": {
+    "create":          "Nuevo Scouter",
+    "editCity":        "Cambiar ciudad",
+    "selectUser":      "Seleccionar usuario",
+    "userSearch":      "Buscar por nombre o email…",
+    "noUsers":         "No hay usuarios disponibles",
+    "level":           "Nivel",
+    "team":            "Equipo",
+    "status":          "Estado",
+    "cityChangeWarning":"Sus influencers y marcas NO se mudan de ciudad. Quedan donde estaban.",
+    "saving":          "Guardando…",
+    "saved":           "Guardado",
+    "daysInactive":    "{n}d inactivo",
+    "groups": {
+      "new":      "Sin rol activo (nuevos Scouters)",
+      "existing": "Scouters existentes (cambiar ciudad)"
+    },
+    "statuses": {
+      "active":    "Activo",
+      "inactive":  "Inactivo",
+      "suspended": "Suspendido"
+    },
+    "cols": {
+      "nombre":       "Nombre",
+      "ciudad":       "Ciudad",
+      "level":        "Nivel",
+      "influencers":  "Inf",
+      "brands":       "Marcas",
+      "opportunities":"Opps",
+      "tasksOverdue": "T. venc.",
+      "daysInactive": "Inactividad"
+    }
+  },
+  "period": {
+    "week":    "Esta semana",
+    "month":   "Este mes",
+    "quarter": "Este trimestre",
+    "range":   "Rango",
+    "from":    "Desde",
+    "to":      "Hasta",
+    "apply":   "Aplicar"
+  },
+  "manual": {
+    "title":      "Manual de Red",
+    "subtitle":   "Todo lo que necesitás saber",
+    "loading":    "Cargando manual…",
+    "empty":      "No hay contenido disponible.",
+    "edit":       "Editar",
+    "save":       "Guardar",
+    "cancel":     "Cancelar",
+    "saving":     "Guardando…",
+    "unsaved":    "Tenés cambios sin guardar. ¿Salir?",
+    "cats": {
+      "network":   "La Red",
+      "operacion": "La Operación",
+      "pitch":     "Pitch y Objeciones",
+      "sistema":   "Usar el Sistema"
+    }
+  },
+  "followups": {
+    "title":        "Seguimiento",
+    "subtitle":     "Todas tus acciones pendientes",
+    "empty":        "Sin seguimientos pendientes.",
+    "emptyGroup":   "Sin items.",
+    "groups": {
+      "overdue":   "Vencidos",
+      "today":     "Hoy",
+      "week":      "Esta semana",
+      "later":     "Más adelante"
+    },
+    "filters": {
+      "all":         "Todos",
+      "influencer":  "Influencers",
+      "brand":       "Marcas",
+      "opportunity": "Oportunidades"
+    },
+    "viewMore":     "Ver más ({n})"
+  },
+  "collab": {
+    "title":   "Colaboraciones",
+    "subtitle":"Activaciones activas",
+    "new":     "Nueva colaboración",
+    "empty":   "Sin colaboraciones.",
+    "sections": {
+      "data":        "Datos",
+      "dates":       "Fechas",
+      "deliverables":"Entregables",
+      "status":      "Estado",
+      "economy":     "Economía",
+      "results":     "Resultados",
+      "activity":    "Actividad"
+    },
+    "fields": {
+      "influencer":     "Influencer",
+      "brand":          "Marca",
+      "campaign":       "Campaña",
+      "activationType": "Tipo de activación",
+      "status":         "Estado",
+      "contentStatus":  "Estado de contenido",
+      "paymentStatus":  "Estado de pago",
+      "startDate":      "Inicio",
+      "endDate":        "Fin",
+      "amount":         "Monto",
+      "currency":       "Moneda",
+      "results":        "Resultados",
+      "notes":          "Notas",
+      "deliverables":   "Entregables"
+    },
+    "status": {
+      "proposed":        "Propuesta",
+      "confirmed":       "Confirmada",
+      "in_progress":     "En curso",
+      "content_pending": "Contenido pendiente",
+      "completed":       "Completada",
+      "cancelled":       "Cancelada"
+    },
+    "contentStatus": {
+      "pending":   "Pendiente",
+      "submitted": "Enviado",
+      "approved":  "Aprobado",
+      "rejected":  "Rechazado"
+    },
+    "paymentStatus": {
+      "pending":  "Pendiente",
+      "invoiced": "Facturado",
+      "paid":     "Pagado"
+    },
+    "addDeliverable":    "Agregar entregable",
+    "deliverablePlaceholder": "Ej: 3 stories + 1 post",
+    "noCampaign":        "Sin campaña asociada",
+    "noCampaignHint":    "(opcional)",
+    "resultsPlaceholder":"Describí los resultados: alcance, métricas, feedback…",
+    "unsavedWarning":    "Tenés cambios sin guardar. ¿Salir de todos modos?"
+  },
+  "opportunities": {
+    "title":   "Oportunidades",
+    "subtitle":"Pipeline activo",
+    "new":     "Nueva oportunidad",
+    "empty":   "Sin oportunidades.",
+    "sections": {
+      "data":       "Datos",
+      "location":   "Ubicación",
+      "pipeline":   "Pipeline",
+      "value":      "Valor",
+      "relationship":"Relación",
+      "closing":    "Cierre",
+      "links":      "Vínculos",
+      "activity":   "Actividad"
+    },
+    "fields": {
+      "title":       "Título",
+      "description": "Descripción",
+      "source":      "Fuente",
+      "brand":       "Marca",
+      "city":        "Ciudad",
+      "country":     "País",
+      "status":      "Estado",
+      "value":       "Valor estimado",
+      "currency":    "Moneda",
+      "nextAction":  "Próxima acción",
+      "nextActionAt":"Fecha",
+      "notes":       "Notas",
+      "lostReason":  "Motivo de pérdida"
+    },
+    "status": {
+      "new":             "Nuevo",
+      "qualifying":      "Calificando",
+      "contacted":       "Contactado",
+      "in_conversation": "En conversación",
+      "proposal":        "Propuesta",
+      "won":             "Ganado",
+      "lost":            "Perdido",
+      "on_hold":         "En espera"
+    },
+    "kanban": {
+      "empty":   "Sin oportunidades",
+      "total":   "{n} total",
+      "tooMany": "Hay más de 200 — mostrando las más recientes."
+    },
+    "unsavedWarning":"Tenés cambios sin guardar. ¿Salir de todos modos?"
   }
 }

@@ -12,6 +12,7 @@
     "followUps": "Seguimiento",
     "notes": "Notas",
     "command": "Command Center",
+    "scouters": "Scouters",
     "missions": "Misiones",
     "roadmap": "Hoja de Ruta",
     "rewards": "Premios",
@@ -275,13 +276,24 @@
     "note": "Nota"
   },
   "pages": {
-    "home": { "title": "Scouter Home", "subtitle": "Tu centro de operaciones", "comingSoonSubtitle": "Scouter Home (Fase 2C): alertas de seguimiento, tareas del día y feed de actividad" },
-    "command": { "title": "Command Center", "subtitle": "Vista de dirección", "comingSoonSubtitle": "Command Center (Fase 2D): métricas de la red, alertas y goals por ciudad" },
-    "influencers": { "title": "Influencers", "subtitle": "Tu cartera de talentos" },
-    "brands": { "title": "Marcas", "subtitle": "Clientes y prospectos" },
-    "opportunities": { "title": "Oportunidades", "subtitle": "Pipeline activo" },
-    "collaborations": { "title": "Colaboraciones", "subtitle": "Activaciones" },
-    "tasks": { "title": "Tareas", "subtitle": "Tus pendientes" }
+    "home":    { "title": "Scouter Home",    "subtitle": "Tu centro de operaciones",  "comingSoonSubtitle": "Scouter Home (Fase 2C): alertas de seguimiento, tareas del día y feed de actividad" },
+    "command": {
+      "title": "Command Center",
+      "subtitle": "Vista de dirección",
+      "comingSoonSubtitle": "Command Center (Fase 2D): métricas de la red, alertas y goals por ciudad",
+      "sections": {
+        "alerts":   "Alertas",
+        "network":  "La Red",
+        "scouters": "Necesitan atención",
+        "goals":    "Objetivos"
+      }
+    },
+    "scouters":       { "title": "Scouters",      "subtitle": "La red completa" },
+    "influencers":    { "title": "Influencers",   "subtitle": "Tu cartera de talentos" },
+    "brands":         { "title": "Marcas",         "subtitle": "Clientes y prospectos" },
+    "opportunities":  { "title": "Oportunidades", "subtitle": "Pipeline activo" },
+    "collaborations": { "title": "Colaboraciones","subtitle": "Activaciones" },
+    "tasks":          { "title": "Tareas",         "subtitle": "Tus pendientes" }
   },
   "layout": {
     "backToApp": "Salir de Network",
@@ -330,5 +342,251 @@
     "unsavedWarning": "Tenés cambios sin guardar. ¿Salir de todos modos?",
     "cityWarning": "Sin ciudad asignada — algunos filtros no van a funcionar.",
     "noCityPlaceholder": "Seleccionar ciudad"
+  },
+  "command": {
+    "allAlertsClear":    "Todo al día",
+    "allAlertsClearSub": "Sin alertas activas.",
+    "allScoutersClear":  "Todos los Scouters al día",
+    "viewAll":           "Ver todos ({n})",
+    "newScouter":        "Nuevo Scouter",
+    "refresh":           "Actualizar",
+    "alerts": {
+      "assign":    "Asignar",
+      "reschedule":"Reagendar",
+      "goTo":      "Ver",
+      "alta":      "Alta",
+      "media":     "Media",
+      "types": {
+        "task_overdue":        "Tarea vencida",
+        "action_overdue":      "Acción vencida",
+        "brand_stale":         "Sin seguimiento",
+        "opportunity_stalled": "Oportunidad estancada",
+        "unassigned":          "Sin dueño",
+        "scouter_inactive":    "Scouter inactivo",
+        "goal_behind":         "Objetivo atrasado"
+      }
+    },
+    "unassigned": {
+      "title":        "Reparto pendiente",
+      "influencers":  "influencers sin dueño",
+      "brands":       "marcas sin dueño",
+      "noCityInf":    "influencers sin ciudad",
+      "noCityBrands": "marcas sin ciudad",
+      "usersNoRole":  "usuarios sin rol"
+    },
+    "goals": {
+      "behind":  "Atrasado",
+      "onTrack": "En ritmo",
+      "noGoals": "Sin objetivos activos",
+      "progress":"{current} / {target}",
+      "pct":     "{n}%"
+    },
+    "net": {
+      "scouters":       "Scouters",
+      "scoutersActive": "Activos",
+      "countries":      "Países",
+      "cities":         "Ciudades",
+      "influencers":    "Influencers",
+      "brands":         "Marcas",
+      "opportunities":  "Oportunidades",
+      "collaborations": "Colaboraciones",
+      "tasksOpen":      "Tareas abiertas",
+      "tasksOverdue":   "Vencidas"
+    }
+  },
+  "bulk": {
+    "selected":    "{n} seleccionados",
+    "assign":      "Asignar en lote",
+    "clear":       "Limpiar selección",
+    "assigning":   "{done}/{total} asignados…",
+    "resultTitle": "Resultado del lote",
+    "resultOk":    "{n} asignados",
+    "resultFailed":"{n} fallaron",
+    "close":       "Cerrar",
+    "cityMismatch":"{n} de los seleccionados no son de la ciudad de {scouter}. ¿Continuar?",
+    "confirm":     "Confirmar",
+    "cancel":      "Cancelar",
+    "pickScouter": "¿A quién asignar?"
+  },
+  "scouter": {
+    "create":          "Nuevo Scouter",
+    "editCity":        "Cambiar ciudad",
+    "selectUser":      "Seleccionar usuario",
+    "userSearch":      "Buscar por nombre o email…",
+    "noUsers":         "No hay usuarios disponibles",
+    "level":           "Nivel",
+    "team":            "Equipo",
+    "status":          "Estado",
+    "cityChangeWarning":"Sus influencers y marcas NO se mudan de ciudad. Quedan donde estaban.",
+    "saving":          "Guardando…",
+    "saved":           "Guardado",
+    "daysInactive":    "{n}d inactivo",
+    "groups": {
+      "new":      "Sin rol activo (nuevos Scouters)",
+      "existing": "Scouters existentes (cambiar ciudad)"
+    },
+    "statuses": {
+      "active":    "Activo",
+      "inactive":  "Inactivo",
+      "suspended": "Suspendido"
+    },
+    "cols": {
+      "nombre":       "Nombre",
+      "ciudad":       "Ciudad",
+      "level":        "Nivel",
+      "influencers":  "Inf",
+      "brands":       "Marcas",
+      "opportunities":"Opps",
+      "tasksOverdue": "T. venc.",
+      "daysInactive": "Inactividad"
+    }
+  },
+  "period": {
+    "week":    "This week",
+    "month":   "This month",
+    "quarter": "This quarter",
+    "range":   "Range",
+    "from":    "From",
+    "to":      "To",
+    "apply":   "Apply"
+  },
+  "manual": {
+    "title":      "Network Manual",
+    "subtitle":   "Everything you need to know",
+    "loading":    "Loading manual…",
+    "empty":      "No content available.",
+    "edit":       "Edit",
+    "save":       "Save",
+    "cancel":     "Cancel",
+    "saving":     "Saving…",
+    "unsaved":    "You have unsaved changes. Leave?",
+    "cats": {
+      "network":   "The Network",
+      "operacion": "Operations",
+      "pitch":     "Pitch & Objections",
+      "sistema":   "Using the System"
+    }
+  },
+  "followups": {
+    "title":        "Follow-ups",
+    "subtitle":     "All your pending actions",
+    "empty":        "No pending follow-ups.",
+    "emptyGroup":   "No items.",
+    "groups": {
+      "overdue":   "Overdue",
+      "today":     "Today",
+      "week":      "This week",
+      "later":     "Later"
+    },
+    "filters": {
+      "all":         "All",
+      "influencer":  "Influencers",
+      "brand":       "Brands",
+      "opportunity": "Opportunities"
+    },
+    "viewMore":     "View more ({n})"
+  },
+  "collab": {
+    "title":   "Collaborations",
+    "subtitle":"Active activations",
+    "new":     "New collaboration",
+    "empty":   "No collaborations.",
+    "sections": {
+      "data":        "Data",
+      "dates":       "Dates",
+      "deliverables":"Deliverables",
+      "status":      "Status",
+      "economy":     "Economy",
+      "results":     "Results",
+      "activity":    "Activity"
+    },
+    "fields": {
+      "influencer":     "Influencer",
+      "brand":          "Brand",
+      "campaign":       "Campaign",
+      "activationType": "Activation type",
+      "status":         "Status",
+      "contentStatus":  "Content status",
+      "paymentStatus":  "Payment status",
+      "startDate":      "Start",
+      "endDate":        "End",
+      "amount":         "Amount",
+      "currency":       "Currency",
+      "results":        "Results",
+      "notes":          "Notes",
+      "deliverables":   "Deliverables"
+    },
+    "status": {
+      "proposed":        "Proposed",
+      "confirmed":       "Confirmed",
+      "in_progress":     "In progress",
+      "content_pending": "Content pending",
+      "completed":       "Completed",
+      "cancelled":       "Cancelled"
+    },
+    "contentStatus": {
+      "pending":   "Pending",
+      "submitted": "Submitted",
+      "approved":  "Approved",
+      "rejected":  "Rejected"
+    },
+    "paymentStatus": {
+      "pending":  "Pending",
+      "invoiced": "Invoiced",
+      "paid":     "Paid"
+    },
+    "addDeliverable":    "Add deliverable",
+    "deliverablePlaceholder": "E.g. 3 stories + 1 post",
+    "noCampaign":        "No campaign linked",
+    "noCampaignHint":    "(optional)",
+    "resultsPlaceholder":"Describe results: reach, metrics, feedback…",
+    "unsavedWarning":    "You have unsaved changes. Leave anyway?"
+  },
+  "opportunities": {
+    "title":   "Opportunities",
+    "subtitle":"Active pipeline",
+    "new":     "New opportunity",
+    "empty":   "No opportunities.",
+    "sections": {
+      "data":       "Data",
+      "location":   "Location",
+      "pipeline":   "Pipeline",
+      "value":      "Value",
+      "relationship":"Relationship",
+      "closing":    "Closing",
+      "links":      "Links",
+      "activity":   "Activity"
+    },
+    "fields": {
+      "title":       "Title",
+      "description": "Description",
+      "source":      "Source",
+      "brand":       "Brand",
+      "city":        "City",
+      "country":     "Country",
+      "status":      "Status",
+      "value":       "Estimated value",
+      "currency":    "Currency",
+      "nextAction":  "Next action",
+      "nextActionAt":"Date",
+      "notes":       "Notes",
+      "lostReason":  "Lost reason"
+    },
+    "status": {
+      "new":             "New",
+      "qualifying":      "Qualifying",
+      "contacted":       "Contacted",
+      "in_conversation": "In conversation",
+      "proposal":        "Proposal",
+      "won":             "Won",
+      "lost":            "Lost",
+      "on_hold":         "On hold"
+    },
+    "kanban": {
+      "empty":   "No opportunities",
+      "total":   "{n} total",
+      "tooMany": "More than 200 records — showing the most recent."
+    },
+    "unsavedWarning":"You have unsaved changes. Leave anyway?"
   }
 }

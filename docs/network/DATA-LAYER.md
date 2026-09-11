@@ -166,9 +166,23 @@ All defined in `src/lib/metrics.js`. All DB functions are `SECURITY INVOKER` —
 |----------|-----|--------|
 | `getNetworkStats` | `network_stats` | cityId, countryId, regionId, from, to |
 | `getNetworkAlerts` | `network_alerts` | — |
+| `getNetworkScouters` | `network_scouters` | cityId, countryId, regionId |
+| `getUnassignedSummary` | `unassigned_summary` | — |
 | `getScouterPerformance` | `scouter_performance` | userId, from, to |
 | `getGoalProgress` | `goal_progress` | goalId |
 | `searchGlobal` | `global_search` | q, lim |
+
+### Write RPCs (026)
+| Function | RPC | Notes |
+|----------|-----|-------|
+| `dbUpsertScouter` (database.js) | `upsert_scouter` | SECURITY DEFINER. Hace en una llamada: fila en `scouters`, `profiles.estado='aprobado'`, `user_roles` con scope_id=ciudad. |
+| `dbAssignBulk` (database.js) | `assign_entities_bulk` | Devuelve `[{ entityId, ok, error }]`. Fallos parciales NO lanzan excepción. Max 100 por llamada; chunking interno. |
+
+### Simplificación conocida — ScouterModal (candidatos)
+`unassigned_summary().users_no_role` devuelve un **conteo**, no una lista.
+Para el selector del modal se hace query directa a `profiles` (estado='aprobado') y `user_roles` (revoked_at IS NULL) y se filtra en el cliente.
+
+**Justificación:** en producción habrá decenas de usuarios, no miles. Si escala, reemplazar por una RPC `pending_scouter_candidates()` que devuelva la lista filtrada desde SQL.
 
 ---
 

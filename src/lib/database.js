@@ -492,6 +492,8 @@ export const dbSaveCampaign = async (camp, userId) => {
 const rowToOpportunity = (r) => ({
   id:          r.id,
   title:       r.title,
+  description: r.description  ?? null,
+  source:      r.source       ?? null,
   brandId:     r.brand_id,
   scouterId:   r.owner_scouter_id,
   cityId:      r.city_id,
@@ -499,19 +501,20 @@ const rowToOpportunity = (r) => ({
   status:      r.status,
   value:       r.value,
   currency:    r.currency,
+  lostReason:  r.lost_reason  ?? null,
   notes:       r.notes,
   createdBy:   r.created_by,
   createdAt:   r.created_at,
   updatedAt:   r.updated_at,
   // 020_crm_fields
-  nextAction:   r.next_action  ?? null,
+  nextAction:   r.next_action   ?? null,
   nextActionAt: r.next_action_at ?? null,
 })
 
 // Paginada — Network. Siempre devuelve { rows, total, hasMore }.
 export const dbGetOpportunities = async ({
   page = 0, pageSize = 30,
-  search, status, brandId, ownerId,
+  search, status, brandId, cityId, ownerId,
   orderBy = 'created_at', orderDir = 'desc',
 } = {}) => {
   let q = supabase.from('opportunities')
@@ -520,6 +523,7 @@ export const dbGetOpportunities = async ({
     .range(page * pageSize, (page + 1) * pageSize - 1)
   if (status)  q = q.eq('status', status)
   if (brandId) q = q.eq('brand_id', brandId)
+  if (cityId)  q = q.eq('city_id', cityId)
   if (ownerId) q = q.eq('owner_scouter_id', ownerId)
   if (search)  q = q.ilike('title', `%${search}%`)
   const { data, count, error } = await q
@@ -534,13 +538,16 @@ export const dbSaveOpportunity = async (opp, userId) => {
   const { id, ...rest } = opp
   const row = {
     title:            (rest.title || '').trim() || 'Sin título',
-    brand_id:         rest.brandId    || null,
-    city_id:          rest.cityId     || null,
-    country_id:       rest.countryId  || null,
-    status:           rest.status     || 'new',
+    description:      rest.description  || null,
+    source:           rest.source       || null,
+    brand_id:         rest.brandId      || null,
+    city_id:          rest.cityId       || null,
+    country_id:       rest.countryId    || null,
+    status:           rest.status       || 'new',
     value:            Number(rest.value) || null,
-    currency:         rest.currency   || null,
-    notes:            rest.notes      || null,
+    currency:         rest.currency     || null,
+    lost_reason:      rest.lostReason   || null,
+    notes:            rest.notes        || null,
   }
   if (isUuid(id)) {
     const { data, error } = await supabase.from('opportunities')
@@ -552,6 +559,31 @@ export const dbSaveOpportunity = async (opp, userId) => {
     .insert([{ ...row, created_by: uid, owner_scouter_id: uid }]).select('*').single()
   if (error) throw friendly(error)
   return rowToOpportunity(data)
+}
+
+export const dbPatchOpportunity = async (id, patch) => {
+  const FIELD_MAP = {
+    title:       'title',
+    description: 'description',
+    source:      'source',
+    brandId:     'brand_id',
+    cityId:      'city_id',
+    countryId:   'country_id',
+    status:      'status',
+    value:       'value',
+    currency:    'currency',
+    lostReason:  'lost_reason',
+    notes:       'notes',
+    nextAction:  'next_action',
+    nextActionAt:'next_action_at',
+  }
+  const row = {}
+  for (const [camel, snake] of Object.entries(FIELD_MAP)) {
+    if (camel in patch) row[snake] = patch[camel]
+  }
+  if (Object.keys(row).length === 0) return
+  const { error } = await supabase.from('opportunities').update(row).eq('id', id)
+  if (error) throw friendly(error)
 }
 
 // Soft delete: status='archived' (invisible en dbGetCampaigns)
@@ -632,16 +664,33 @@ export const dbGetActivationTypes = async (force = false) => {
 // ═══════════════════════════════════════════════════════════
 
 export const dbGetCollaborations = async (filters = {}) => {
+  const paginated = filters.pageSize !== undefined
+  const { page = 0, pageSize = 30, includeCancelled = false } = filters
+
   let q = supabase.from('collaborations')
-    .select('*')
-    .not('status', 'eq', 'cancelled')
+    .select(paginated ? '*, influencers(id, name, username), brands(id, name)' : '*', { count: paginated ? 'exact' : undefined })
     .order('created_at', { ascending: false })
+  if (paginated) q = q.range(page * pageSize, (page + 1) * pageSize - 1)
+  else           q = q.limit(1000)   // legacy cap — App.jsx
+  if (!includeCancelled)        q = q.not('status', 'eq', 'cancelled')
   if (filters.status)           q = q.eq('status', filters.status)
   if (filters.activationTypeId) q = q.eq('activation_type_id', filters.activationTypeId)
   if (filters.influencerId)     q = q.eq('influencer_id', filters.influencerId)
-  const { data, error } = await q
+  if (filters.cityId)           q = q.eq('city_id', filters.cityId)
+  if (filters.scouterId)        q = q.eq('scouter_id', filters.scouterId)
+
+  const { data, count, error } = await q
   if (error) throw friendly(error)
-  return (data || []).map(rowToCollaboration)
+
+  if (!paginated) {
+    return (data || []).map(rowToCollaboration)
+  }
+  const rows = (data || []).map(r => ({
+    ...rowToCollaboration(r),
+    influencerName: r.influencers?.name || r.influencers?.username || null,
+    brandName:      r.brands?.name || null,
+  }))
+  return { rows, total: count ?? 0, hasMore: (count ?? 0) > (page + 1) * pageSize }
 }
 
 export const dbSaveCollaboration = async (collab, userId) => {
@@ -681,6 +730,32 @@ export const dbDeleteCollaboration = async (id) => {
     .update({ status: 'cancelled' }).eq('id', id).select('*').single()
   if (error) throw friendly(error)
   return rowToCollaboration(data)
+}
+
+export const dbPatchCollaboration = async (id, patch) => {
+  const FIELD_MAP = {
+    influencerId:     'influencer_id',
+    brandId:          'brand_id',
+    campaignId:       'campaign_id',
+    activationTypeId: 'activation_type_id',
+    status:           'status',
+    startDate:        'start_date',
+    endDate:          'end_date',
+    deliverables:     'deliverables',
+    contentStatus:    'content_status',
+    paymentStatus:    'payment_status',
+    amount:           'amount',
+    currency:         'currency',
+    results:          'results',
+    notes:            'notes',
+  }
+  const row = {}
+  for (const [camel, snake] of Object.entries(FIELD_MAP)) {
+    if (camel in patch) row[snake] = patch[camel]
+  }
+  if (Object.keys(row).length === 0) return
+  const { error } = await supabase.from('collaborations').update(row).eq('id', id)
+  if (error) throw friendly(error)
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1348,4 +1423,94 @@ export const dbSetNextAction = async (entityType, entityId, action, at) => {
     p_at:          at,
   })
   if (error) throw friendlyRpc(error)
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCOUTERS — gestión (026)
+// upsert_scouter es SECURITY DEFINER: hace las tres escrituras
+// (scouters, profiles.estado, user_roles) en una llamada atómica.
+// ═══════════════════════════════════════════════════════════
+
+export const dbUpsertScouter = async ({ userId, cityId, teamId = null, level = 1, status = 'active' }) => {
+  const { error } = await supabase.rpc('upsert_scouter', {
+    p_user_id: userId,
+    p_city_id: cityId,
+    p_team_id: teamId,
+    p_level:   level,
+    p_status:  status,
+  })
+  if (error) throw friendly(error)
+}
+
+const BULK_CHUNK = 100
+
+// assign_entities_bulk devuelve una fila POR ENTIDAD con ok/error.
+// Fallos parciales NO lanzan excepción: vienen en el array de resultados.
+// onProgress(done, total) es opcional para mostrar progreso.
+export const dbAssignBulk = async (entityType, entityIds, toOwner, reason = null, onProgress) => {
+  const results = []
+  for (let i = 0; i < entityIds.length; i += BULK_CHUNK) {
+    const chunk = entityIds.slice(i, i + BULK_CHUNK)
+    const { data, error } = await supabase.rpc('assign_entities_bulk', {
+      p_entity_type: entityType,
+      p_entity_ids:  chunk,
+      p_to_owner:    toOwner,
+      p_reason:      reason,
+    })
+    if (error) throw friendly(error)
+    for (const r of data || []) {
+      results.push({ entityId: r.entity_id, ok: r.ok, error: r.error })
+    }
+    if (onProgress) onProgress(results.length, entityIds.length)
+  }
+  return results
+}
+
+// ═══════════════════════════════════════════════════════════
+// MANUAL (027 migration)
+// RLS filtra por scouters.level — NO duplicar en cliente.
+// Edición solo para Dirección (RLS lo valida en dbPatchManual).
+// ═══════════════════════════════════════════════════════════
+
+export const dbGetManualCategories = async () => {
+  const { data, error } = await supabase.from('manual_categories')
+    .select('*').eq('active', true).order('sort_order')
+  if (error) throw friendly(error)
+  return (data || []).map(r => ({ code: r.code, name: r.name, sortOrder: r.sort_order }))
+}
+
+export const dbGetManual = async () => {
+  const { data, error } = await supabase.from('manual_sections')
+    .select('*, manual_categories(code, name, sort_order)')
+    .eq('active', true)
+    .order('sort_order')
+  if (error) throw friendly(error)
+  return (data || [])
+    .sort((a, b) => {
+      const cA = a.manual_categories?.sort_order ?? 0
+      const cB = b.manual_categories?.sort_order ?? 0
+      return cA !== cB ? cA - cB : (a.sort_order ?? 0) - (b.sort_order ?? 0)
+    })
+    .map(r => ({
+      id:         r.id,
+      category:   r.category,
+      categoryName: r.manual_categories?.name || r.category,
+      slug:       r.slug,
+      title:      r.title,
+      subtitle:   r.subtitle || null,
+      body:       r.body     || '',
+      sortOrder:  r.sort_order,
+      minLevel:   r.min_level ?? 1,
+      updatedAt:  r.updated_at,
+    }))
+}
+
+export const dbPatchManual = async (id, patch) => {
+  const row = {}
+  if ('title'    in patch) row.title    = patch.title
+  if ('subtitle' in patch) row.subtitle = patch.subtitle
+  if ('body'     in patch) row.body     = patch.body
+  if (Object.keys(row).length === 0) return
+  const { error } = await supabase.from('manual_sections').update(row).eq('id', id)
+  if (error) throw friendly(error)
 }

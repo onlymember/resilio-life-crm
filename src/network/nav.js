@@ -1,7 +1,7 @@
 import {
   Home, Users, Building2, Briefcase, CheckCircle,
   CheckSquare, Calendar, ArrowRight, FileText,
-  Target, Map, Award, BarChart3, BookOpen,
+  Target, Map, Award, BarChart3, BookOpen, Users2,
 } from 'lucide-react'
 import { COMMAND_ROLES } from './routes.js'
 
@@ -12,7 +12,8 @@ export const NAV_SECTIONS = [
     sectionKey: 'nav.sections.inicio',
     roles: null,
     items: [
-      { path: '/network/home', labelKey: 'nav.home', icon: Home, soon: false, roles: null },
+      { path: '/network/home',   labelKey: 'nav.home',   icon: Home,     soon: false, roles: null },
+      { path: '/network/manual', labelKey: 'nav.manual', icon: BookOpen, soon: false, roles: null },
     ],
   },
   {
@@ -31,7 +32,7 @@ export const NAV_SECTIONS = [
     items: [
       { path: '/network/tasks',       labelKey: 'nav.tasks',      icon: CheckSquare, soon: false, roles: null },
       { path: '/network/calendar',    labelKey: 'nav.calendar',   icon: Calendar,    soon: true,  roles: null },
-      { path: '/network/follow-ups',  labelKey: 'nav.followUps',  icon: ArrowRight,  soon: true,  roles: null },
+      { path: '/network/follow-ups',  labelKey: 'nav.followUps',  icon: ArrowRight,  soon: false, roles: null },
       { path: '/network/notes',       labelKey: 'nav.notes',      icon: FileText,    soon: true,  roles: null },
     ],
   },
@@ -48,14 +49,8 @@ export const NAV_SECTIONS = [
     sectionKey: 'nav.sections.intelligence',
     roles: COMMAND_ROLES,
     items: [
-      { path: '/network/command', labelKey: 'nav.command', icon: BarChart3, soon: false, roles: COMMAND_ROLES },
-    ],
-  },
-  {
-    sectionKey: 'nav.sections.manual',
-    roles: null,
-    items: [
-      { path: '/network/manual', labelKey: 'nav.manual', icon: BookOpen, soon: true, roles: null },
+      { path: '/network/command',  labelKey: 'nav.command',  icon: BarChart3, soon: false, roles: COMMAND_ROLES },
+      { path: '/network/scouters', labelKey: 'nav.scouters', icon: Users2,    soon: false, roles: COMMAND_ROLES },
     ],
   },
 ]

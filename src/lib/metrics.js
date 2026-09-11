@@ -96,3 +96,68 @@ export const getMyMissions = async () => {
     endsAt:       r.ends_at,
   }))
 }
+
+// ── Command Center (026) ─────────────────────────────────────
+
+export const getNetworkScouters = async ({ cityId, countryId, regionId } = {}) => {
+  const { data, error } = await supabase.rpc('network_scouters', {
+    p_city:    cityId    || null,
+    p_country: countryId || null,
+    p_region:  regionId  || null,
+  })
+  if (error) throw error
+  return (data || []).map(r => ({
+    userId:        r.user_id,
+    nombre:        r.nombre,
+    email:         r.email,
+    ciudad:        r.ciudad,
+    pais:          r.pais,
+    cityId:        r.city_id,
+    level:         r.level,
+    status:        r.status,
+    joinedAt:      r.joined_at,
+    influencers:   Number(r.influencers),
+    brands:        Number(r.brands),
+    opportunities: Number(r.opportunities),
+    tasksOpen:     Number(r.tasks_open),
+    tasksOverdue:  Number(r.tasks_overdue),
+    lastActivity:  r.last_activity,
+    daysInactive:  r.days_inactive,
+  }))
+}
+
+export const getUnassignedSummary = async () => {
+  const { data, error } = await supabase.rpc('unassigned_summary')
+  if (error) throw error
+  const d = data || {}
+  return {
+    influencers:   Number(d.influencers    ?? 0),
+    brands:        Number(d.brands         ?? 0),
+    opportunities: Number(d.opportunities  ?? 0),
+    noCityInf:     Number(d.no_city_inf    ?? 0),
+    noCityBrands:  Number(d.no_city_brands ?? 0),
+    usersNoRole:   Number(d.users_no_role  ?? 0),
+  }
+}
+
+export const assignEntitiesBulk = async (entityType, entityIds, toOwner, reason = null) => {
+  const { data, error } = await supabase.rpc('assign_entities_bulk', {
+    p_entity_type: entityType,
+    p_entity_ids:  entityIds,
+    p_to_owner:    toOwner,
+    p_reason:      reason,
+  })
+  if (error) throw error
+  return data || []
+}
+
+export const upsertScouter = async ({ userId, cityId, teamId = null, level = 1, status = 'active' }) => {
+  const { error } = await supabase.rpc('upsert_scouter', {
+    p_user_id: userId,
+    p_city_id: cityId,
+    p_team_id: teamId,
+    p_level:   level,
+    p_status:  status,
+  })
+  if (error) throw error
+}

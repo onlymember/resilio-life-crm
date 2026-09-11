@@ -10,8 +10,12 @@ import BrandDetailPage from './pages/BrandDetailPage.jsx'
 import OpportunitiesPage from './pages/OpportunitiesPage.jsx'
 import OpportunityDetailPage from './pages/OpportunityDetailPage.jsx'
 import CollaborationsPage from './pages/CollaborationsPage.jsx'
+import CollaborationDetailPage from './pages/CollaborationDetailPage.jsx'
+import ManualPage from './pages/ManualPage.jsx'
+import FollowUpsPage from './pages/FollowUpsPage.jsx'
 import TasksPage from './pages/TasksPage.jsx'
 import CommandPage from './pages/CommandPage.jsx'
+import ScoutersPage from './pages/ScoutersPage.jsx'
 import ComingSoonPage from './pages/ComingSoonPage.jsx'
 import CreateSheet from './components/CreateSheet.jsx'
 import EmptyState from './components/EmptyState.jsx'
@@ -107,20 +111,26 @@ export default function NetworkApp({ currentUser }) {
           <Route path="brands/:id"    element={<BrandDetailPage currentUser={currentUser}/>}/>
           <Route path="opportunities" element={<OpportunitiesPage onOpenCreate={() => setCreateOpen(true)} currentUser={currentUser}/>}/>
           <Route path="opportunities/:id" element={<OpportunityDetailPage currentUser={currentUser}/>}/>
-          <Route path="collaborations" element={<CollaborationsPage onOpenCreate={() => setCreateOpen(true)} currentUser={currentUser}/>}/>
-          <Route path="tasks"         element={<TasksPage currentUser={currentUser}/>}/>
+          <Route path="collaborations"     element={<CollaborationsPage onOpenCreate={() => setCreateOpen(true)} currentUser={currentUser}/>}/>
+          <Route path="collaborations/:id" element={<CollaborationDetailPage currentUser={currentUser}/>}/>
+          <Route path="tasks"              element={<TasksPage currentUser={currentUser}/>}/>
           <Route path="command"       element={
             <RoleGuard user={currentUser} allowedRoles={COMMAND_ROLES}>
               <CommandPage currentUser={currentUser}/>
             </RoleGuard>
           }/>
+          <Route path="scouters"      element={
+            <RoleGuard user={currentUser} allowedRoles={COMMAND_ROLES}>
+              <ScoutersPage currentUser={currentUser}/>
+            </RoleGuard>
+          }/>
           <Route path="calendar"    element={<ComingSoonPage/>}/>
-          <Route path="follow-ups"  element={<ComingSoonPage/>}/>
+          <Route path="follow-ups"  element={<FollowUpsPage currentUser={currentUser}/>}/>
           <Route path="notes"       element={<ComingSoonPage/>}/>
           <Route path="missions"    element={<ComingSoonPage/>}/>
           <Route path="roadmap"     element={<ComingSoonPage/>}/>
           <Route path="rewards"     element={<ComingSoonPage/>}/>
-          <Route path="manual"      element={<ComingSoonPage/>}/>
+          <Route path="manual"      element={<ManualPage currentUser={currentUser}/>}/>
           {/* Catch-all: vuelve al destino por defecto según rol */}
           <Route path="*" element={<Navigate to={getDefaultRoute(currentUser)} replace/>}/>
         </Route>
