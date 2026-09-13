@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Edit3, Check, X } from 'lucide-react'
 import SimpleMarkdown from './SimpleMarkdown.jsx'
 import { t } from '../../i18n/index.js'
@@ -10,6 +10,23 @@ export default function ManualSection({ section, canEdit, sectionRef }) {
   const [saving,  setSaving]    = useState(false)
   const [error,   setError]     = useState(null)
   const [body,    setBody]      = useState(section.body)
+
+  const cardRef = useRef(null)
+
+  // One-shot entrance animation via IntersectionObserver
+  useEffect(() => {
+    const el = cardRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        el.style.opacity = '1'
+        el.style.transform = 'translateY(0)'
+        obs.disconnect()
+      }
+    }, { threshold: 0.05 })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
 
   const startEdit = () => { setDraft(body); setEditing(true); setError(null) }
   const cancel    = () => { setEditing(false); setError(null) }
@@ -27,11 +44,14 @@ export default function ManualSection({ section, canEdit, sectionRef }) {
 
   return (
     <div
-      ref={sectionRef}
+      ref={(el) => { cardRef.current = el; sectionRef(el) }}
       data-category={section.category}
       style={{
         paddingTop: 32, paddingBottom: 8,
         borderBottom: '1px solid rgba(139,92,246,0.1)',
+        opacity: 0,
+        transform: 'translateY(16px)',
+        transition: 'opacity 0.4s ease, transform 0.4s ease',
       }}
     >
       {/* Section header */}

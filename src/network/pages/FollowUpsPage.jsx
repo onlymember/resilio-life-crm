@@ -54,7 +54,7 @@ function Group({ labelKey, items, onComplete, onReschedule }) {
   )
 }
 
-const ENTITY_FILTERS = ['all', 'influencer', 'brand', 'opportunity']
+const ENTITY_FILTERS = ['all', 'influencer', 'brand', 'opportunity', 'collaboration']
 
 export default function FollowUpsPage() {
   const tz = useTz()

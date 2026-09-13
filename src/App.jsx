@@ -176,6 +176,8 @@ const GlobalStyles = () => (
     @supports not (backdrop-filter: blur(1px)) { .nw-bottom-nav { background: var(--bg-secondary); } }
     .nw-save-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 150; background: var(--bg-secondary); border-top: 1px solid var(--border-violet); padding: 12px 20px; padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
     @media (max-width: 767px) { .nw-save-bar { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); } }
+    .nw-manual-nav { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-violet); }
+    @supports not (backdrop-filter: blur(1px)) { .nw-manual-nav { background: var(--bg-secondary); } }
   `}</style>
 )
 
@@ -1100,8 +1102,13 @@ export default function App() {
 
   const handleLogin = (user) => {
     setCurrentUser(user)
-    setShowPortal(true)
-    setCurrentView(defaultViewFor(user))
+    const view = defaultViewFor(user)
+    setCurrentView(view)
+    if (view === 'network') {
+      window.history.pushState({}, '', '/network/home')
+    } else {
+      setShowPortal(true)
+    }
   }
 
   const handleLogout = async () => {
@@ -1127,8 +1134,13 @@ export default function App() {
         if (!alive) return
         setCurrentUser(user)
         if (isSignIn && user) {
-          setShowPortal(true)
-          setCurrentView(defaultViewFor(user))
+          const view = defaultViewFor(user)
+          setCurrentView(view)
+          if (view === 'network') {
+            window.history.pushState({}, '', '/network/home')
+          } else {
+            setShowPortal(true)
+          }
         }
       } catch (e) {
         console.error('Auth — no se pudo cargar el perfil:', e)

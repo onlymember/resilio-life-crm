@@ -164,8 +164,7 @@ const NavBtn = ({ to, icon: Icon, label, exactActive }) => (
   </NavLink>
 )
 
-export default function MobileLayout({ currentUser, onCreated }) {
-  const [createOpen, setCreateOpen] = useState(false)
+export default function MobileLayout({ currentUser, onCreated, createOpen, onOpenCreate, onCloseCreate }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   const openDrawer = () => {
@@ -198,7 +197,7 @@ export default function MobileLayout({ currentUser, onCreated }) {
         {/* FAB central */}
         <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
           <button
-            onClick={() => setCreateOpen(true)}
+            onClick={onOpenCreate}
             style={{ width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg,var(--primary-violet-dark),var(--primary-violet))', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(139,92,246,0.5)', transform: 'translateY(-8px)', transition: 'all 0.2s' }}
             onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-10px) scale(1.05)'}
             onMouseLeave={e => e.currentTarget.style.transform = 'translateY(-8px)'}
@@ -213,7 +212,7 @@ export default function MobileLayout({ currentUser, onCreated }) {
 
       <CreateSheet
         isOpen={createOpen}
-        onClose={() => setCreateOpen(false)}
+        onClose={onCloseCreate}
         currentUser={currentUser}
         onCreated={onCreated}
       />

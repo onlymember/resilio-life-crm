@@ -6,18 +6,16 @@ export default function MissionProgress({ mission }) {
   const pct     = Math.min(100, Math.max(0, mission.pct ?? 0))
   const endsAt  = mission.endsAt
     ? new Date(mission.endsAt).toLocaleDateString('es', { day: 'numeric', month: 'short' })
-    : null
+    : t('missions.noDeadline')
 
   return (
     <div style={{ padding: '12px 14px', background: 'var(--glass-bg)', border: '1px solid var(--border-violet)', borderRadius: 12 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3 }}>{mission.title}</div>
-          {endsAt && (
-            <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 2 }}>
-              {t('missions.endsAt', { date: endsAt })}
-            </div>
-          )}
+          <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 2 }}>
+            {mission.endsAt ? t('missions.endsAt', { date: endsAt }) : endsAt}
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0, marginLeft: 10 }}>
           <Star size={11} color="#FCD34D"/>

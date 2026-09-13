@@ -97,6 +97,37 @@ export const getMyMissions = async () => {
   }))
 }
 
+// ── Rewards (030) ───────────────────────────────────────────
+
+export const claimCompletedMissions = async () => {
+  const { data, error } = await supabase.rpc('claim_completed_missions')
+  if (error) throw error
+  return (data || []).map(r => ({
+    missionId:     r.mission_id,
+    title:         r.title,
+    pointsAwarded: r.points_awarded,
+  }))
+}
+
+export const getMyRewardBalance = async () => {
+  const { data, error } = await supabase.rpc('my_reward_balance')
+  if (error) throw error
+  return Number(data ?? 0)
+}
+
+export const getMyRewardHistory = async (limit = 50) => {
+  const { data, error } = await supabase.rpc('my_reward_history', { p_limit: limit })
+  if (error) throw error
+  return (data || []).map(r => ({
+    id:           r.id,
+    points:       r.points,
+    sourceType:   r.source_type,
+    sourceId:     r.source_id,
+    missionTitle: r.mission_title,
+    createdAt:    r.created_at,
+  }))
+}
+
 // ── Command Center (026) ─────────────────────────────────────
 
 export const getNetworkScouters = async ({ cityId, countryId, regionId } = {}) => {

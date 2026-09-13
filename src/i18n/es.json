@@ -282,7 +282,78 @@
   "missions": {
     "points": "{n} pts",
     "progress": "{current} / {target}",
-    "endsAt": "Vence {date}"
+    "endsAt": "Vence {date}",
+    "noDeadline": "Sin fecha límite",
+    "title": "Misiones",
+    "subtitle": "Tus objetivos activos",
+    "new": "Nueva misión",
+    "empty": "No hay misiones activas por ahora",
+    "emptySub": "Dirección cargará misiones para la red en breve.",
+    "claimed": "🎉 +{n} pts por completar \"{title}\"",
+    "form": {
+      "title": "Título",
+      "description": "Descripción (opcional)",
+      "type": "Tipo",
+      "typeIndividual": "Individual",
+      "typeTeam": "Equipo",
+      "metric": "Métrica",
+      "target": "Objetivo (número)",
+      "city": "Ciudad (opcional, vacío = global)",
+      "startsAt": "Fecha inicio (opcional)",
+      "endsAt": "Fecha fin (opcional)",
+      "rewardPoints": "Puntos de recompensa",
+      "titlePlaceholder": "Ej: 5 influencers este mes",
+      "descriptionPlaceholder": "Contexto o reglas de la misión…",
+      "metrics": {
+        "influencers_added": "Influencers agregados",
+        "brands_added": "Marcas agregadas",
+        "opportunities": "Oportunidades creadas",
+        "collaborations": "Colaboraciones creadas",
+        "contacts": "Contactos realizados",
+        "follow_ups": "Seguimientos completados",
+        "tasks_completed": "Tareas completadas"
+      }
+    }
+  },
+  "notes": {
+    "title": "Notas",
+    "subtitle": "Tu cuaderno y notas del CRM",
+    "tabNotebook": "Mi cuaderno",
+    "tabCrm": "Notas del CRM",
+    "new": "+ Nota",
+    "emptyNotebook": "Todavía no escribiste ninguna nota.",
+    "emptyNotebookSub": "Usá el cuaderno para ideas, recordatorios o lo que quieras.",
+    "emptyCrm": "Todavía no hay notas cargadas en influencers, marcas, oportunidades ni colaboraciones.",
+    "pinned": "Fijada",
+    "pin": "Fijar",
+    "unpin": "Desfijar",
+    "delete": "Eliminar",
+    "confirmDelete": "¿Eliminar esta nota?",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "saving": "Guardando…",
+    "titlePlaceholder": "Título (opcional)",
+    "bodyPlaceholder": "Escribí tu nota acá…",
+    "chips": {
+      "influencer": "Influencer",
+      "brand": "Marca",
+      "opportunity": "Oportunidad",
+      "collaboration": "Colaboración"
+    }
+  },
+  "rewards": {
+    "title": "Premios",
+    "subtitle": "Tu balance de puntos",
+    "balance": "{n} pts",
+    "balanceLabel": "puntos acumulados",
+    "history": "Historial",
+    "historyEmpty": "Sin movimientos todavía.",
+    "emptyTitle": "Todavía no tenés puntos",
+    "emptySub": "Completá misiones para ganar puntos.",
+    "goToMissions": "Ver misiones",
+    "sourceOther": "Otro",
+    "pointsAwarded": "+{n} pts",
+    "claimed": "🎉 +{n} pts por completar \"{title}\""
   },
   "quickActions": {
     "whatsapp": "WhatsApp",
@@ -504,10 +575,11 @@
       "later":     "Más adelante"
     },
     "filters": {
-      "all":         "Todos",
-      "influencer":  "Influencers",
-      "brand":       "Marcas",
-      "opportunity": "Oportunidades"
+      "all":           "Todos",
+      "influencer":    "Influencers",
+      "brand":         "Marcas",
+      "opportunity":   "Oportunidades",
+      "collaboration": "Colaboraciones"
     },
     "viewMore":     "Ver más ({n})"
   },
@@ -516,14 +588,19 @@
     "subtitle":"Activaciones activas",
     "new":     "Nueva colaboración",
     "empty":   "Sin colaboraciones.",
+    "nextAction": "Acción pendiente",
     "sections": {
-      "data":        "Datos",
-      "dates":       "Fechas",
-      "deliverables":"Entregables",
-      "status":      "Estado",
-      "economy":     "Economía",
-      "results":     "Resultados",
-      "activity":    "Actividad"
+      "data":               "Datos",
+      "dates":              "Fechas",
+      "deliverables":       "Entregables",
+      "nextAction":         "Próxima acción",
+      "status":             "Estado",
+      "economy":            "Economía",
+      "documents":          "Documentos",
+      "kpis":               "KPIs",
+      "results":            "Resultados",
+      "activity":           "Actividad",
+      "legacyDeliverables": "Entregables anteriores"
     },
     "fields": {
       "influencer":     "Influencer",
@@ -539,7 +616,9 @@
       "currency":       "Moneda",
       "results":        "Resultados",
       "notes":          "Notas",
-      "deliverables":   "Entregables"
+      "deliverables":   "Entregables",
+      "nextAction":     "Próxima acción",
+      "nextActionAt":   "Fecha límite"
     },
     "status": {
       "proposed":        "Propuesta",
@@ -560,12 +639,35 @@
       "invoiced": "Facturado",
       "paid":     "Pagado"
     },
-    "addDeliverable":    "Agregar entregable",
+    "addDeliverable":         "Agregar entregable",
     "deliverablePlaceholder": "Ej: 3 stories + 1 post",
-    "noCampaign":        "Sin campaña asociada",
-    "noCampaignHint":    "(opcional)",
-    "resultsPlaceholder":"Describí los resultados: alcance, métricas, feedback…",
-    "unsavedWarning":    "Tenés cambios sin guardar. ¿Salir de todos modos?"
+    "noCampaign":             "Sin campaña asociada",
+    "noCampaignHint":         "(opcional)",
+    "resultsPlaceholder":     "Describí los resultados: alcance, métricas, feedback…",
+    "unsavedWarning":         "Tenés cambios sin guardar. ¿Salir de todos modos?",
+    "nextActionPlaceholder":  "¿Qué hay que hacer a continuación?",
+    "nextActionComplete":     "Marcar hecha",
+    "fromOpportunity":        "Oportunidad relacionada",
+    "fromOpportunityLink":    "Ver oportunidad →",
+    "contractUrl":            "URL Contrato",
+    "invoiceUrl":             "URL Factura",
+    "deliverables": {
+      "add":         "Agregar entregable",
+      "placeholder": "Ej: 3 stories + 1 post",
+      "dueDate":     "Fecha límite"
+    },
+    "kpis": {
+      "reach":               "Alcance",
+      "impressions":         "Impresiones",
+      "likes":               "Likes",
+      "comments":            "Comentarios",
+      "shares":              "Compartidos",
+      "saves":               "Guardados",
+      "linkClicks":          "Clics en link",
+      "engagementRate":      "Engagement (%)",
+      "estimatedMediaValue": "Valor de media estimado",
+      "resultsNotes":        "Notas de resultados"
+    }
   },
   "opportunities": {
     "title":   "Oportunidades",

@@ -18,6 +18,9 @@ import CommandPage from './pages/CommandPage.jsx'
 import ScoutersPage from './pages/ScoutersPage.jsx'
 import ComingSoonPage from './pages/ComingSoonPage.jsx'
 import CalendarPage from './pages/CalendarPage.jsx'
+import MissionsPage from './pages/MissionsPage.jsx'
+import NotesPage from './pages/NotesPage.jsx'
+import RewardsPage from './pages/RewardsPage.jsx'
 import CreateSheet from './components/CreateSheet.jsx'
 import EmptyState from './components/EmptyState.jsx'
 import { Shield } from 'lucide-react'
@@ -101,7 +104,13 @@ export default function NetworkApp({ currentUser }) {
           path="/network/*"
           element={
             isMobile
-              ? <MobileLayout currentUser={currentUser} onCreated={handleCreated}/>
+              ? <MobileLayout
+                  currentUser={currentUser}
+                  onCreated={handleCreated}
+                  createOpen={createOpen}
+                  onOpenCreate={() => setCreateOpen(true)}
+                  onCloseCreate={() => setCreateOpen(false)}
+                />
               : <NetworkLayout currentUser={currentUser}/>
           }
         >
@@ -127,10 +136,10 @@ export default function NetworkApp({ currentUser }) {
           }/>
           <Route path="calendar"    element={<CalendarPage currentUser={currentUser}/>}/>
           <Route path="follow-ups"  element={<FollowUpsPage currentUser={currentUser}/>}/>
-          <Route path="notes"       element={<ComingSoonPage/>}/>
-          <Route path="missions"    element={<ComingSoonPage/>}/>
+          <Route path="notes"       element={<NotesPage    currentUser={currentUser}/>}/>
+          <Route path="missions"    element={<MissionsPage currentUser={currentUser}/>}/>
           <Route path="roadmap"     element={<ComingSoonPage/>}/>
-          <Route path="rewards"     element={<ComingSoonPage/>}/>
+          <Route path="rewards"     element={<RewardsPage/>}/>
           <Route path="manual"      element={<ManualPage currentUser={currentUser}/>}/>
           {/* Catch-all: vuelve al destino por defecto según rol */}
           <Route path="*" element={<Navigate to={getDefaultRoute(currentUser)} replace/>}/>

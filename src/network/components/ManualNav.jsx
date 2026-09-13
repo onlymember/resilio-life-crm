@@ -1,6 +1,17 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
+
+const useIsMobile = () => {
+  const [mobile, setMobile] = useState(() => window.innerWidth < 640)
+  useEffect(() => {
+    const h = () => setMobile(window.innerWidth < 640)
+    window.addEventListener('resize', h)
+    return () => window.removeEventListener('resize', h)
+  }, [])
+  return mobile
+}
 
 export default function ManualNav({ categories, activeCode, onSelect }) {
+  const isMobile = useIsMobile()
   const barRef  = useRef(null)
   const btnRefs = useRef({})
 
@@ -19,10 +30,10 @@ export default function ManualNav({ categories, activeCode, onSelect }) {
   return (
     <div
       ref={barRef}
+      className="nw-manual-nav"
       style={{
         display: 'flex', gap: 6, overflowX: 'auto', padding: '10px 20px',
-        background: 'var(--bg-primary)', borderBottom: '1px solid var(--border-violet)',
-        position: 'sticky', top: 0, zIndex: 20,
+        position: 'sticky', top: isMobile ? 52 : 0, zIndex: 20,
         scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch',
       }}
     >

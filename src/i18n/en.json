@@ -282,7 +282,78 @@
   "missions": {
     "points": "{n} pts",
     "progress": "{current} / {target}",
-    "endsAt": "Vence {date}"
+    "endsAt": "Due {date}",
+    "noDeadline": "No deadline",
+    "title": "Missions",
+    "subtitle": "Your active objectives",
+    "new": "New mission",
+    "empty": "No active missions right now",
+    "emptySub": "Direction will load missions for the network soon.",
+    "claimed": "🎉 +{n} pts for completing \"{title}\"",
+    "form": {
+      "title": "Title",
+      "description": "Description (optional)",
+      "type": "Type",
+      "typeIndividual": "Individual",
+      "typeTeam": "Team",
+      "metric": "Metric",
+      "target": "Target (number)",
+      "city": "City (optional, empty = global)",
+      "startsAt": "Start date (optional)",
+      "endsAt": "End date (optional)",
+      "rewardPoints": "Reward points",
+      "titlePlaceholder": "E.g. 5 influencers this month",
+      "descriptionPlaceholder": "Context or rules for this mission…",
+      "metrics": {
+        "influencers_added": "Influencers added",
+        "brands_added": "Brands added",
+        "opportunities": "Opportunities created",
+        "collaborations": "Collaborations created",
+        "contacts": "Contacts made",
+        "follow_ups": "Follow-ups completed",
+        "tasks_completed": "Tasks completed"
+      }
+    }
+  },
+  "notes": {
+    "title": "Notes",
+    "subtitle": "Your notebook and CRM notes",
+    "tabNotebook": "My notebook",
+    "tabCrm": "CRM notes",
+    "new": "+ Note",
+    "emptyNotebook": "You haven't written any notes yet.",
+    "emptyNotebookSub": "Use the notebook for ideas, reminders or anything you want.",
+    "emptyCrm": "No notes loaded in influencers, brands, opportunities or collaborations yet.",
+    "pinned": "Pinned",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "delete": "Delete",
+    "confirmDelete": "Delete this note?",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "titlePlaceholder": "Title (optional)",
+    "bodyPlaceholder": "Write your note here…",
+    "chips": {
+      "influencer": "Influencer",
+      "brand": "Brand",
+      "opportunity": "Opportunity",
+      "collaboration": "Collaboration"
+    }
+  },
+  "rewards": {
+    "title": "Rewards",
+    "subtitle": "Your points balance",
+    "balance": "{n} pts",
+    "balanceLabel": "accumulated points",
+    "history": "History",
+    "historyEmpty": "No transactions yet.",
+    "emptyTitle": "No points yet",
+    "emptySub": "Complete missions to earn points.",
+    "goToMissions": "See missions",
+    "sourceOther": "Other",
+    "pointsAwarded": "+{n} pts",
+    "claimed": "🎉 +{n} pts for completing \"{title}\""
   },
   "quickActions": {
     "whatsapp": "WhatsApp",
@@ -504,10 +575,11 @@
       "later":     "Later"
     },
     "filters": {
-      "all":         "All",
-      "influencer":  "Influencers",
-      "brand":       "Brands",
-      "opportunity": "Opportunities"
+      "all":           "All",
+      "influencer":    "Influencers",
+      "brand":         "Brands",
+      "opportunity":   "Opportunities",
+      "collaboration": "Collaborations"
     },
     "viewMore":     "View more ({n})"
   },
@@ -516,14 +588,19 @@
     "subtitle":"Active activations",
     "new":     "New collaboration",
     "empty":   "No collaborations.",
+    "nextAction": "Action due",
     "sections": {
-      "data":        "Data",
-      "dates":       "Dates",
-      "deliverables":"Deliverables",
-      "status":      "Status",
-      "economy":     "Economy",
-      "results":     "Results",
-      "activity":    "Activity"
+      "data":               "Data",
+      "dates":              "Dates",
+      "deliverables":       "Deliverables",
+      "nextAction":         "Next action",
+      "status":             "Status",
+      "economy":            "Economy",
+      "documents":          "Documents",
+      "kpis":               "KPIs",
+      "results":            "Results",
+      "activity":           "Activity",
+      "legacyDeliverables": "Legacy deliverables"
     },
     "fields": {
       "influencer":     "Influencer",
@@ -539,7 +616,9 @@
       "currency":       "Currency",
       "results":        "Results",
       "notes":          "Notes",
-      "deliverables":   "Deliverables"
+      "deliverables":   "Deliverables",
+      "nextAction":     "Next action",
+      "nextActionAt":   "Due date"
     },
     "status": {
       "proposed":        "Proposed",
@@ -560,12 +639,35 @@
       "invoiced": "Invoiced",
       "paid":     "Paid"
     },
-    "addDeliverable":    "Add deliverable",
+    "addDeliverable":         "Add deliverable",
     "deliverablePlaceholder": "E.g. 3 stories + 1 post",
-    "noCampaign":        "No campaign linked",
-    "noCampaignHint":    "(optional)",
-    "resultsPlaceholder":"Describe results: reach, metrics, feedback…",
-    "unsavedWarning":    "You have unsaved changes. Leave anyway?"
+    "noCampaign":             "No campaign linked",
+    "noCampaignHint":         "(optional)",
+    "resultsPlaceholder":     "Describe results: reach, metrics, feedback…",
+    "unsavedWarning":         "You have unsaved changes. Leave anyway?",
+    "nextActionPlaceholder":  "What needs to happen next?",
+    "nextActionComplete":     "Mark done",
+    "fromOpportunity":        "Linked opportunity",
+    "fromOpportunityLink":    "View opportunity →",
+    "contractUrl":            "Contract URL",
+    "invoiceUrl":             "Invoice URL",
+    "deliverables": {
+      "add":         "Add deliverable",
+      "placeholder": "E.g. 3 stories + 1 post",
+      "dueDate":     "Due date"
+    },
+    "kpis": {
+      "reach":               "Reach",
+      "impressions":         "Impressions",
+      "likes":               "Likes",
+      "comments":            "Comments",
+      "shares":              "Shares",
+      "saves":               "Saves",
+      "linkClicks":          "Link clicks",
+      "engagementRate":      "Engagement (%)",
+      "estimatedMediaValue": "Estimated media value",
+      "resultsNotes":        "Results notes"
+    }
   },
   "opportunities": {
     "title":   "Opportunities",

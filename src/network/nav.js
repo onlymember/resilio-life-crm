@@ -33,16 +33,16 @@ export const NAV_SECTIONS = [
       { path: '/network/tasks',       labelKey: 'nav.tasks',      icon: CheckSquare, soon: false, roles: null },
       { path: '/network/calendar',    labelKey: 'nav.calendar',   icon: Calendar,    soon: false, roles: null },
       { path: '/network/follow-ups',  labelKey: 'nav.followUps',  icon: ArrowRight,  soon: false, roles: null },
-      { path: '/network/notes',       labelKey: 'nav.notes',      icon: FileText,    soon: true,  roles: null },
+      { path: '/network/notes',       labelKey: 'nav.notes',      icon: FileText,    soon: false, roles: null },
     ],
   },
   {
     sectionKey: 'nav.sections.growth',
     roles: null,
     items: [
-      { path: '/network/missions', labelKey: 'nav.missions', icon: Target, soon: true, roles: null },
-      { path: '/network/roadmap',  labelKey: 'nav.roadmap',  icon: Map,    soon: true, roles: null },
-      { path: '/network/rewards',  labelKey: 'nav.rewards',  icon: Award,  soon: true, roles: null },
+      { path: '/network/missions', labelKey: 'nav.missions', icon: Target, soon: false, roles: null },
+      { path: '/network/roadmap',  labelKey: 'nav.roadmap',  icon: Map,    soon: true,  roles: null },
+      { path: '/network/rewards',  labelKey: 'nav.rewards',  icon: Award,  soon: false, roles: null },
     ],
   },
   {

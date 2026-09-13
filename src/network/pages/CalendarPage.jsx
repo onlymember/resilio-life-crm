@@ -21,7 +21,7 @@ const pad2 = (n) => String(n).padStart(2, '0')
 const fmtDate = (date) =>
   `${date.getFullYear()}-${pad2(date.getMonth()+1)}-${pad2(date.getDate())}`
 
-const ENTITY_PATHS = { influencer: 'influencers', brand: 'brands', opportunity: 'opportunities', task: 'tasks' }
+const ENTITY_PATHS = { influencer: 'influencers', brand: 'brands', opportunity: 'opportunities', collaboration: 'collaborations', task: 'tasks' }
 
 export default function CalendarPage() {
   const navigate = useNavigate()

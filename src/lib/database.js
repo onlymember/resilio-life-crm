@@ -293,27 +293,45 @@ const rowToCampaignInfluencer = (r) => ({
 })
 
 const rowToCollaboration = (r) => ({
-  id:               r.id,
-  campaignId:       r.campaign_id,
-  brandId:          r.brand_id,
-  influencerId:     r.influencer_id,
-  scouterId:        r.scouter_id,
-  cityId:           r.city_id,
-  countryId:        r.country_id,
-  status:           r.status,
-  activationTypeId: r.activation_type_id,
-  startDate:        r.start_date,
-  endDate:          r.end_date,
-  deliverables:     r.deliverables || [],
-  contentStatus:    r.content_status,
-  paymentStatus:    r.payment_status,
-  amount:           r.amount,
-  currency:         r.currency,
-  results:          r.results || {},
-  notes:            r.notes,
-  createdBy:        r.created_by,
-  createdAt:        r.created_at,
-  updatedAt:        r.updated_at,
+  id:                   r.id,
+  campaignId:           r.campaign_id,
+  opportunityId:        r.opportunity_id      ?? null,
+  brandId:              r.brand_id,
+  influencerId:         r.influencer_id,
+  scouterId:            r.scouter_id,
+  cityId:               r.city_id,
+  countryId:            r.country_id,
+  status:               r.status,
+  activationTypeId:     r.activation_type_id,
+  startDate:            r.start_date,
+  endDate:              r.end_date,
+  deliverables:         r.deliverables        || [],
+  contentStatus:        r.content_status,
+  paymentStatus:        r.payment_status,
+  amount:               r.amount,
+  currency:             r.currency,
+  results:              r.results             || {},
+  notes:                r.notes,
+  // 031 — próxima acción
+  nextAction:           r.next_action         ?? null,
+  nextActionAt:         r.next_action_at      ?? null,
+  // 031 — documentos
+  contractUrl:          r.contract_url        ?? null,
+  invoiceUrl:           r.invoice_url         ?? null,
+  // 031 — KPIs
+  reach:                r.reach               ?? null,
+  impressions:          r.impressions         ?? null,
+  likes:                r.likes               ?? null,
+  comments:             r.comments            ?? null,
+  shares:               r.shares              ?? null,
+  saves:                r.saves               ?? null,
+  linkClicks:           r.link_clicks         ?? null,
+  engagementRate:       r.engagement_rate     ?? null,
+  estimatedMediaValue:  r.estimated_media_value ?? null,
+  resultsNotes:         r.results_notes       ?? null,
+  createdBy:            r.created_by,
+  createdAt:            r.created_at,
+  updatedAt:            r.updated_at,
 })
 
 const rowToActivationType = (r) => ({
@@ -699,6 +717,7 @@ export const dbSaveCollaboration = async (collab, userId) => {
   const { id, ...rest } = collab
   const row = {
     campaign_id:        rest.campaignId       || null,
+    opportunity_id:     rest.opportunityId    || null,
     brand_id:           rest.brandId          || null,
     influencer_id:      rest.influencerId      || null,
     scouter_id:         rest.scouterId        || uid,
@@ -734,20 +753,35 @@ export const dbDeleteCollaboration = async (id) => {
 
 export const dbPatchCollaboration = async (id, patch) => {
   const FIELD_MAP = {
-    influencerId:     'influencer_id',
-    brandId:          'brand_id',
-    campaignId:       'campaign_id',
-    activationTypeId: 'activation_type_id',
-    status:           'status',
-    startDate:        'start_date',
-    endDate:          'end_date',
-    deliverables:     'deliverables',
-    contentStatus:    'content_status',
-    paymentStatus:    'payment_status',
-    amount:           'amount',
-    currency:         'currency',
-    results:          'results',
-    notes:            'notes',
+    influencerId:        'influencer_id',
+    brandId:             'brand_id',
+    campaignId:          'campaign_id',
+    opportunityId:       'opportunity_id',
+    activationTypeId:    'activation_type_id',
+    status:              'status',
+    startDate:           'start_date',
+    endDate:             'end_date',
+    deliverables:        'deliverables',
+    contentStatus:       'content_status',
+    paymentStatus:       'payment_status',
+    amount:              'amount',
+    currency:            'currency',
+    results:             'results',
+    notes:               'notes',
+    nextAction:          'next_action',
+    nextActionAt:        'next_action_at',
+    contractUrl:         'contract_url',
+    invoiceUrl:          'invoice_url',
+    reach:               'reach',
+    impressions:         'impressions',
+    likes:               'likes',
+    comments:            'comments',
+    shares:              'shares',
+    saves:               'saves',
+    linkClicks:          'link_clicks',
+    engagementRate:      'engagement_rate',
+    estimatedMediaValue: 'estimated_media_value',
+    resultsNotes:        'results_notes',
   }
   const row = {}
   for (const [camel, snake] of Object.entries(FIELD_MAP)) {
@@ -755,6 +789,61 @@ export const dbPatchCollaboration = async (id, patch) => {
   }
   if (Object.keys(row).length === 0) return
   const { error } = await supabase.from('collaborations').update(row).eq('id', id)
+  if (error) throw friendly(error)
+}
+
+// ═══════════════════════════════════════════════════════════
+// COLLABORATION DELIVERABLES
+// ═══════════════════════════════════════════════════════════
+
+const rowToDeliverable = (r) => ({
+  id:          r.id,
+  description: r.description,
+  dueDate:     r.due_date ?? null,
+  status:      r.status,
+  completedAt: r.completed_at ?? null,
+  sortOrder:   r.sort_order ?? 0,
+})
+
+export const dbGetCollaborationDeliverables = async (collaborationId) => {
+  const { data, error } = await supabase
+    .from('collaboration_deliverables')
+    .select('*')
+    .eq('collaboration_id', collaborationId)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true })
+  if (error) throw friendly(error)
+  return (data || []).map(rowToDeliverable)
+}
+
+export const dbAddCollaborationDeliverable = async (collaborationId, { description, dueDate, sortOrder = 0 }) => {
+  const { data, error } = await supabase
+    .from('collaboration_deliverables')
+    .insert([{ collaboration_id: collaborationId, description, due_date: dueDate || null, sort_order: sortOrder }])
+    .select('*').single()
+  if (error) throw friendly(error)
+  return rowToDeliverable(data)
+}
+
+export const dbUpdateCollaborationDeliverable = async (id, patch) => {
+  const row = {}
+  if ('description' in patch) row.description = patch.description
+  if ('dueDate'     in patch) row.due_date     = patch.dueDate || null
+  if ('sortOrder'   in patch) row.sort_order   = patch.sortOrder
+  if ('status'      in patch) {
+    row.status       = patch.status
+    row.completed_at = patch.status === 'approved' ? new Date().toISOString() : null
+  }
+  if (Object.keys(row).length === 0) return
+  const { data, error } = await supabase
+    .from('collaboration_deliverables')
+    .update(row).eq('id', id).select('*').single()
+  if (error) throw friendly(error)
+  return rowToDeliverable(data)
+}
+
+export const dbDeleteCollaborationDeliverable = async (id) => {
+  const { error } = await supabase.from('collaboration_deliverables').delete().eq('id', id)
   if (error) throw friendly(error)
 }
 
@@ -855,7 +944,7 @@ export const dbCompleteTask = async (id) => {
 }
 
 // ═══════════════════════════════════════════════════════════
-// GOALS / MISSIONS (solo lectura desde el cliente)
+// GOALS / MISSIONS
 // ═══════════════════════════════════════════════════════════
 
 export const dbGetGoals = async (filters = {}) => {
@@ -874,6 +963,102 @@ export const dbGetMissions = async (filters = {}) => {
   const { data, error } = await q
   if (error) throw friendly(error)
   return (data || []).map(rowToMission)
+}
+
+export const dbSaveMission = async (mission, userId) => {
+  const uid = userId || await myId()
+  if (!uid) throw new Error('Sesión expirada. Volvé a entrar.')
+  const row = {
+    title:         (mission.title || '').trim() || 'Misión sin título',
+    description:   mission.description || null,
+    type:          mission.type || 'individual',
+    metric:        mission.metric,
+    target:        Number(mission.target) || 0,
+    city_id:       mission.cityId || null,
+    starts_at:     mission.startsAt || null,
+    ends_at:       mission.endsAt || null,
+    reward_points: Number(mission.rewardPoints) || 0,
+    status:        mission.status || 'active',
+  }
+  if (isUuid(mission.id)) {
+    const { data, error } = await supabase.from('missions')
+      .update(row).eq('id', mission.id).select('*').single()
+    if (error) throw friendly(error)
+    return rowToMission(data)
+  }
+  const { data, error } = await supabase.from('missions')
+    .insert([{ ...row, created_by: uid }]).select('*').single()
+  if (error) throw friendly(error)
+  return rowToMission(data)
+}
+
+// ═══════════════════════════════════════════════════════════
+// PERSONAL NOTES (030) — cuaderno privado por usuario
+// ═══════════════════════════════════════════════════════════
+
+const rowToPersonalNote = (r) => ({
+  id:        r.id,
+  title:     r.title,
+  body:      r.body,
+  pinned:    r.pinned,
+  createdAt: r.created_at,
+  updatedAt: r.updated_at,
+})
+
+export const dbGetPersonalNotes = async () => {
+  const { data, error } = await supabase.from('personal_notes')
+    .select('*')
+    .order('pinned', { ascending: false })
+    .order('updated_at', { ascending: false })
+  if (error) throw friendly(error)
+  return (data || []).map(rowToPersonalNote)
+}
+
+export const dbSavePersonalNote = async (note, userId) => {
+  const uid = userId || await myId()
+  if (!uid) throw new Error('Sesión expirada. Volvé a entrar.')
+  const row = {
+    title:      note.title || null,
+    body:       note.body || '',
+    pinned:     !!note.pinned,
+    updated_at: new Date().toISOString(),
+  }
+  if (isUuid(note.id)) {
+    const { data, error } = await supabase.from('personal_notes')
+      .update(row).eq('id', note.id).select('*').single()
+    if (error) throw friendly(error)
+    return rowToPersonalNote(data)
+  }
+  const { data, error } = await supabase.from('personal_notes')
+    .insert([{ ...row, user_id: uid }]).select('*').single()
+  if (error) throw friendly(error)
+  return rowToPersonalNote(data)
+}
+
+export const dbDeletePersonalNote = async (id) => {
+  const { error } = await supabase.from('personal_notes').delete().eq('id', id)
+  if (error) throw friendly(error)
+}
+
+// ═══════════════════════════════════════════════════════════
+// NOTES FEED (030) — agregador de notas de entidades
+// ═══════════════════════════════════════════════════════════
+
+const rowToFeedNote = (r) => ({
+  entityType:     r.entity_type,
+  entityId:       r.entity_id,
+  entityLabel:    r.entity_label,
+  noteText:       r.note_text,
+  notedAt:        r.noted_at,
+  ownerScouterId: r.owner_scouter_id,
+})
+
+export const dbGetNotesFeed = async () => {
+  const { data, error } = await supabase.from('my_notes_feed')
+    .select('*')
+    .order('noted_at', { ascending: false })
+  if (error) throw friendly(error)
+  return (data || []).map(rowToFeedNote)
 }
 
 // ═══════════════════════════════════════════════════════════

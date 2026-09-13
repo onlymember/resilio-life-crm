@@ -32,9 +32,9 @@ export const ROUTES = [
   { path: '/network/scouters',              pageKey: 'scouters',           soon: false, roles: COMMAND_ROLES },
   { path: '/network/calendar',              pageKey: 'calendar',           soon: false, roles: null },
   { path: '/network/follow-ups',            pageKey: 'follow-ups',         soon: false, roles: null },
-  { path: '/network/notes',                 pageKey: 'notes',              soon: true,  roles: null },
-  { path: '/network/missions',              pageKey: 'missions',           soon: true,  roles: null },
+  { path: '/network/notes',                 pageKey: 'notes',              soon: false, roles: null },
+  { path: '/network/missions',              pageKey: 'missions',           soon: false, roles: null },
   { path: '/network/roadmap',               pageKey: 'roadmap',            soon: true,  roles: null },
-  { path: '/network/rewards',               pageKey: 'rewards',            soon: true,  roles: null },
+  { path: '/network/rewards',               pageKey: 'rewards',            soon: false, roles: null },
   { path: '/network/manual',               pageKey: 'manual',             soon: false, roles: null },
 ]

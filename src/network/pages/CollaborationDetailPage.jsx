@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, CheckCircle, Plus, Trash2 } from 'lucide-react'
+import { ChevronLeft, CheckCircle, Plus, Trash2, ExternalLink, Check } from 'lucide-react'
 import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { t } from '../../i18n/index.js'
 import {
-  dbPatchCollaboration, dbGetActivationTypes, dbGetGeography,
+  dbPatchCollaboration, dbGetActivationTypes,
   dbGetEntityTimeline,
+  dbGetCollaborationDeliverables, dbAddCollaborationDeliverable,
+  dbUpdateCollaborationDeliverable, dbDeleteCollaborationDeliverable,
 } from '../../lib/database.js'
 import { supabase } from '../../lib/supabase.js'
 
@@ -21,28 +23,43 @@ async function fetchCollab(id) {
   if (error) throw error
   if (!data) return null
   return {
-    id:               data.id,
-    influencerId:     data.influencer_id,
-    influencerName:   data.influencers?.name || data.influencers?.username || null,
-    brandId:          data.brand_id,
-    brandName:        data.brands?.name || null,
-    campaignId:       data.campaign_id,
-    campaignName:     data.campaigns?.name || null,
-    activationTypeId: data.activation_type_id,
-    status:           data.status,
-    startDate:        data.start_date,
-    endDate:          data.end_date,
-    deliverables:     data.deliverables || [],
-    contentStatus:    data.content_status,
-    paymentStatus:    data.payment_status,
-    amount:           data.amount,
-    currency:         data.currency,
-    results:          data.results ? JSON.stringify(data.results, null, 2) : '',
-    notes:            data.notes,
-    scouterId:        data.scouter_id,
-    cityId:           data.city_id,
-    createdAt:        data.created_at,
-    updatedAt:        data.updated_at,
+    id:                  data.id,
+    influencerId:        data.influencer_id,
+    influencerName:      data.influencers?.name || data.influencers?.username || null,
+    brandId:             data.brand_id,
+    brandName:           data.brands?.name || null,
+    campaignId:          data.campaign_id,
+    campaignName:        data.campaigns?.name || null,
+    opportunityId:       data.opportunity_id ?? null,
+    activationTypeId:    data.activation_type_id,
+    status:              data.status,
+    startDate:           data.start_date,
+    endDate:             data.end_date,
+    deliverables:        data.deliverables || [],
+    contentStatus:       data.content_status,
+    paymentStatus:       data.payment_status,
+    amount:              data.amount,
+    currency:            data.currency,
+    results:             data.results ? JSON.stringify(data.results, null, 2) : '',
+    notes:               data.notes,
+    nextAction:          data.next_action ?? null,
+    nextActionAt:        data.next_action_at ? data.next_action_at.slice(0,10) : null,
+    contractUrl:         data.contract_url ?? null,
+    invoiceUrl:          data.invoice_url ?? null,
+    reach:               data.reach ?? null,
+    impressions:         data.impressions ?? null,
+    likes:               data.likes ?? null,
+    comments:            data.comments ?? null,
+    shares:              data.shares ?? null,
+    saves:               data.saves ?? null,
+    linkClicks:          data.link_clicks ?? null,
+    engagementRate:      data.engagement_rate ?? null,
+    estimatedMediaValue: data.estimated_media_value ?? null,
+    resultsNotes:        data.results_notes ?? null,
+    scouterId:           data.scouter_id,
+    cityId:              data.city_id,
+    createdAt:           data.created_at,
+    updatedAt:           data.updated_at,
   }
 }
 
@@ -63,6 +80,9 @@ const Label = ({ children }) => (
   <label style={{ fontSize:10, fontWeight:600, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:0.5, display:'block', marginBottom:4 }}>{children}</label>
 )
 
+const numField = (val) => val == null ? '' : String(val)
+const parseNum = (s) => s === '' ? null : Number(s)
+
 export default function CollaborationDetailPage() {
   const { id }   = useParams()
   const navigate = useNavigate()
@@ -75,9 +95,28 @@ export default function CollaborationDetailPage() {
   const [saving,    setSaving]    = useState(false)
   const [saveError, setSaveError] = useState(null)
 
+  // Structured deliverables (collaboration_deliverables table)
+  const [deliverables,    setDeliverables]    = useState([])
+  const [delivLoading,    setDelivLoading]    = useState(false)
+  const [addingDeliv,     setAddingDeliv]     = useState(false)
+  const [newDelivDesc,    setNewDelivDesc]    = useState('')
+  const [newDelivDate,    setNewDelivDate]    = useState('')
+  const [delivSaving,     setDelivSaving]     = useState(false)
+  const [completingNext,  setCompletingNext]  = useState(false)
+  const [legacyExpanded,  setLegacyExpanded]  = useState(false)
+
   const get = (f) => f in dirty ? dirty[f] : entity?.[f]
   const set = (f, v) => setDirty(prev => ({ ...prev, [f]: v }))
   const isDirty = Object.keys(dirty).length > 0
+
+  const loadDeliverables = useCallback(async (collabId) => {
+    setDelivLoading(true)
+    try {
+      const rows = await dbGetCollaborationDeliverables(collabId)
+      setDeliverables(rows)
+    } catch(e) { console.error('loadDeliverables:', e.message) }
+    finally { setDelivLoading(false) }
+  }, [])
 
   useEffect(() => {
     if (!id) return
@@ -88,9 +127,10 @@ export default function CollaborationDetailPage() {
       dbGetActivationTypes(),
     ]).then(([c, tl, at]) => {
       setEntity(c); setTimeline(tl); setActTypes(at)
+      if (c) loadDeliverables(c.id)
     }).catch(() => setEntity(null))
     .finally(() => setLoading(false))
-  }, [id])
+  }, [id, loadDeliverables])
 
   useEffect(() => {
     if (!isDirty) return
@@ -108,7 +148,6 @@ export default function CollaborationDetailPage() {
     if (!isDirty || saving) return
     setSaving(true); setSaveError(null)
     try {
-      // Parse results JSON if it changed
       const patch = { ...dirty }
       if ('results' in patch) {
         try { patch.results = JSON.parse(patch.results) } catch { patch.results = { raw: patch.results } }
@@ -120,25 +159,49 @@ export default function CollaborationDetailPage() {
     finally { setSaving(false) }
   }
 
-  // Deliverables management
-  const addDeliverable = () => {
-    const current = get('deliverables') || []
-    set('deliverables', [...current, ''])
+  const handleCompleteNextAction = async () => {
+    if (completingNext) return
+    setCompletingNext(true)
+    try {
+      await dbPatchCollaboration(entity.id, { nextAction: null, nextActionAt: null })
+      setEntity(prev => ({ ...prev, nextAction: null, nextActionAt: null }))
+      setDirty(prev => { const d = { ...prev }; delete d.nextAction; delete d.nextActionAt; return d })
+    } catch(e) { setSaveError(e.message) }
+    finally { setCompletingNext(false) }
   }
-  const updateDeliverable = (i, val) => {
-    const current = [...(get('deliverables') || [])]
-    current[i] = val
-    set('deliverables', current)
+
+  const handleAddDeliverable = async () => {
+    if (!newDelivDesc.trim() || delivSaving) return
+    setDelivSaving(true)
+    try {
+      const row = await dbAddCollaborationDeliverable(entity.id, { description: newDelivDesc.trim(), dueDate: newDelivDate || null, sortOrder: deliverables.length })
+      setDeliverables(prev => [...prev, row])
+      setNewDelivDesc(''); setNewDelivDate(''); setAddingDeliv(false)
+    } catch(e) { console.error('addDeliverable:', e.message) }
+    finally { setDelivSaving(false) }
   }
-  const removeDeliverable = (i) => {
-    const current = (get('deliverables') || []).filter((_, j) => j !== i)
-    set('deliverables', current)
+
+  const handleToggleDeliverable = async (deliv) => {
+    const nextStatus = deliv.status === 'approved' ? 'pending' : 'approved'
+    try {
+      const updated = await dbUpdateCollaborationDeliverable(deliv.id, { status: nextStatus })
+      setDeliverables(prev => prev.map(d => d.id === deliv.id ? updated : d))
+    } catch(e) { console.error('toggleDeliverable:', e.message) }
+  }
+
+  const handleDeleteDeliverable = async (delivId) => {
+    try {
+      await dbDeleteCollaborationDeliverable(delivId)
+      setDeliverables(prev => prev.filter(d => d.id !== delivId))
+    } catch(e) { console.error('deleteDeliverable:', e.message) }
   }
 
   if (loading) return <div style={{ padding:40, textAlign:'center', color:'var(--text-secondary)' }}>{t('loading.generic')}</div>
   if (!entity)  return <EmptyState icon={CheckCircle} title={t('errors.notFound')}/>
 
   const actType = actTypes.find(a => a.id === get('activationTypeId'))
+  const legacyDeliverables = entity.deliverables || []
+  const hasNextAction = !!(get('nextAction') || get('nextActionAt'))
 
   return (
     <div style={{ maxWidth:680, paddingBottom: isDirty ? 20 : 0 }}>
@@ -173,7 +236,7 @@ export default function CollaborationDetailPage() {
 
         {/* DATOS */}
         <div style={SH}>
-          <SectionHeader label={t('collab.sections.data')} fields={['influencerName','brandName','campaignId','activationTypeId']} dirty={dirty}/>
+          <SectionHeader label={t('collab.sections.data')} fields={['activationTypeId']} dirty={dirty}/>
           <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
             <div>
               <Label>{t('collab.fields.influencer')}</Label>
@@ -194,6 +257,49 @@ export default function CollaborationDetailPage() {
                 {actTypes.map(at => <option key={at.id} value={at.id}>{at.name}</option>)}
               </select>
             </div>
+            {entity.opportunityId && (
+              <div>
+                <Label>{t('collab.fromOpportunity')}</Label>
+                <button
+                  onClick={() => navigate(`/network/opportunities/${entity.opportunityId}`)}
+                  style={{ display:'flex', alignItems:'center', gap:6, width:'100%', padding:'8px 12px', borderRadius:8, background:'rgba(139,92,246,0.07)', border:'1px solid var(--border-violet)', color:'var(--primary-violet-light)', fontSize:13, cursor:'pointer', fontWeight:600 }}
+                >
+                  <ExternalLink size={13}/>{t('collab.fromOpportunityLink')}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* PRÓXIMA ACCIÓN */}
+        <div style={SH}>
+          <SectionHeader label={t('collab.sections.nextAction')} fields={['nextAction','nextActionAt']} dirty={dirty}/>
+          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            <div>
+              <Label>{t('collab.fields.nextAction')}</Label>
+              <textarea
+                value={get('nextAction') || ''}
+                onChange={e => set('nextAction', e.target.value || null)}
+                rows={2}
+                placeholder={t('collab.nextActionPlaceholder')}
+                style={{ ...inputStyle, resize:'vertical', lineHeight:1.5, fontFamily:'inherit' }}
+              />
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr auto', gap:10, alignItems:'flex-end' }}>
+              <div>
+                <Label>{t('collab.fields.nextActionAt')}</Label>
+                <input type="date" value={get('nextActionAt') || ''} onChange={e => set('nextActionAt', e.target.value || null)} style={inputStyle}/>
+              </div>
+              {hasNextAction && (
+                <button
+                  onClick={handleCompleteNextAction}
+                  disabled={completingNext}
+                  style={{ padding:'8px 14px', borderRadius:8, background:'rgba(52,211,153,0.1)', border:'1px solid rgba(52,211,153,0.3)', color:'#34D399', cursor:'pointer', fontSize:12, fontWeight:700, display:'flex', alignItems:'center', gap:5, flexShrink:0, height:36 }}
+                >
+                  <Check size={13}/>{t('collab.nextActionComplete')}
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -212,27 +318,66 @@ export default function CollaborationDetailPage() {
           </div>
         </div>
 
-        {/* ENTREGABLES */}
+        {/* ENTREGABLES ESTRUCTURADOS */}
         <div style={SH}>
-          <SectionHeader label={t('collab.sections.deliverables')} fields={['deliverables']} dirty={dirty}/>
-          <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-            {(get('deliverables') || []).map((d, i) => (
-              <div key={i} style={{ display:'flex', gap:6 }}>
-                <input
-                  value={d}
-                  onChange={e => updateDeliverable(i, e.target.value)}
-                  placeholder={t('collab.deliverablePlaceholder')}
-                  style={{ ...inputStyle, flex:1 }}
-                />
-                <button onClick={() => removeDeliverable(i)} style={{ padding:'6px 10px', borderRadius:8, background:'rgba(248,113,113,0.08)', border:'1px solid rgba(248,113,113,0.2)', color:'#F87171', cursor:'pointer' }}>
-                  <Trash2 size={13}/>
+          <SectionHeader label={t('collab.sections.deliverables')} fields={[]} dirty={dirty}/>
+          {delivLoading ? (
+            <div style={{ fontSize:12, color:'var(--text-secondary)', padding:'8px 0' }}>{t('loading.generic')}</div>
+          ) : (
+            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+              {deliverables.map(d => (
+                <div key={d.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 10px', borderRadius:8, background:'rgba(139,92,246,0.04)', border:'1px solid var(--border-violet)' }}>
+                  <button
+                    onClick={() => handleToggleDeliverable(d)}
+                    style={{ width:20, height:20, borderRadius:6, border:`2px solid ${d.status === 'approved' ? '#34D399' : 'rgba(139,92,246,0.4)'}`, background: d.status === 'approved' ? 'rgba(52,211,153,0.15)' : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0 }}
+                  >
+                    {d.status === 'approved' && <Check size={11} color="#34D399"/>}
+                  </button>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:13, color: d.status === 'approved' ? 'var(--text-secondary)' : 'var(--text-primary)', textDecoration: d.status === 'approved' ? 'line-through' : 'none', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                      {d.description}
+                    </div>
+                    {d.dueDate && (
+                      <div style={{ fontSize:10, color:'var(--text-secondary)', marginTop:2 }}>
+                        {t('collab.deliverables.dueDate')}: {new Date(d.dueDate).toLocaleDateString('es-AR', { day:'2-digit', month:'short' })}
+                      </div>
+                    )}
+                  </div>
+                  <button onClick={() => handleDeleteDeliverable(d.id)} style={{ padding:4, background:'none', border:'none', color:'rgba(248,113,113,0.6)', cursor:'pointer', flexShrink:0 }}>
+                    <Trash2 size={13}/>
+                  </button>
+                </div>
+              ))}
+
+              {addingDeliv ? (
+                <div style={{ display:'flex', flexDirection:'column', gap:6, padding:'10px', borderRadius:8, background:'rgba(139,92,246,0.04)', border:'1px solid var(--border-violet)' }}>
+                  <input
+                    autoFocus
+                    value={newDelivDesc}
+                    onChange={e => setNewDelivDesc(e.target.value)}
+                    placeholder={t('collab.deliverables.placeholder')}
+                    style={{ ...inputStyle, fontSize:13 }}
+                    onKeyDown={e => e.key === 'Enter' && handleAddDeliverable()}
+                  />
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr auto auto', gap:6, alignItems:'center' }}>
+                    <input type="date" value={newDelivDate} onChange={e => setNewDelivDate(e.target.value)} style={{ ...inputStyle, fontSize:12 }}/>
+                    <button onClick={handleAddDeliverable} disabled={!newDelivDesc.trim() || delivSaving}
+                      style={{ padding:'7px 14px', borderRadius:8, background:'var(--primary-violet)', border:'none', color:'white', fontSize:12, fontWeight:700, cursor:'pointer' }}>
+                      {t('form.save')}
+                    </button>
+                    <button onClick={() => { setAddingDeliv(false); setNewDelivDesc(''); setNewDelivDate('') }}
+                      style={{ padding:'7px 12px', borderRadius:8, background:'transparent', border:'1px solid var(--border-violet)', color:'var(--text-secondary)', fontSize:12, cursor:'pointer' }}>
+                      {t('form.cancel')}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button onClick={() => setAddingDeliv(true)} style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 12px', borderRadius:8, background:'rgba(139,92,246,0.07)', border:'1px solid var(--border-violet)', color:'var(--text-secondary)', cursor:'pointer', fontSize:12 }}>
+                  <Plus size={12}/>{t('collab.deliverables.add')}
                 </button>
-              </div>
-            ))}
-            <button onClick={addDeliverable} style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 12px', borderRadius:8, background:'rgba(139,92,246,0.07)', border:'1px solid var(--border-violet)', color:'var(--text-secondary)', cursor:'pointer', fontSize:12 }}>
-              <Plus size={12}/>{t('collab.addDeliverable')}
-            </button>
-          </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ESTADO */}
@@ -275,7 +420,57 @@ export default function CollaborationDetailPage() {
           </div>
         </div>
 
-        {/* RESULTADOS */}
+        {/* DOCUMENTOS */}
+        <div style={SH}>
+          <SectionHeader label={t('collab.sections.documents')} fields={['contractUrl','invoiceUrl']} dirty={dirty}/>
+          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            <div>
+              <Label>{t('collab.contractUrl')}</Label>
+              <input value={get('contractUrl') || ''} onChange={e => set('contractUrl', e.target.value || null)} placeholder="https://…" style={inputStyle}/>
+            </div>
+            <div>
+              <Label>{t('collab.invoiceUrl')}</Label>
+              <input value={get('invoiceUrl') || ''} onChange={e => set('invoiceUrl', e.target.value || null)} placeholder="https://…" style={inputStyle}/>
+            </div>
+          </div>
+        </div>
+
+        {/* KPIs */}
+        <div style={SH}>
+          <SectionHeader label={t('collab.sections.kpis')} fields={['reach','impressions','likes','comments','shares','saves','linkClicks','engagementRate','estimatedMediaValue','resultsNotes']} dirty={dirty}/>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
+            {[
+              ['reach',               t('collab.kpis.reach')],
+              ['impressions',         t('collab.kpis.impressions')],
+              ['likes',               t('collab.kpis.likes')],
+              ['comments',            t('collab.kpis.comments')],
+              ['shares',              t('collab.kpis.shares')],
+              ['saves',               t('collab.kpis.saves')],
+              ['linkClicks',          t('collab.kpis.linkClicks')],
+              ['estimatedMediaValue', t('collab.kpis.estimatedMediaValue')],
+            ].map(([field, label]) => (
+              <div key={field}>
+                <Label>{label}</Label>
+                <input type="number" min="0" value={numField(get(field))} onChange={e => set(field, parseNum(e.target.value))} style={inputStyle}/>
+              </div>
+            ))}
+          </div>
+          <div>
+            <Label>{t('collab.kpis.engagementRate')} (%)</Label>
+            <input type="number" min="0" step="0.01" value={numField(get('engagementRate'))} onChange={e => set('engagementRate', parseNum(e.target.value))} style={inputStyle}/>
+          </div>
+          <div style={{ marginTop:10 }}>
+            <Label>{t('collab.kpis.resultsNotes')}</Label>
+            <textarea
+              value={get('resultsNotes') || ''}
+              onChange={e => set('resultsNotes', e.target.value || null)}
+              rows={3}
+              style={{ ...inputStyle, resize:'vertical', lineHeight:1.5, fontFamily:'inherit' }}
+            />
+          </div>
+        </div>
+
+        {/* RESULTADOS (legacy JSONB + notas) */}
         <div style={SH}>
           <SectionHeader label={t('collab.sections.results')} fields={['results','notes']} dirty={dirty}/>
           <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
@@ -300,6 +495,26 @@ export default function CollaborationDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* ENTREGABLES LEGACY (colapsado, solo lectura) */}
+        {legacyDeliverables.length > 0 && (
+          <div style={SH}>
+            <button
+              onClick={() => setLegacyExpanded(p => !p)}
+              style={{ display:'flex', alignItems:'center', gap:6, fontSize:10, fontWeight:700, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, background:'none', border:'none', cursor:'pointer', padding:0, width:'100%', justifyContent:'space-between' }}
+            >
+              {t('collab.sections.legacyDeliverables')} ({legacyDeliverables.length})
+              <span style={{ fontSize:12 }}>{legacyExpanded ? '▲' : '▼'}</span>
+            </button>
+            {legacyExpanded && (
+              <div style={{ marginTop:10, display:'flex', flexDirection:'column', gap:4 }}>
+                {legacyDeliverables.map((d, i) => (
+                  <div key={i} style={{ fontSize:12, color:'var(--text-secondary)', padding:'4px 0', borderBottom:'1px solid rgba(139,92,246,0.08)' }}>{d}</div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ACTIVIDAD */}
         <div style={SH}>

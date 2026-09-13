@@ -1,6 +1,17 @@
 import React from 'react'
 import { t } from '../../i18n/index.js'
 
+const todayStr = () => new Date().toISOString().slice(0, 10)
+
+const urgencyColor = (nextActionAt) => {
+  if (!nextActionAt) return null
+  const d = nextActionAt.slice(0, 10)
+  const today = todayStr()
+  if (d < today)  return '#F87171'
+  if (d === today) return '#FBBF24'
+  return null
+}
+
 const fmtMoney = (n, cur) => {
   if (!n) return null
   const s = n >= 1000000 ? `${(n/1000000).toFixed(1)}M` : n >= 1000 ? `${(n/1000).toFixed(0)}K` : String(n)
@@ -13,6 +24,8 @@ const fmtDate = (d) => {
 }
 
 export default function CollaborationCard({ collab, activationType, onClick }) {
+  const urgColor = urgencyColor(collab.nextActionAt)
+
   const statusColor = {
     proposed:        '#9CA3AF',
     confirmed:       '#60A5FA',
@@ -61,6 +74,11 @@ export default function CollaborationCard({ collab, activationType, onClick }) {
         {(collab.startDate || collab.endDate) && (
           <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>
             {fmtDate(collab.startDate)}{collab.endDate ? ` → ${fmtDate(collab.endDate)}` : ''}
+          </span>
+        )}
+        {urgColor && (
+          <span style={{ padding: '2px 8px', borderRadius: 8, fontSize: 10, fontWeight: 700, background: `${urgColor}18`, color: urgColor, border: `1px solid ${urgColor}30` }}>
+            {t('collab.nextAction')}
           </span>
         )}
         {collab.amount && (
