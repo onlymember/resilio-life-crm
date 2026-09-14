@@ -137,15 +137,20 @@ export default function ManualPage({ currentUser }) {
             borderBottom: '3px solid #6B2FB3',
           }}>
             <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2.5, textTransform: 'uppercase', color: '#E6337F', marginBottom: 10 }}>
-              {t('manual.title')} /
+              {t('manual.sectionBadge', { num: (group.code || '').replace(/\D/g, '').padStart(2, '0') })}
             </div>
-            <h2 style={{ fontSize: 'clamp(22px,4vw,32px)', fontWeight: 800, color: '#F2EBFB', margin: 0, letterSpacing: -0.5, lineHeight: 1.2 }}>
+            <h2 style={{ fontSize: 'clamp(22px,4vw,32px)', fontWeight: 800, color: 'white', margin: 0, letterSpacing: -0.5, lineHeight: 1.2 }}>
               {group.name}
             </h2>
+            {group.sections[0]?.subtitle && (
+              <p style={{ fontSize: 'clamp(13px,2vw,16px)', fontStyle: 'italic', color: 'rgba(242,235,251,0.72)', margin: 'clamp(8px,1.5vw,12px) 0 0' }}>
+                {group.sections[0].subtitle}
+              </p>
+            )}
           </div>
 
           {/* Sections */}
-          <div style={{ padding: '0 clamp(20px,4vw,48px) 56px' }}>
+          <div style={{ padding: '0 clamp(20px,4vw,48px) 56px', background: 'white' }}>
             {group.sections.map(sec => (
               <ManualSection
                 key={sec.id}

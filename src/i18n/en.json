@@ -546,7 +546,8 @@
     "cancel":     "Cancel",
     "saving":     "Saving…",
     "unsaved":    "You have unsaved changes. Leave?",
-    "print":      "Print",
+    "print":       "Print",
+    "sectionBadge": "SECTION {num}",
     "cats": {
       "network":   "The Network",
       "operacion": "Operations",

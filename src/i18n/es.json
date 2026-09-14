@@ -546,7 +546,8 @@
     "cancel":     "Cancelar",
     "saving":     "Guardando…",
     "unsaved":    "Tenés cambios sin guardar. ¿Salir?",
-    "print":      "Imprimir",
+    "print":       "Imprimir",
+    "sectionBadge": "SECCIÓN {num}",
     "cats": {
       "network":   "La Red",
       "operacion": "La Operación",
