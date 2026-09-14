@@ -1,9 +1,111 @@
-import React, { useState, useEffect } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
-import { Home, CheckSquare, Plus, Users, Menu, X, LogOut } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Home, CheckSquare, Plus, Users, Menu, X, LogOut, Bell } from 'lucide-react'
 import CreateSheet from './components/CreateSheet.jsx'
 import { NAV_SECTIONS } from './nav.js'
 import { t } from '../i18n/index.js'
+import { dbGetNotifications } from '../lib/database.js'
+
+const ENTITY_ROUTE = {
+  influencer:    (id) => `/network/influencers/${id}`,
+  brand:         (id) => `/network/brands/${id}`,
+  opportunity:   (id) => `/network/opportunities/${id}`,
+  collaboration: (id) => `/network/collaborations/${id}`,
+}
+
+function fmtAt(at) {
+  if (!at) return ''
+  const diffH = Math.floor((Date.now() - new Date(at)) / 3600000)
+  if (diffH < 1)  return `${Math.max(1, Math.floor((Date.now() - new Date(at)) / 60000))}m`
+  if (diffH < 24) return `${diffH}h`
+  return `${Math.floor(diffH / 24)}d`
+}
+
+function BellNavBtn() {
+  const [notifs,    setNotifs]    = useState([])
+  const [open,      setOpen]      = useState(false)
+  const [seen,      setSeen]      = useState(new Set())
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    dbGetNotifications(3).then(setNotifs).catch(() => {})
+  }, [])
+
+  const unseen = notifs.filter(n => !seen.has(`${n.entityType}:${n.entityId}`)).length
+
+  const handleOpen = () => {
+    setOpen(true)
+    setSeen(new Set(notifs.map(n => `${n.entityType}:${n.entityId}`)))
+    document.body.style.overflow = 'hidden'
+  }
+
+  const handleClose = () => {
+    setOpen(false)
+    document.body.style.overflow = ''
+  }
+
+  const handleClick = (n) => {
+    const route = ENTITY_ROUTE[n.entityType]
+    if (route) navigate(route(n.entityId))
+    handleClose()
+  }
+
+  return (
+    <>
+      <button
+        onClick={handleOpen}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '6px 10px', flex: 1, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', position: 'relative' }}
+      >
+        <Bell size={20}/>
+        {unseen > 0 && (
+          <span style={{ position: 'absolute', top: 4, right: 'calc(50% - 14px)', minWidth: 16, height: 16, borderRadius: 8, background: '#F87171', border: '2px solid var(--bg-primary)', fontSize: 9, fontWeight: 700, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
+            {unseen > 9 ? '9+' : unseen}
+          </span>
+        )}
+        <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: 0.3 }}>{t('notifications.title')}</span>
+      </button>
+
+      {open && (
+        <>
+          <div onClick={handleClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 300, backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}/>
+          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 301, background: 'var(--bg-secondary)', borderRadius: '20px 20px 0 0', border: '1px solid var(--border-violet)', borderBottom: 'none', maxHeight: '80vh', display: 'flex', flexDirection: 'column', animation: 'slideUp 0.2s ease' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 12px', borderBottom: '1px solid var(--border-violet)', flexShrink: 0 }}>
+              <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>{t('notifications.title')}</span>
+              <button onClick={handleClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 4 }}><X size={18}/></button>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 'calc(16px + env(safe-area-inset-bottom, 0px))' }}>
+              {notifs.length === 0 ? (
+                <div style={{ padding: '32px 20px', textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)' }}>{t('notifications.empty')}</div>
+              ) : (
+                notifs.map((n, i) => {
+                  const kindColor = n.isOverdue ? '#F87171' : n.kind === 'assigned' ? '#60A5FA' : '#FBBF24'
+                  return (
+                    <button key={i} onClick={() => handleClick(n)}
+                      style={{ width: '100%', textAlign: 'left', padding: '12px 20px', background: 'none', border: 'none', borderBottom: '1px solid rgba(139,92,246,0.06)', cursor: 'pointer', display: 'block' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(139,92,246,0.06)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                        <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: `${kindColor}18`, color: kindColor, border: `1px solid ${kindColor}30`, flexShrink: 0, marginTop: 2 }}>
+                          {t(`notifications.kind.${n.kind}`)}
+                        </span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</div>
+                          {n.subtitle && <div style={{ fontSize: 11, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2 }}>{n.subtitle}</div>}
+                        </div>
+                        <span style={{ fontSize: 10, color: 'var(--text-secondary)', flexShrink: 0 }}>{fmtAt(n.at)}</span>
+                      </div>
+                    </button>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </>
+  )
+}
 
 const AVATAR_COLORS = ['#8B5CF6','#EC4899','#06B6D4','#10B981','#F59E0B','#EF4444','#6366F1']
 const avatarColor = (name='') => AVATAR_COLORS[(name.charCodeAt(0)||0) % AVATAR_COLORS.length]
@@ -207,7 +309,7 @@ export default function MobileLayout({ currentUser, onCreated, createOpen, onOpe
         </div>
 
         <NavBtn to="/network/influencers" icon={Users} label={t('nav.influencers')}/>
-        <NavBtn to="/network/command"     icon={Menu}  label={t('nav.more')}/>
+        <BellNavBtn/>
       </nav>
 
       <CreateSheet
