@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+
+// Persists across renders — prevents re-showing splash on internal navigation
+let sessionBooted = false
 import {
   LayoutDashboard, Building2, MapPin, Users, Gift, QrCode,
   BarChart3, ChevronDown, ChevronRight, Search,
@@ -178,6 +181,8 @@ const GlobalStyles = () => (
     @media (max-width: 767px) { .nw-save-bar { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); } }
     .nw-manual-nav { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-violet); }
     @supports not (backdrop-filter: blur(1px)) { .nw-manual-nav { background: var(--bg-secondary); } }
+    body { touch-action: pan-x pan-y; }
+    @media print { .no-print { display: none !important; } }
   `}</style>
 )
 
@@ -1146,14 +1151,14 @@ export default function App() {
         console.error('Auth — no se pudo cargar el perfil:', e)
         if (alive) setCurrentUser(null)
       } finally {
-        if (alive) setAuthReady(true)
+        if (alive) { sessionBooted = true; setAuthReady(true) }
       }
     }
 
     // 1) Sesión inicial, fuera de cualquier callback
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!alive) return
-      if (!session?.user) { setCurrentUser(null); setAuthReady(true); return }
+      if (!session?.user) { setCurrentUser(null); sessionBooted = true; setAuthReady(true); return }
       loadProfile(session.user.id)
     })
 
@@ -1162,11 +1167,11 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!alive) return
       if (event === 'PASSWORD_RECOVERY') {
-        setPasswordReset(true); setCurrentUser(null); setAuthReady(true); return
+        setPasswordReset(true); setCurrentUser(null); sessionBooted = true; setAuthReady(true); return
       }
       if (event === 'TOKEN_REFRESHED') return   // misma sesión, no recargar
       if (!session?.user) {
-        setCurrentUser(null); setShowPortal(false); setAuthReady(true); return
+        setCurrentUser(null); setShowPortal(false); sessionBooted = true; setAuthReady(true); return
       }
       setTimeout(() => {
         if (alive) loadProfile(session.user.id, { isSignIn: event === 'SIGNED_IN' })
@@ -1229,6 +1234,13 @@ export default function App() {
   const [nodesBeforeSidebar, setNodesBeforeSidebar] = useState(false)
 
   useEffect(() => { const h=()=>setWindowWidth(window.innerWidth); window.addEventListener('resize',h); return()=>window.removeEventListener('resize',h) }, [])
+  useEffect(() => {
+    const noWheel = (e) => { if (e.ctrlKey || e.metaKey) e.preventDefault() }
+    const noKeys  = (e) => { if ((e.ctrlKey||e.metaKey) && (e.key==='+' || e.key==='-' || e.key==='=')) e.preventDefault() }
+    window.addEventListener('wheel', noWheel, { passive: false })
+    window.addEventListener('keydown', noKeys)
+    return () => { window.removeEventListener('wheel', noWheel); window.removeEventListener('keydown', noKeys) }
+  }, [])
   useEffect(() => { document.documentElement.setAttribute('data-theme',theme) }, [theme])
   useEffect(() => {
     const h=(e)=>{ if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();setCmdOpen(p=>!p)} }
@@ -1551,7 +1563,7 @@ export default function App() {
   })()
 
   // ── Auth gate ──────────────────────────────────
-  if (!authReady) {
+  if (!authReady && !sessionBooted) {
     return <><GlobalStyles/><SplashLoading/></>
   }
 

@@ -37,17 +37,24 @@ const useIsMobile = () => {
   return mobile
 }
 
-// Guard de rol: si el usuario no tiene el rol requerido, redirige a home
+function NoAccessPage() {
+  return (
+    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg-primary)' }}>
+      <div style={{ textAlign:'center', maxWidth:320, padding:'0 24px' }}>
+        <Shield size={48} style={{ color:'var(--primary-violet-light)', display:'block', margin:'0 auto 16px' }}/>
+        <div style={{ fontSize:18, fontWeight:700, color:'var(--text-primary)', marginBottom:8 }}>{t('errors.noAccess')}</div>
+        <div style={{ fontSize:13, color:'var(--text-secondary)', marginBottom:20 }}>{t('errors.noAccessSubtitle')}</div>
+        <a href="/" style={{ fontSize:13, color:'var(--primary-violet-light)', textDecoration:'none' }}>{t('layout.backToApp')}</a>
+      </div>
+    </div>
+  )
+}
+
+// Guard de rol: si el usuario no tiene el rol requerido, redirige a página sin layout
 function RoleGuard({ user, allowedRoles, children }) {
   if (!user) return <Navigate to="/network/home" replace/>
   if (allowedRoles && !allowedRoles.includes(user.rol)) {
-    return (
-      <EmptyState
-        icon={Shield}
-        title={t('errors.noAccess')}
-        subtitle={t('errors.noAccessSubtitle')}
-      />
-    )
+    return <Navigate to="/network/no-access" replace/>
   }
   return children
 }
@@ -96,6 +103,9 @@ export default function NetworkApp({ currentUser }) {
       `}</style>
 
       <Routes>
+        {/* Standalone — no hereda sidebar/header del layout */}
+        <Route path="/network/no-access" element={<NoAccessPage/>}/>
+
         {/* Redirect raíz */}
         <Route path="/network" element={<NetworkRedirect currentUser={currentUser}/>}/>
 

@@ -517,7 +517,7 @@ const rowToOpportunity = (r) => ({
   cityId:      r.city_id,
   countryId:   r.country_id,
   status:      r.status,
-  value:       r.value,
+  value:       r.estimated_value,
   currency:    r.currency,
   lostReason:  r.lost_reason  ?? null,
   notes:       r.notes,
@@ -562,7 +562,7 @@ export const dbSaveOpportunity = async (opp, userId) => {
     city_id:          rest.cityId       || null,
     country_id:       rest.countryId    || null,
     status:           rest.status       || 'new',
-    value:            Number(rest.value) || null,
+    estimated_value:  Number(rest.value) || null,
     currency:         rest.currency     || null,
     lost_reason:      rest.lostReason   || null,
     notes:            rest.notes        || null,
@@ -588,7 +588,7 @@ export const dbPatchOpportunity = async (id, patch) => {
     cityId:      'city_id',
     countryId:   'country_id',
     status:      'status',
-    value:       'value',
+    value:       'estimated_value',
     currency:    'currency',
     lostReason:  'lost_reason',
     notes:       'notes',
@@ -1733,4 +1733,124 @@ export const dbGetCalendarRange = async (from, to) => {
   const { data, error } = await supabase.rpc('my_calendar_range', { p_from: from, p_to: to })
   if (error) throw friendly(error)
   return (data || []).map(mapCalendarRow)
+}
+
+// ═══════════════════════════════════════════════════════════
+// OPPORTUNITY INFLUENCERS (032 migration)
+// ═══════════════════════════════════════════════════════════
+
+const rowToOppInfluencer = (r, totalMap = {}) => ({
+  id:             r.id,
+  opportunityId:  r.opportunity_id,
+  influencerId:   r.influencer_id,
+  influencerName: r.influencers?.name || r.influencers?.username || '—',
+  status:         r.status,
+  notes:          r.notes ?? null,
+  createdAt:      r.created_at,
+  totalValue:     totalMap[r.id] ?? 0,
+})
+
+const rowToOppInfluencerItem = (r) => ({
+  id:                     r.id,
+  opportunityInfluencerId: r.opportunity_influencer_id,
+  activationTypeId:       r.activation_type_id ?? null,
+  activationTypeName:     r.activation_types?.name ?? null,
+  activationTypeColor:    r.activation_types?.color ?? '#8B5CF6',
+  quantity:               r.quantity,
+  unitValue:              Number(r.unit_value),
+  subtotal:               Number(r.subtotal),
+  notes:                  r.notes ?? null,
+})
+
+export const dbGetOpportunityInfluencers = async (opportunityId) => {
+  const [{ data: oi, error: e1 }, { data: tots, error: e2 }] = await Promise.all([
+    supabase.from('opportunity_influencers')
+      .select('*, influencers(id, name, username)')
+      .eq('opportunity_id', opportunityId)
+      .order('created_at'),
+    supabase.from('v_opportunity_influencer_totals')
+      .select('opportunity_influencer_id, total_value')
+      .eq('opportunity_id', opportunityId),
+  ])
+  if (e1) throw friendly(e1)
+  const totalMap = {}
+  for (const t of tots || []) totalMap[t.opportunity_influencer_id] = Number(t.total_value)
+  return (oi || []).map(r => rowToOppInfluencer(r, totalMap))
+}
+
+export const dbAddOpportunityInfluencer = async (opportunityId, influencerId, notes = null) => {
+  const uid = await myId()
+  if (!uid) throw new Error('Sesión expirada. Volvé a entrar.')
+  const { data, error } = await supabase.from('opportunity_influencers')
+    .insert([{ opportunity_id: opportunityId, influencer_id: influencerId, notes, created_by: uid }])
+    .select('*, influencers(id, name, username)').single()
+  if (error) throw friendly(error)
+  return rowToOppInfluencer(data)
+}
+
+export const dbUpdateOpportunityInfluencerStatus = async (id, status) => {
+  const { error } = await supabase.from('opportunity_influencers').update({ status }).eq('id', id)
+  if (error) throw friendly(error)
+}
+
+export const dbDeleteOpportunityInfluencer = async (id) => {
+  const { error } = await supabase.from('opportunity_influencers').delete().eq('id', id)
+  if (error) throw friendly(error)
+}
+
+export const dbGetOpportunityInfluencerItems = async (opportunityInfluencerId) => {
+  const { data, error } = await supabase.from('opportunity_influencer_items')
+    .select('*, activation_types(id, name, color)')
+    .eq('opportunity_influencer_id', opportunityInfluencerId)
+    .order('created_at')
+  if (error) throw friendly(error)
+  return (data || []).map(rowToOppInfluencerItem)
+}
+
+export const dbAddOpportunityInfluencerItem = async (opportunityInfluencerId, activationTypeId, quantity, unitValue, notes = null) => {
+  const { data, error } = await supabase.from('opportunity_influencer_items')
+    .insert([{
+      opportunity_influencer_id: opportunityInfluencerId,
+      activation_type_id: activationTypeId || null,
+      quantity: Number(quantity) || 1,
+      unit_value: Number(unitValue) || 0,
+      notes,
+    }])
+    .select('*, activation_types(id, name, color)').single()
+  if (error) throw friendly(error)
+  return rowToOppInfluencerItem(data)
+}
+
+export const dbUpdateOpportunityInfluencerItem = async (id, fields) => {
+  const row = {}
+  if ('activationTypeId' in fields) row.activation_type_id = fields.activationTypeId || null
+  if ('quantity'         in fields) row.quantity            = Number(fields.quantity) || 1
+  if ('unitValue'        in fields) row.unit_value          = Number(fields.unitValue) || 0
+  if ('notes'            in fields) row.notes               = fields.notes || null
+  if (Object.keys(row).length === 0) return
+  const { error } = await supabase.from('opportunity_influencer_items').update(row).eq('id', id)
+  if (error) throw friendly(error)
+}
+
+export const dbDeleteOpportunityInfluencerItem = async (id) => {
+  const { error } = await supabase.from('opportunity_influencer_items').delete().eq('id', id)
+  if (error) throw friendly(error)
+}
+
+// ═══════════════════════════════════════════════════════════
+// NOTIFICATIONS (032 migration)
+// ═══════════════════════════════════════════════════════════
+
+export const dbGetNotifications = async (daysLookback = 3) => {
+  const { data, error } = await supabase.rpc('my_notifications', { p_days_lookback: daysLookback })
+  if (error) throw friendly(error)
+  return (data || []).map(r => ({
+    kind:       r.kind,
+    entityType: r.entity_type,
+    entityId:   r.entity_id,
+    title:      r.title,
+    subtitle:   r.subtitle,
+    at:         r.at,
+    isOverdue:  r.is_overdue,
+  }))
 }

@@ -546,6 +546,7 @@
     "cancel":     "Cancel",
     "saving":     "Saving…",
     "unsaved":    "You have unsaved changes. Leave?",
+    "print":      "Print",
     "cats": {
       "network":   "The Network",
       "operacion": "Operations",
@@ -714,6 +715,37 @@
       "total":   "{n} total",
       "tooMany": "More than 200 records — showing the most recent."
     },
-    "unsavedWarning":"You have unsaved changes. Leave anyway?"
+    "unsavedWarning":"You have unsaved changes. Leave anyway?",
+    "linkedCampaignsLabel": "Campaigns",
+    "linkedCollaborationsLabel": "Collaborations",
+    "influencers": {
+      "title":             "Candidate Influencers",
+      "add":               "Add Influencer",
+      "empty":             "No influencers added yet.",
+      "searchPlaceholder": "Search influencer…",
+      "noResults":         "No results",
+      "type":              "Action type",
+      "qty":               "Qty.",
+      "unitValue":         "Unit value",
+      "addItem":           "Add",
+      "noItems":           "No items yet.",
+      "total":             "Estimated total",
+      "confirm":           "Confirm",
+      "decline":           "Decline",
+      "remove":            "Remove",
+      "status": {
+        "proposed":  "Proposed",
+        "confirmed": "Confirmed",
+        "declined":  "Declined"
+      }
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No recent updates.",
+    "kind": {
+      "due":      "Due",
+      "assigned": "New"
+    }
   }
 }

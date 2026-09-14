@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Briefcase, ChevronLeft } from 'lucide-react'
+import { Briefcase, ChevronLeft, ChevronDown, ChevronUp, Plus, Trash2, Check, X } from 'lucide-react'
 import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { t } from '../../i18n/index.js'
@@ -8,7 +8,11 @@ import { useTz } from '../utils/tz.js'
 import { isoToDatetimeLocal, datetimeLocalToIso } from '../utils/date.js'
 import {
   dbPatchOpportunity, dbGetGeography, dbListAllBrands,
-  dbGetEntityTimeline,
+  dbGetEntityTimeline, dbGetActivationTypes, dbGetInfluencers,
+  dbGetOpportunityInfluencers, dbAddOpportunityInfluencer,
+  dbUpdateOpportunityInfluencerStatus, dbDeleteOpportunityInfluencer,
+  dbGetOpportunityInfluencerItems, dbAddOpportunityInfluencerItem,
+  dbDeleteOpportunityInfluencerItem,
 } from '../../lib/database.js'
 import { supabase } from '../../lib/supabase.js'
 
@@ -37,7 +41,7 @@ async function fetchOpportunity(id) {
     cityId:      data.city_id,
     countryId:   data.country_id,
     status:      data.status,
-    value:       data.value,
+    value:       data.estimated_value,
     currency:    data.currency,
     lostReason:  data.lost_reason  ?? null,
     notes:       data.notes,
@@ -67,19 +71,225 @@ const Label = ({ children }) => (
   <label style={{ fontSize:10, fontWeight:600, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:0.5, display:'block', marginBottom:4 }}>{children}</label>
 )
 
+const CAND_STATUS_COLOR = { proposed:'#9CA3AF', confirmed:'#34D399', declined:'#F87171' }
+
+const fmtMoney = (n) => {
+  if (!n) return '—'
+  return n >= 1000000 ? `${(n/1000000).toFixed(1)}M` : n >= 1000 ? `${(n/1000).toFixed(0)}K` : String(n)
+}
+
+function AddItemInline({ candidateId, actTypes, onAdded }) {
+  const [form, setForm] = useState({ activationTypeId: '', quantity: 1, unitValue: '' })
+  const [saving, setSaving] = useState(false)
+  const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
+  const valid = Number(form.quantity) > 0 && form.unitValue !== ''
+
+  const handleAdd = async () => {
+    if (!valid || saving) return
+    setSaving(true)
+    try {
+      const item = await dbAddOpportunityInfluencerItem(
+        candidateId, form.activationTypeId || null,
+        Number(form.quantity), Number(form.unitValue)
+      )
+      onAdded(item)
+      setForm({ activationTypeId: '', quantity: 1, unitValue: '' })
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <div style={{ display:'flex', gap:6, alignItems:'center', flexWrap:'wrap', marginTop:6 }}>
+      <select value={form.activationTypeId} onChange={e => set('activationTypeId', e.target.value)}
+        style={{ padding:'4px 6px', borderRadius:6, background:'rgba(139,92,246,0.07)', border:'1px solid var(--border-violet)', color:'var(--text-primary)', fontSize:11, flex:'1 1 100px' }}>
+        <option value="">— {t('opportunities.influencers.type')} —</option>
+        {actTypes.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+      </select>
+      <input type="number" min="1" value={form.quantity} onChange={e => set('quantity', e.target.value)}
+        style={{ width:50, padding:'4px 6px', borderRadius:6, background:'rgba(139,92,246,0.07)', border:'1px solid var(--border-violet)', color:'var(--text-primary)', fontSize:11 }}
+        placeholder={t('opportunities.influencers.qty')}/>
+      <input type="number" min="0" step="any" value={form.unitValue} onChange={e => set('unitValue', e.target.value)}
+        style={{ width:80, padding:'4px 6px', borderRadius:6, background:'rgba(139,92,246,0.07)', border:'1px solid var(--border-violet)', color:'var(--text-primary)', fontSize:11 }}
+        placeholder={t('opportunities.influencers.unitValue')}/>
+      <button onClick={handleAdd} disabled={!valid || saving}
+        style={{ padding:'4px 10px', borderRadius:6, background: valid ? 'var(--primary-violet)' : 'rgba(139,92,246,0.3)', border:'none', color:'white', fontSize:11, cursor: valid ? 'pointer' : 'default' }}>
+        {saving ? '…' : t('opportunities.influencers.addItem')}
+      </button>
+    </div>
+  )
+}
+
+function CandidateRow({ candidate, actTypes, onStatusChange, onDelete, onTotalChange }) {
+  const [expanded, setExpanded] = useState(false)
+  const [items,    setItems]    = useState([])
+  const [loadingItems, setLoadingItems] = useState(false)
+  const color = CAND_STATUS_COLOR[candidate.status] || '#9CA3AF'
+
+  const loadItems = useCallback(async () => {
+    if (items.length > 0) return
+    setLoadingItems(true)
+    try {
+      const its = await dbGetOpportunityInfluencerItems(candidate.id)
+      setItems(its)
+    } finally { setLoadingItems(false) }
+  }, [candidate.id, items.length])
+
+  const handleExpand = () => {
+    if (!expanded) loadItems()
+    setExpanded(p => !p)
+  }
+
+  const handleItemAdded = (item) => {
+    const next = [...items, item]
+    setItems(next)
+    const total = next.reduce((s, it) => s + it.subtotal, 0)
+    onTotalChange(candidate.id, total)
+  }
+
+  const handleDeleteItem = async (itemId) => {
+    await dbDeleteOpportunityInfluencerItem(itemId)
+    const next = items.filter(i => i.id !== itemId)
+    setItems(next)
+    const total = next.reduce((s, it) => s + it.subtotal, 0)
+    onTotalChange(candidate.id, total)
+  }
+
+  return (
+    <div style={{ borderBottom:'1px solid rgba(139,92,246,0.08)', paddingBottom:8, marginBottom:8 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+        <button onClick={handleExpand} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', padding:2, flexShrink:0 }}>
+          {expanded ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
+        </button>
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ fontSize:13, fontWeight:600, color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{candidate.influencerName}</div>
+          <span style={{ fontSize:10, fontWeight:600, color, background:`${color}15`, border:`1px solid ${color}30`, borderRadius:4, padding:'1px 5px' }}>
+            {t(`opportunities.influencers.status.${candidate.status}`)}
+          </span>
+        </div>
+        <div style={{ fontSize:12, fontWeight:700, color:'var(--primary-violet-light)', flexShrink:0 }}>
+          {candidate.totalValue ? fmtMoney(candidate.totalValue) : '—'}
+        </div>
+        {candidate.status === 'proposed' && (
+          <>
+            <button onClick={() => onStatusChange(candidate.id, 'confirmed')} title={t('opportunities.influencers.confirm')}
+              style={{ background:'rgba(52,211,153,0.1)', border:'1px solid rgba(52,211,153,0.3)', borderRadius:6, padding:'3px 6px', cursor:'pointer', color:'#34D399' }}>
+              <Check size={12}/>
+            </button>
+            <button onClick={() => onStatusChange(candidate.id, 'declined')} title={t('opportunities.influencers.decline')}
+              style={{ background:'rgba(248,113,113,0.1)', border:'1px solid rgba(248,113,113,0.3)', borderRadius:6, padding:'3px 6px', cursor:'pointer', color:'#F87171' }}>
+              <X size={12}/>
+            </button>
+          </>
+        )}
+        <button onClick={() => onDelete(candidate.id)} title={t('opportunities.influencers.remove')}
+          style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', padding:2 }}>
+          <Trash2 size={12}/>
+        </button>
+      </div>
+
+      {expanded && (
+        <div style={{ paddingLeft:22, marginTop:8 }}>
+          {loadingItems ? (
+            <div style={{ fontSize:11, color:'var(--text-secondary)' }}>…</div>
+          ) : items.length === 0 ? (
+            <div style={{ fontSize:11, color:'var(--text-secondary)', marginBottom:4 }}>{t('opportunities.influencers.noItems')}</div>
+          ) : (
+            <div style={{ display:'flex', flexDirection:'column', gap:4, marginBottom:6 }}>
+              {items.map(item => (
+                <div key={item.id} style={{ display:'flex', alignItems:'center', gap:6, fontSize:11 }}>
+                  <span style={{ flex:1, color:'var(--text-primary)' }}>
+                    {item.activationTypeName || '—'} × {item.quantity}
+                  </span>
+                  <span style={{ color:'var(--text-secondary)' }}>{fmtMoney(item.unitValue)} × {item.quantity}</span>
+                  <span style={{ fontWeight:600, color:'var(--primary-violet-light)', minWidth:40, textAlign:'right' }}>{fmtMoney(item.subtotal)}</span>
+                  <button onClick={() => handleDeleteItem(item.id)} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', padding:1 }}>
+                    <Trash2 size={10}/>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <AddItemInline candidateId={candidate.id} actTypes={actTypes} onAdded={handleItemAdded}/>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function AddInfluencerSheet({ opportunityId, existing, onAdded, onClose }) {
+  const [search,  setSearch]  = useState('')
+  const [results, setResults] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [adding,  setAdding]  = useState(null)
+
+  useEffect(() => {
+    if (search.length < 2) { setResults([]); return }
+    setLoading(true)
+    dbGetInfluencers({ search, pageSize: 10, status: 'active' })
+      .then(r => setResults(r.rows.filter(inf => !existing.includes(inf.id))))
+      .finally(() => setLoading(false))
+  }, [search, existing])
+
+  const handleAdd = async (inf) => {
+    setAdding(inf.id)
+    try {
+      const candidate = await dbAddOpportunityInfluencer(opportunityId, inf.id)
+      onAdded(candidate)
+      onClose()
+    } catch (e) {
+      console.warn(e.message)
+    } finally { setAdding(null) }
+  }
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:300, backdropFilter:'blur(2px)' }}/>
+      <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:301, background:'var(--bg-secondary)', borderRadius:'20px 20px 0 0', border:'1px solid var(--border-violet)', borderBottom:'none', maxHeight:'70vh', display:'flex', flexDirection:'column', animation:'slideUp 0.2s ease' }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 20px 12px' }}>
+          <span style={{ fontSize:15, fontWeight:700, color:'var(--text-primary)' }}>{t('opportunities.influencers.add')}</span>
+          <button onClick={onClose} style={{ background:'none', border:'none', color:'var(--text-secondary)', cursor:'pointer' }}><X size={18}/></button>
+        </div>
+        <div style={{ padding:'0 20px 12px' }}>
+          <input value={search} onChange={e => setSearch(e.target.value)} autoFocus
+            placeholder={t('opportunities.influencers.searchPlaceholder')}
+            style={{ width:'100%', padding:'8px 12px', borderRadius:8, background:'rgba(139,92,246,0.07)', border:'1px solid var(--border-violet)', color:'var(--text-primary)', fontSize:13, outline:'none' }}/>
+        </div>
+        <div style={{ flex:1, overflowY:'auto', padding:'0 20px 24px' }}>
+          {loading && <div style={{ fontSize:12, color:'var(--text-secondary)', textAlign:'center', padding:16 }}>…</div>}
+          {!loading && search.length >= 2 && results.length === 0 && (
+            <div style={{ fontSize:12, color:'var(--text-secondary)', textAlign:'center', padding:16 }}>{t('opportunities.influencers.noResults')}</div>
+          )}
+          {results.map(inf => (
+            <button key={inf.id} onClick={() => handleAdd(inf)} disabled={adding === inf.id}
+              style={{ width:'100%', textAlign:'left', padding:'10px 0', background:'none', border:'none', borderBottom:'1px solid rgba(139,92,246,0.08)', cursor:'pointer', display:'flex', alignItems:'center', gap:8 }}>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontSize:13, fontWeight:600, color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{inf.name}</div>
+                {inf.username && <div style={{ fontSize:11, color:'var(--text-secondary)' }}>@{inf.username}</div>}
+              </div>
+              <Plus size={14} style={{ color:'var(--primary-violet-light)', flexShrink:0 }}/>
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
+  )
+}
+
 export default function OpportunityDetailPage({ currentUser }) {
   const { id }   = useParams()
   const navigate = useNavigate()
   const tz       = useTz()
 
-  const [entity,    setEntity]    = useState(null)
-  const [timeline,  setTimeline]  = useState([])
-  const [geo,       setGeo]       = useState({ cities:[], countries:[] })
-  const [brands,    setBrands]    = useState([])
-  const [loading,   setLoading]   = useState(true)
-  const [dirty,     setDirty]     = useState({})
-  const [saving,    setSaving]    = useState(false)
-  const [saveError, setSaveError] = useState(null)
+  const [entity,      setEntity]      = useState(null)
+  const [timeline,    setTimeline]    = useState([])
+  const [geo,         setGeo]         = useState({ cities:[], countries:[] })
+  const [brands,      setBrands]      = useState([])
+  const [loading,     setLoading]     = useState(true)
+  const [dirty,       setDirty]       = useState({})
+  const [saving,      setSaving]      = useState(false)
+  const [saveError,   setSaveError]   = useState(null)
+  const [candidates,  setCandidates]  = useState([])
+  const [actTypes,    setActTypes]    = useState([])
+  const [addInfOpen,  setAddInfOpen]  = useState(false)
 
   const get = (f) => f in dirty ? dirty[f] : entity?.[f]
   const set = (f, v) => setDirty(prev => ({ ...prev, [f]: v }))
@@ -93,8 +303,11 @@ export default function OpportunityDetailPage({ currentUser }) {
       dbGetEntityTimeline('opportunity', id).catch(() => []),
       dbGetGeography(),
       dbListAllBrands(),
-    ]).then(([opp, tl, g, br]) => {
+      dbGetOpportunityInfluencers(id).catch(() => []),
+      dbGetActivationTypes().catch(() => []),
+    ]).then(([opp, tl, g, br, cands, acts]) => {
       setEntity(opp); setTimeline(tl); setGeo(g); setBrands(br)
+      setCandidates(cands); setActTypes(acts)
     }).catch(() => setEntity(null))
     .finally(() => setLoading(false))
   }, [id])
@@ -120,6 +333,24 @@ export default function OpportunityDetailPage({ currentUser }) {
       setDirty({})
     } catch(e) { setSaveError(e.message) }
     finally { setSaving(false) }
+  }
+
+  const handleCandidateStatusChange = async (candidateId, status) => {
+    await dbUpdateOpportunityInfluencerStatus(candidateId, status).catch(() => {})
+    setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, status } : c))
+  }
+
+  const handleCandidateDelete = async (candidateId) => {
+    await dbDeleteOpportunityInfluencer(candidateId).catch(() => {})
+    setCandidates(prev => prev.filter(c => c.id !== candidateId))
+  }
+
+  const handleCandidateTotalChange = (candidateId, total) => {
+    setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, totalValue: total } : c))
+  }
+
+  const handleCandidateAdded = (candidate) => {
+    setCandidates(prev => [...prev, candidate])
   }
 
   if (loading) return <div style={{ padding:40, textAlign:'center', color:'var(--text-secondary)' }}>{t('loading.generic')}</div>
@@ -263,13 +494,56 @@ export default function OpportunityDetailPage({ currentUser }) {
           </div>
         )}
 
+        {/* INFLUENCERS CANDIDATOS */}
+        <div style={SH}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+            <div style={{ fontSize:10, fontWeight:700, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1 }}>
+              {t('opportunities.influencers.title')}
+            </div>
+            <button onClick={() => setAddInfOpen(true)}
+              style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 10px', borderRadius:7, background:'var(--primary-violet)', border:'none', color:'white', fontSize:11, fontWeight:700, cursor:'pointer' }}>
+              <Plus size={11}/>{t('opportunities.influencers.add')}
+            </button>
+          </div>
+          {candidates.length === 0 ? (
+            <div style={{ fontSize:12, color:'var(--text-secondary)', textAlign:'center', padding:'12px 0' }}>
+              {t('opportunities.influencers.empty')}
+            </div>
+          ) : (
+            candidates.map(c => (
+              <CandidateRow
+                key={c.id}
+                candidate={c}
+                actTypes={actTypes}
+                onStatusChange={handleCandidateStatusChange}
+                onDelete={handleCandidateDelete}
+                onTotalChange={handleCandidateTotalChange}
+              />
+            ))
+          )}
+          {candidates.length > 0 && (
+            <div style={{ display:'flex', justifyContent:'flex-end', paddingTop:4, fontSize:12, fontWeight:700, color:'var(--primary-violet-light)' }}>
+              {t('opportunities.influencers.total')}: {fmtMoney(candidates.reduce((s,c) => s + (c.totalValue||0), 0))}
+            </div>
+          )}
+        </div>
+
+        {addInfOpen && (
+          <AddInfluencerSheet
+            opportunityId={entity.id}
+            existing={candidates.map(c => c.influencerId)}
+            onAdded={handleCandidateAdded}
+            onClose={() => setAddInfOpen(false)}
+          />
+        )}
+
         {/* VÍNCULOS */}
         {(entity.linkedCampaigns?.length > 0 || entity.linkedCollaborations?.length > 0) && (
           <div style={SH}>
             <SectionHeader label={t('opportunities.sections.links')} fields={[]} dirty={dirty}/>
             {entity.linkedCampaigns?.length > 0 && (
               <div style={{ marginBottom:8 }}>
-                <div style={{ fontSize:10, color:'var(--text-secondary)', marginBottom:4, fontWeight:600 }}>Campañas</div>
+                <div style={{ fontSize:10, color:'var(--text-secondary)', marginBottom:4, fontWeight:600 }}>{t('opportunities.linkedCampaignsLabel')}</div>
                 {entity.linkedCampaigns.map(c => (
                   <div key={c.id} style={{ fontSize:12, color:'var(--text-primary)', padding:'4px 0', borderBottom:'1px solid rgba(139,92,246,0.08)' }}>{c.name}</div>
                 ))}
@@ -277,7 +551,7 @@ export default function OpportunityDetailPage({ currentUser }) {
             )}
             {entity.linkedCollaborations?.length > 0 && (
               <div>
-                <div style={{ fontSize:10, color:'var(--text-secondary)', marginBottom:4, fontWeight:600 }}>Colaboraciones</div>
+                <div style={{ fontSize:10, color:'var(--text-secondary)', marginBottom:4, fontWeight:600 }}>{t('opportunities.linkedCollaborationsLabel')}</div>
                 {entity.linkedCollaborations.map(c => (
                   <div key={c.id} style={{ fontSize:12, color:'var(--text-primary)', padding:'4px 0', borderBottom:'1px solid rgba(139,92,246,0.08)' }}>
                     {t(`collab.status.${c.status}`)}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { Printer } from 'lucide-react'
 import ManualNav from '../components/ManualNav.jsx'
 import ManualSection from '../components/ManualSection.jsx'
 import { t } from '../../i18n/index.js'
@@ -93,50 +94,90 @@ export default function ManualPage({ currentUser }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
-      {/* Sticky category nav */}
-      <ManualNav
-        categories={categories}
-        activeCode={activeCode}
-        onSelect={handleSelectCategory}
-      />
-
-      {/* Content */}
-      <div style={{ padding: '0 20px 60px', maxWidth: '65ch', width: '100%' }}>
-
-        {/* Page header */}
-        <div style={{ padding: '24px 0 4px' }}>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>
-            {t('manual.title')}
-          </h1>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-            {t('manual.subtitle')}
-          </p>
-        </div>
-
-        {/* Category groups */}
-        {byCategory.map(group => (
-          <div key={group.code}>
-            {/* Category heading */}
-            <div style={{
-              marginTop: 32, marginBottom: 4,
-              fontSize: 10, fontWeight: 800, letterSpacing: 1.5,
-              textTransform: 'uppercase', color: 'var(--primary-violet-light)',
-            }}>
-              {group.name}
-            </div>
-
-            {/* Sections */}
-            {group.sections.map(sec => (
-              <ManualSection
-                key={sec.id}
-                section={sec}
-                canEdit={canEdit}
-                sectionRef={el => { sectionRefs.current[sec.id] = el }}
-              />
-            ))}
-          </div>
-        ))}
+      {/* Sticky category nav — hidden on print */}
+      <div className="no-print">
+        <ManualNav
+          categories={categories}
+          activeCode={activeCode}
+          onSelect={handleSelectCategory}
+        />
       </div>
+
+      {/* Document sheet */}
+      <div style={{ padding: '24px 20px 80px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{
+          width: '100%', maxWidth: 800,
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-violet)',
+          borderRadius: 12,
+          padding: '40px 48px',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
+        }}>
+
+          {/* Document header */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32, paddingBottom: 20, borderBottom: '2px solid var(--border-violet)' }}>
+            <div>
+              <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6, letterSpacing: -0.5 }}>
+                {t('manual.title')}
+              </h1>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+                {t('manual.subtitle')}
+              </p>
+            </div>
+            <button
+              onClick={() => window.print()}
+              className="no-print"
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9, background: 'transparent', border: '1px solid var(--border-violet)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 12, fontWeight: 600, flexShrink: 0, transition: 'all 0.15s' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.08)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+            >
+              <Printer size={13}/>{t('manual.print')}
+            </button>
+          </div>
+
+          {/* Category groups */}
+          {byCategory.map(group => (
+            <div key={group.code} style={{ marginBottom: 40 }}>
+              {/* Category heading */}
+              <div style={{
+                marginBottom: 16,
+                fontSize: 10, fontWeight: 800, letterSpacing: 2,
+                textTransform: 'uppercase', color: 'var(--primary-violet-light)',
+                paddingBottom: 8, borderBottom: '1px solid rgba(139,92,246,0.15)',
+              }}>
+                {group.name}
+              </div>
+
+              {/* Sections */}
+              {group.sections.map(sec => (
+                <ManualSection
+                  key={sec.id}
+                  section={sec}
+                  canEdit={canEdit}
+                  sectionRef={el => { sectionRefs.current[sec.id] = el }}
+                />
+              ))}
+            </div>
+          ))}
+
+          {/* Document footer */}
+          <div style={{ marginTop: 40, paddingTop: 16, borderTop: '1px solid var(--border-violet)', fontSize: 10, color: 'var(--text-secondary)', textAlign: 'right', letterSpacing: 0.5 }}>
+            RESILIO NETWORK
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @media print {
+          .no-print { display: none !important; }
+          body { background: white !important; }
+          [style*="--bg-secondary"] { background: white !important; }
+          [style*="--text-primary"] { color: #111 !important; }
+          [style*="--text-secondary"] { color: #555 !important; }
+          [style*="--primary-violet-light"] { color: #6d28d9 !important; }
+          [style*="--border-violet"] { border-color: #e5e7eb !important; }
+        }
+      `}</style>
     </div>
   )
 }

@@ -546,6 +546,7 @@
     "cancel":     "Cancelar",
     "saving":     "Guardando…",
     "unsaved":    "Tenés cambios sin guardar. ¿Salir?",
+    "print":      "Imprimir",
     "cats": {
       "network":   "La Red",
       "operacion": "La Operación",
@@ -714,6 +715,37 @@
       "total":   "{n} total",
       "tooMany": "Hay más de 200 — mostrando las más recientes."
     },
-    "unsavedWarning":"Tenés cambios sin guardar. ¿Salir de todos modos?"
+    "unsavedWarning":"Tenés cambios sin guardar. ¿Salir de todos modos?",
+    "linkedCampaignsLabel": "Campañas",
+    "linkedCollaborationsLabel": "Colaboraciones",
+    "influencers": {
+      "title":             "Influencers candidatos",
+      "add":               "Agregar influencer",
+      "empty":             "Ningún influencer agregado aún.",
+      "searchPlaceholder": "Buscar influencer…",
+      "noResults":         "Sin resultados",
+      "type":              "Tipo de acción",
+      "qty":               "Cant.",
+      "unitValue":         "Valor unit.",
+      "addItem":           "Agregar",
+      "noItems":           "Sin ítems aún.",
+      "total":             "Total estimado",
+      "confirm":           "Confirmar",
+      "decline":           "Declinar",
+      "remove":            "Quitar",
+      "status": {
+        "proposed":  "Propuesto",
+        "confirmed": "Confirmado",
+        "declined":  "Declinado"
+      }
+    }
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "empty": "Sin novedades recientes.",
+    "kind": {
+      "due":      "Vencido",
+      "assigned": "Nuevo"
+    }
   }
 }

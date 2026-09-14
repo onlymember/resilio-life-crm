@@ -1,8 +1,111 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react'
+import { ChevronLeft, ChevronRight, LogOut, Bell, X } from 'lucide-react'
 import { NAV_SECTIONS } from './nav.js'
 import { t } from '../i18n/index.js'
+import { dbGetNotifications } from '../lib/database.js'
+
+const ENTITY_ROUTE = {
+  influencer:    (id) => `/network/influencers/${id}`,
+  brand:         (id) => `/network/brands/${id}`,
+  opportunity:   (id) => `/network/opportunities/${id}`,
+  collaboration: (id) => `/network/collaborations/${id}`,
+}
+
+function fmtAt(at) {
+  if (!at) return ''
+  const d = new Date(at)
+  const now = new Date()
+  const diffMs = now - d
+  const diffH = Math.floor(diffMs / 3600000)
+  if (diffH < 1)  return `${Math.max(1, Math.floor(diffMs/60000))}m`
+  if (diffH < 24) return `${diffH}h`
+  return `${Math.floor(diffH/24)}d`
+}
+
+function NotificationBell({ onNavigate }) {
+  const [notifs,  setNotifs]  = useState([])
+  const [open,    setOpen]    = useState(false)
+  const [seen,    setSeen]    = useState(new Set())
+  const panelRef = useRef(null)
+
+  useEffect(() => {
+    dbGetNotifications(3).then(setNotifs).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e) => { if (panelRef.current && !panelRef.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const handleOpen = () => {
+    setOpen(p => !p)
+    setSeen(new Set(notifs.map(n => `${n.entityType}:${n.entityId}`)))
+  }
+
+  const unseen = notifs.filter(n => !seen.has(`${n.entityType}:${n.entityId}`)).length
+
+  const handleClick = (n) => {
+    const route = ENTITY_ROUTE[n.entityType]
+    if (route && onNavigate) onNavigate(route(n.entityId))
+    setOpen(false)
+  }
+
+  return (
+    <div style={{ position:'relative' }} ref={panelRef}>
+      <button
+        onClick={handleOpen}
+        style={{ position:'relative', background:'none', border:'none', cursor:'pointer', color: open ? 'var(--primary-violet-light)' : 'var(--text-secondary)', padding:6, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', transition:'color 0.15s' }}
+        onMouseEnter={e => e.currentTarget.style.color = 'var(--primary-violet-light)'}
+        onMouseLeave={e => { if (!open) e.currentTarget.style.color = 'var(--text-secondary)' }}
+      >
+        <Bell size={16}/>
+        {unseen > 0 && (
+          <span style={{ position:'absolute', top:2, right:2, width:8, height:8, borderRadius:'50%', background:'#F87171', border:'2px solid var(--bg-secondary)' }}/>
+        )}
+      </button>
+
+      {open && (
+        <div style={{ position:'absolute', top:'calc(100% + 6px)', right:0, width:300, background:'var(--bg-secondary)', border:'1px solid var(--border-violet)', borderRadius:12, boxShadow:'0 8px 32px rgba(0,0,0,0.35)', zIndex:200, overflow:'hidden' }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', borderBottom:'1px solid var(--border-violet)' }}>
+            <span style={{ fontSize:12, fontWeight:700, color:'var(--text-primary)' }}>{t('notifications.title')}</span>
+            <button onClick={() => setOpen(false)} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', padding:2 }}><X size={14}/></button>
+          </div>
+          <div style={{ maxHeight:320, overflowY:'auto' }}>
+            {notifs.length === 0 ? (
+              <div style={{ padding:'24px 14px', textAlign:'center', fontSize:12, color:'var(--text-secondary)' }}>{t('notifications.empty')}</div>
+            ) : (
+              notifs.map((n, i) => {
+                const isUnseen = !seen.has(`${n.entityType}:${n.entityId}`)
+                const kindColor = n.isOverdue ? '#F87171' : n.kind === 'assigned' ? '#60A5FA' : '#FBBF24'
+                return (
+                  <button key={i} onClick={() => handleClick(n)}
+                    style={{ width:'100%', textAlign:'left', padding:'10px 14px', background: isUnseen ? 'rgba(139,92,246,0.05)' : 'transparent', border:'none', borderBottom:'1px solid rgba(139,92,246,0.06)', cursor:'pointer', display:'block' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(139,92,246,0.08)'}
+                    onMouseLeave={e => e.currentTarget.style.background = isUnseen ? 'rgba(139,92,246,0.05)' : 'transparent'}
+                  >
+                    <div style={{ display:'flex', alignItems:'flex-start', gap:8 }}>
+                      <span style={{ fontSize:9, fontWeight:700, padding:'2px 6px', borderRadius:4, background:`${kindColor}18`, color:kindColor, border:`1px solid ${kindColor}30`, flexShrink:0, marginTop:1 }}>
+                        {t(`notifications.kind.${n.kind}`)}
+                      </span>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontSize:12, fontWeight:600, color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{n.title}</div>
+                        {n.subtitle && <div style={{ fontSize:11, color:'var(--text-secondary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{n.subtitle}</div>}
+                      </div>
+                      <span style={{ fontSize:10, color:'var(--text-secondary)', flexShrink:0 }}>{fmtAt(n.at)}</span>
+                    </div>
+                  </button>
+                )
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 const AVATAR_COLORS = ['#8B5CF6','#EC4899','#06B6D4','#10B981','#F59E0B','#EF4444','#6366F1']
 const avatarColor = (name = '') => AVATAR_COLORS[(name.charCodeAt(0)||0) % AVATAR_COLORS.length]
@@ -126,6 +229,7 @@ function NetworkSidebar({ currentUser, collapsed, onToggle }) {
 
 export default function NetworkLayout({ currentUser, railContent }) {
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('nw_sidebar_collapsed') === 'true')
+  const navigate = useNavigate()
 
   const handleToggle = () => {
     setCollapsed(prev => {
@@ -141,6 +245,10 @@ export default function NetworkLayout({ currentUser, railContent }) {
 
       {/* Workspace */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto' }}>
+        {/* Topbar */}
+        <div style={{ height: 44, borderBottom: '1px solid var(--border-violet)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 16px', background: 'var(--bg-secondary)', flexShrink: 0, position: 'sticky', top: 0, zIndex: 10 }}>
+          <NotificationBell onNavigate={navigate}/>
+        </div>
         <Outlet/>
       </div>
 
