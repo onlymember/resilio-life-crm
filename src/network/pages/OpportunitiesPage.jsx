@@ -254,8 +254,8 @@ export default function OpportunitiesPage({ onOpenCreate, currentUser }) {
       ) : (
         /* ── GROUPED LIST (mobile) ── */
         <div style={{ display:'flex', flexDirection:'column', gap:0, paddingBottom:40 }}>
-          {STATUSES.filter(s => byStatus[s].length > 0).map(status => (
-            <div key={status}>
+          {STATUSES.filter(s => byStatus[s].length > 0).map((status, si) => (
+            <div key={status} style={{ animation: `cardIn var(--dur-base) var(--ease-emphasized) ${si * 60}ms both` }}>
               <div style={{ fontSize:10, fontWeight:800, letterSpacing:1.2, textTransform:'uppercase', color: STATUS_COLOR[status], padding:'16px 0 6px' }}>
                 {t(`opportunities.status.${status}`)} ({byStatus[status].length})
               </div>

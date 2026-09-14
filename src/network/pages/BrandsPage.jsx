@@ -140,8 +140,8 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
         <EmptyState icon={Building2} title={search ? t('empty.noResults') : t('empty.noBrands')} actionLabel={`+ ${t('create.brand.label')}`} onAction={onOpenCreate}/>
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-          {rows.map(b => (
-            <div key={b.id} style={{ position:'relative' }}>
+          {rows.map((b, i) => (
+            <div key={b.id} style={{ position:'relative', animation: `cardIn var(--dur-base) var(--ease-emphasized) ${Math.min(i, 9) * 40}ms both` }}>
               {isDesktop && canReassign && (
                 <input
                   type="checkbox"

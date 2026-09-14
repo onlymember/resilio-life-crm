@@ -25,6 +25,8 @@ const AVATAR_COLORS = ['#8B5CF6','#EC4899','#06B6D4','#10B981','#F59E0B','#EF444
 const avatarColor = (name = '') =>
   AVATAR_COLORS[(name.charCodeAt(0) || 0) % AVATAR_COLORS.length]
 
+const CAN_HOVER = window.matchMedia('(hover: hover)').matches
+
 // Per-session debounce: 2s cooldown per entity+contactType
 const _lastContact = new Map()
 
@@ -62,15 +64,17 @@ export default function NetworkCard({
       background: 'var(--glass-bg)', backdropFilter: 'blur(20px)',
       border: '1px solid var(--border-violet)',
       borderRadius: 14, overflow: 'hidden',
-      transition: 'border-color 0.2s, box-shadow 0.2s',
+      transition: 'border-color 0.2s, box-shadow 0.2s, transform 0.2s',
     }}
       onMouseEnter={e => {
         e.currentTarget.style.borderColor = 'rgba(139,92,246,0.5)'
         e.currentTarget.style.boxShadow   = '0 4px 20px rgba(139,92,246,0.15)'
+        if (CAN_HOVER) e.currentTarget.style.transform = 'translateY(-2px)'
       }}
       onMouseLeave={e => {
         e.currentTarget.style.borderColor = 'var(--border-violet)'
         e.currentTarget.style.boxShadow   = 'none'
+        if (CAN_HOVER) e.currentTarget.style.transform = ''
       }}
     >
       {/* Navigation zone — single <button>, no <a> children */}

@@ -72,6 +72,12 @@ function Page({ component: Comp, currentUser, onOpenCreate, onCreated, ...rest }
 export default function NetworkApp({ currentUser }) {
   const isMobile = useIsMobile()
   const [createOpen, setCreateOpen] = useState(false)
+  const [createStep, setCreateStep] = useState('select')
+
+  const handleOpenCreate = useCallback((step = 'select') => {
+    setCreateStep(step)
+    setCreateOpen(true)
+  }, [])
 
   const handleCreated = useCallback((type, entity) => {
     window.dispatchEvent(new CustomEvent('network:created', { detail: { type, entity } }))
@@ -118,20 +124,21 @@ export default function NetworkApp({ currentUser }) {
                   currentUser={currentUser}
                   onCreated={handleCreated}
                   createOpen={createOpen}
-                  onOpenCreate={() => setCreateOpen(true)}
+                  createStep={createStep}
+                  onOpenCreate={handleOpenCreate}
                   onCloseCreate={() => setCreateOpen(false)}
                 />
               : <NetworkLayout currentUser={currentUser}/>
           }
         >
-          <Route path="home"          element={<HomePage onOpenCreate={() => setCreateOpen(true)} currentUser={currentUser}/>}/>
-          <Route path="influencers"   element={<InfluencersPage onOpenCreate={() => setCreateOpen(true)} currentUser={currentUser}/>}/>
+          <Route path="home"          element={<HomePage onOpenCreate={handleOpenCreate} currentUser={currentUser}/>}/>
+          <Route path="influencers"   element={<InfluencersPage onOpenCreate={handleOpenCreate} currentUser={currentUser}/>}/>
           <Route path="influencers/:id" element={<InfluencerDetailPage currentUser={currentUser}/>}/>
-          <Route path="brands"        element={<BrandsPage onOpenCreate={() => setCreateOpen(true)} currentUser={currentUser}/>}/>
+          <Route path="brands"        element={<BrandsPage onOpenCreate={handleOpenCreate} currentUser={currentUser}/>}/>
           <Route path="brands/:id"    element={<BrandDetailPage currentUser={currentUser}/>}/>
-          <Route path="opportunities" element={<OpportunitiesPage onOpenCreate={() => setCreateOpen(true)} currentUser={currentUser}/>}/>
+          <Route path="opportunities" element={<OpportunitiesPage onOpenCreate={handleOpenCreate} currentUser={currentUser}/>}/>
           <Route path="opportunities/:id" element={<OpportunityDetailPage currentUser={currentUser}/>}/>
-          <Route path="collaborations"     element={<CollaborationsPage onOpenCreate={() => setCreateOpen(true)} currentUser={currentUser}/>}/>
+          <Route path="collaborations"     element={<CollaborationsPage onOpenCreate={handleOpenCreate} currentUser={currentUser}/>}/>
           <Route path="collaborations/:id" element={<CollaborationDetailPage currentUser={currentUser}/>}/>
           <Route path="tasks"              element={<TasksPage currentUser={currentUser}/>}/>
           <Route path="command"       element={
@@ -163,6 +170,7 @@ export default function NetworkApp({ currentUser }) {
           onClose={() => setCreateOpen(false)}
           currentUser={currentUser}
           onCreated={handleCreated}
+          initialStep={createStep}
         />
       )}
     </BrowserRouter>

@@ -116,6 +116,12 @@ const GlobalStyles = () => (
       --nebula-1: radial-gradient(ellipse 60% 50% at 15% 25%, rgba(139,92,246,0.07) 0%, transparent 60%);
       --nebula-2: radial-gradient(ellipse 50% 60% at 85% 75%, rgba(232,121,249,0.05) 0%, transparent 60%);
       --nebula-3: radial-gradient(ellipse 40% 40% at 50% 50%, rgba(34,211,238,0.03) 0%, transparent 50%);
+      --ease-standard:  cubic-bezier(0.4, 0, 0.2, 1);
+      --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
+      --dur-fast:  150ms;
+      --dur-base:  250ms;
+      --dur-slow:  400ms;
     }
     [data-theme="light"] {
       --bg-primary: #F3F0FF; --bg-secondary: #EDE9FE; --bg-tertiary: #DDD6FE;
@@ -130,7 +136,8 @@ const GlobalStyles = () => (
     ::-webkit-scrollbar-thumb { background: var(--primary-violet-dark); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--primary-violet); }
     input, textarea, select { font-family: inherit; outline: none; border: none; background: transparent; color: var(--text-primary); font-size: 16px; }
-    button { cursor: pointer; font-family: inherit; border: none; background: none; }
+    button { cursor: pointer; font-family: inherit; border: none; background: none; touch-action: manipulation; }
+    button:active:not([disabled]) { transform: scale(0.97); transition: transform var(--dur-fast); }
     a { text-decoration: none; color: inherit; }
     @keyframes fadeIn     { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes slideIn    { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }
@@ -141,6 +148,17 @@ const GlobalStyles = () => (
     @keyframes starTwinkle{ 0%,100%{opacity:.3} 50%{opacity:1} }
     @keyframes notifSlide { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
     @keyframes hubNodeIn { 0%{opacity:0;transform:scale(0.15);} 70%{opacity:1;transform:scale(1.08);} 100%{opacity:1;transform:scale(1);} }
+    @keyframes cardIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    @keyframes backdropIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes badgePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.45); } }
+    @keyframes slideInDrawer { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+    @media (prefers-reduced-motion: reduce) {
+      @keyframes cardIn      { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes backdropIn  { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes slideInDrawer { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes badgePulse  { 0%, 100% { transform: none; } 50% { transform: none; } }
+      @keyframes slideUp     { from { opacity: 0; } to { opacity: 1; } }
+    }
     .animate-fade { animation: fadeIn 0.3s ease; }
     .glass { background: var(--glass-bg); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border: 1px solid var(--border-violet); }
     .glow { box-shadow: var(--glow-violet); }

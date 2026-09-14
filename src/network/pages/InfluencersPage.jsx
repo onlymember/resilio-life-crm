@@ -180,8 +180,8 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
         <EmptyState icon={Users} title={search ? t('empty.noResults') : t('empty.noInfluencers')} actionLabel={`+ ${t('create.influencer.label')}`} onAction={onOpenCreate}/>
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-          {rows.map(inf => (
-            <div key={inf.id} style={{ position:'relative' }}>
+          {rows.map((inf, i) => (
+            <div key={inf.id} style={{ position:'relative', animation: `cardIn var(--dur-base) var(--ease-emphasized) ${Math.min(i, 9) * 40}ms both` }}>
               {isDesktop && canReassign && (
                 <input
                   type="checkbox"

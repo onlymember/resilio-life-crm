@@ -63,7 +63,7 @@ function NotificationBell({ onNavigate }) {
       >
         <Bell size={16}/>
         {unseen > 0 && (
-          <span style={{ position:'absolute', top:2, right:2, width:8, height:8, borderRadius:'50%', background:'#F87171', border:'2px solid var(--bg-secondary)' }}/>
+          <span style={{ position:'absolute', top:2, right:2, width:8, height:8, borderRadius:'50%', background:'#F87171', border:'2px solid var(--bg-secondary)', animation:'badgePulse 0.4s var(--ease-spring) 0.5s 2 both' }}/>
         )}
       </button>
 
@@ -134,7 +134,7 @@ function NetworkSidebar({ currentUser, collapsed, onToggle }) {
         {!collapsed && (
           <div style={{ overflow: 'hidden', flex: 1 }}>
             <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, whiteSpace: 'nowrap', background: 'linear-gradient(90deg,var(--primary-violet-light),var(--accent-magenta))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              RESILIO NETWORK
+              Resilio
             </div>
           </div>
         )}

@@ -100,13 +100,14 @@ export default function CollaborationsPage({ onOpenCreate }) {
         <EmptyState icon={CheckCircle} title={t('collab.empty')} actionLabel={`+ ${t('collab.new')}`} onAction={onOpenCreate}/>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {rows.map(collab => (
-            <CollaborationCard
-              key={collab.id}
-              collab={collab}
-              activationType={actTypeMap[collab.activationTypeId]}
-              onClick={() => navigate(`/network/collaborations/${collab.id}`)}
-            />
+          {rows.map((collab, i) => (
+            <div key={collab.id} style={{ animation: `cardIn var(--dur-base) var(--ease-emphasized) ${Math.min(i, 9) * 40}ms both` }}>
+              <CollaborationCard
+                collab={collab}
+                activationType={actTypeMap[collab.activationTypeId]}
+                onClick={() => navigate(`/network/collaborations/${collab.id}`)}
+              />
+            </div>
           ))}
           {rows.length < total && (
             <button onClick={() => load(page + 1)} disabled={loading} style={{ padding: '12px', borderRadius: 10, background: 'rgba(139,92,246,0.08)', border: '1px solid var(--border-violet)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 13 }}>

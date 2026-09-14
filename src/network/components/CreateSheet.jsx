@@ -247,8 +247,8 @@ function TypeButton({ icon: Icon, label, color, onClick }) {
 
 // ─── Sheet principal ──────────────────────────────────────────────────────────
 
-export default function CreateSheet({ isOpen, onClose, currentUser, onCreated }) {
-  const [step,           setStep]           = useState('select') // 'select' | 'influencer' | 'brand' | 'opportunity' | 'collaboration'
+export default function CreateSheet({ isOpen, onClose, currentUser, onCreated, initialStep = 'select' }) {
+  const [step,           setStep]           = useState(initialStep) // 'select' | 'influencer' | 'brand' | 'opportunity' | 'collaboration'
   const [saving,         setSaving]         = useState(false)
   const [error,          setError]          = useState(null)
   const [cities,         setCities]         = useState([])
@@ -258,7 +258,7 @@ export default function CreateSheet({ isOpen, onClose, currentUser, onCreated })
 
   useEffect(() => {
     if (!isOpen) return
-    setStep('select'); setError(null)
+    setStep(initialStep || 'select'); setError(null)
     dbGetGeography().then(g => setCities(g.cities || [])).catch(() => {})
     dbListAllBrands().then(b => setBrands(b)).catch(() => {})
     dbListAllInfluencers().then(i => setInfluencers(i)).catch(() => {})
@@ -352,14 +352,14 @@ export default function CreateSheet({ isOpen, onClose, currentUser, onCreated })
 
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', zIndex: 400 }}/>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', zIndex: 400, animation: 'backdropIn var(--dur-base) var(--ease-standard)' }}/>
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 401,
         background: 'var(--bg-secondary)', borderRadius: '24px 24px 0 0',
         border: '1px solid var(--border-violet)', borderBottom: 'none',
         padding: '0 20px 40px',
         maxHeight: '90vh', overflowY: 'auto',
-        animation: 'slideUp 0.22s ease',
+        animation: 'slideUp var(--dur-base) var(--ease-emphasized)',
       }}>
         <div style={{ width: 36, height: 4, background: 'rgba(255,255,255,0.15)', borderRadius: 2, margin: '12px auto 0' }}/>
 

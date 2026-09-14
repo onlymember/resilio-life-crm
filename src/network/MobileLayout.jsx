@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Home, CheckSquare, Plus, Users, Menu, X, LogOut, Bell } from 'lucide-react'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { Home, CheckSquare, Plus, Users, Building2, Briefcase, Handshake, Menu, X, LogOut, Bell } from 'lucide-react'
 import CreateSheet from './components/CreateSheet.jsx'
 import { NAV_SECTIONS } from './nav.js'
 import { t } from '../i18n/index.js'
 import { dbGetNotifications } from '../lib/database.js'
+
+const PREFERS_REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 const ENTITY_ROUTE = {
   influencer:    (id) => `/network/influencers/${id}`,
@@ -20,6 +22,14 @@ function fmtAt(at) {
   if (diffH < 24) return `${diffH}h`
   return `${Math.floor(diffH / 24)}d`
 }
+
+// Speed-dial options — same order as CreateSheet TypeButtons
+const SPEED_DIAL_ITEMS = [
+  { step: 'influencer',    labelKey: 'create.influencer.label',    Icon: Users,     color: '#8B5CF6' },
+  { step: 'brand',         labelKey: 'create.brand.label',         Icon: Building2, color: '#22D3EE' },
+  { step: 'opportunity',   labelKey: 'create.opportunity.label',   Icon: Briefcase, color: '#FBBF24' },
+  { step: 'collaboration', labelKey: 'create.collaboration.label', Icon: Handshake, color: '#34D399' },
+]
 
 function BellNavBtn() {
   const [notifs,    setNotifs]    = useState([])
@@ -58,7 +68,7 @@ function BellNavBtn() {
       >
         <Bell size={20}/>
         {unseen > 0 && (
-          <span style={{ position: 'absolute', top: 4, right: 'calc(50% - 14px)', minWidth: 16, height: 16, borderRadius: 8, background: '#F87171', border: '2px solid var(--bg-primary)', fontSize: 9, fontWeight: 700, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
+          <span style={{ position: 'absolute', top: 4, right: 'calc(50% - 14px)', minWidth: 16, height: 16, borderRadius: 8, background: '#F87171', border: '2px solid var(--bg-primary)', fontSize: 9, fontWeight: 700, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', animation: 'badgePulse 0.4s var(--ease-spring) 0.5s 2 both' }}>
             {unseen > 9 ? '9+' : unseen}
           </span>
         )}
@@ -67,8 +77,8 @@ function BellNavBtn() {
 
       {open && (
         <>
-          <div onClick={handleClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 300, backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}/>
-          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 301, background: 'var(--bg-secondary)', borderRadius: '20px 20px 0 0', border: '1px solid var(--border-violet)', borderBottom: 'none', maxHeight: '80vh', display: 'flex', flexDirection: 'column', animation: 'slideUp 0.2s ease' }}>
+          <div onClick={handleClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 300, backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)', animation: 'backdropIn var(--dur-base) var(--ease-standard)' }}/>
+          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 301, background: 'var(--bg-secondary)', borderRadius: '20px 20px 0 0', border: '1px solid var(--border-violet)', borderBottom: 'none', maxHeight: '80vh', display: 'flex', flexDirection: 'column', animation: 'slideUp var(--dur-base) var(--ease-emphasized)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 12px', borderBottom: '1px solid var(--border-violet)', flexShrink: 0 }}>
               <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>{t('notifications.title')}</span>
               <button onClick={handleClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 4 }}><X size={18}/></button>
@@ -126,8 +136,8 @@ function MobileHeader({ currentUser, onOpenDrawer }) {
         <Menu size={20}/>
       </button>
 
-      <div style={{ flex: 1, textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: 1.5, background: 'linear-gradient(90deg,var(--primary-violet-light),var(--accent-magenta))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-        RESILIO NETWORK
+      <div style={{ flex: 1, textAlign: 'center', fontSize: 13, fontWeight: 800, letterSpacing: 1, background: 'linear-gradient(90deg,var(--primary-violet-light),var(--accent-magenta))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+        Resilio
       </div>
 
       {currentUser && (
@@ -159,32 +169,28 @@ function NavDrawer({ currentUser, onClose }) {
 
   return (
     <>
-      {/* Overlay */}
       <div
         onClick={onClose}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 200, backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 200, backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)', animation: 'backdropIn var(--dur-base) var(--ease-standard)' }}
       />
-      {/* Drawer */}
       <div style={{
         position: 'fixed', top: 0, left: 0, bottom: 0, width: 260, zIndex: 201,
         background: 'var(--bg-secondary)', borderRight: '1px solid var(--border-violet)',
         display: 'flex', flexDirection: 'column', overflowY: 'auto',
-        animation: 'slideIn 0.2s ease',
+        animation: 'slideInDrawer var(--dur-base) var(--ease-emphasized)',
       }}>
-        {/* Drawer header */}
         <div style={{ height: 52, display: 'flex', alignItems: 'center', padding: '0 12px', borderBottom: '1px solid var(--border-violet)', flexShrink: 0 }}>
           <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <img src="/logoresilio.png" alt="Resilio" style={{ width: 16, height: 16, objectFit: 'contain', filter: 'brightness(0) invert(1)' }}/>
           </div>
-          <div style={{ flex: 1, marginLeft: 10, fontSize: 11, fontWeight: 800, letterSpacing: 1.5, background: 'linear-gradient(90deg,var(--primary-violet-light),var(--accent-magenta))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            RESILIO NETWORK
+          <div style={{ flex: 1, marginLeft: 10, fontSize: 13, fontWeight: 800, letterSpacing: 1, background: 'linear-gradient(90deg,var(--primary-violet-light),var(--accent-magenta))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            Resilio
           </div>
           <button onClick={onClose} style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', borderRadius: 8 }}>
             <X size={18}/>
           </button>
         </div>
 
-        {/* Nav sections */}
         <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 8px' }}>
           {NAV_SECTIONS.map((section, si) => {
             if (section.roles && !section.roles.includes(userRol)) return null
@@ -205,7 +211,7 @@ function NavDrawer({ currentUser, onClose }) {
                       style={({ isActive }) => ({
                         display: 'flex', alignItems: 'center', gap: 10,
                         padding: '9px 10px', borderRadius: 10, marginBottom: 2,
-                        textDecoration: 'none', transition: 'all 0.15s',
+                        textDecoration: 'none', transition: 'all var(--dur-fast)',
                         background: isActive ? 'rgba(139,92,246,0.2)' : 'transparent',
                         color: isActive ? 'var(--primary-violet-light)' : 'var(--text-secondary)',
                         border: isActive ? '1px solid rgba(139,92,246,0.4)' : '1px solid transparent',
@@ -226,7 +232,6 @@ function NavDrawer({ currentUser, onClose }) {
           })}
         </nav>
 
-        {/* User + exit */}
         {currentUser && (
           <div style={{ padding: '12px', borderTop: '1px solid var(--border-violet)', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 10 }}>
@@ -266,8 +271,13 @@ const NavBtn = ({ to, icon: Icon, label, exactActive }) => (
   </NavLink>
 )
 
-export default function MobileLayout({ currentUser, onCreated, createOpen, onOpenCreate, onCloseCreate }) {
-  const [drawerOpen, setDrawerOpen] = useState(false)
+export default function MobileLayout({ currentUser, onCreated, createOpen, createStep, onOpenCreate, onCloseCreate }) {
+  const [drawerOpen,    setDrawerOpen]    = useState(false)
+  const [speedDialOpen, setSpeedDialOpen] = useState(false)
+  const location = useLocation()
+
+  // Close speed-dial when navigating to a different route
+  useEffect(() => { setSpeedDialOpen(false) }, [location.pathname])
 
   const openDrawer = () => {
     setDrawerOpen(true)
@@ -277,6 +287,11 @@ export default function MobileLayout({ currentUser, onCreated, createOpen, onOpe
   const closeDrawer = () => {
     setDrawerOpen(false)
     document.body.style.overflow = ''
+  }
+
+  const handleSpeedDialSelect = (step) => {
+    setSpeedDialOpen(false)
+    onOpenCreate(step)
   }
 
   useEffect(() => () => { document.body.style.overflow = '' }, [])
@@ -291,20 +306,88 @@ export default function MobileLayout({ currentUser, onCreated, createOpen, onOpe
         <Outlet/>
       </main>
 
-      {/* Bottom Nav with glassmorphism */}
+      {/* Speed-dial backdrop — below nav (z:100), above page */}
+      {speedDialOpen && (
+        <div
+          onClick={() => setSpeedDialOpen(false)}
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0,
+            bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+            zIndex: 99,
+            animation: 'backdropIn var(--dur-base) var(--ease-standard)',
+          }}
+        />
+      )}
+
+      {/* Bottom Nav */}
       <nav className="nw-bottom-nav" style={{ position: 'fixed', bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', left: 16, right: 16, height: 64, display: 'flex', alignItems: 'center', zIndex: 100 }}>
         <NavBtn to="/network/home"   icon={Home}        label={t('nav.home')}        exactActive/>
         <NavBtn to="/network/tasks"  icon={CheckSquare} label={t('nav.tasks')}/>
 
-        {/* FAB central */}
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+        {/* FAB central with speed-dial */}
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', position: 'relative' }}>
+          {/* Speed-dial items — fan out upward from FAB */}
+          {SPEED_DIAL_ITEMS.map((item, i) => {
+            const isOpen = speedDialOpen
+            const openDelay   = i * 45
+            const closeDelay  = (SPEED_DIAL_ITEMS.length - 1 - i) * 30
+            const dur = isOpen ? 250 : 150
+            const delay = isOpen ? openDelay : closeDelay
+            const easing = isOpen ? 'var(--ease-spring)' : 'var(--ease-standard)'
+            const scaleTarget = PREFERS_REDUCED ? '' : isOpen ? ' scale(1)' : ' scale(0.6)'
+            return (
+              <button
+                key={item.step}
+                tabIndex={isOpen ? 0 : -1}
+                onClick={() => handleSpeedDialSelect(item.step)}
+                aria-label={t(item.labelKey)}
+                style={{
+                  position: 'absolute',
+                  bottom: `${70 + i * 54}px`,
+                  left: '50%',
+                  transform: `translateX(-50%)${scaleTarget}`,
+                  opacity: isOpen ? 1 : 0,
+                  transition: `opacity ${dur}ms ${easing} ${delay}ms, transform ${dur}ms ${easing} ${delay}ms`,
+                  pointerEvents: isOpen ? 'auto' : 'none',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '9px 16px 9px 10px',
+                  borderRadius: 24, cursor: 'pointer',
+                  background: 'var(--bg-secondary)',
+                  border: `1px solid ${item.color}45`,
+                  boxShadow: `0 4px 24px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.05)`,
+                  whiteSpace: 'nowrap', zIndex: 2,
+                }}
+              >
+                <div style={{ width: 30, height: 30, borderRadius: 9, background: `${item.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <item.Icon size={15} color={item.color}/>
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 600, color: item.color }}>{t(item.labelKey)}</span>
+              </button>
+            )
+          })}
+
+          {/* FAB button */}
           <button
-            onClick={onOpenCreate}
-            style={{ width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg,var(--primary-violet-dark),var(--primary-violet))', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(139,92,246,0.5)', transform: 'translateY(-8px)', transition: 'all 0.2s' }}
-            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-10px) scale(1.05)'}
-            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(-8px)'}
+            onClick={() => setSpeedDialOpen(p => !p)}
+            aria-label={t('create.selectType')}
+            aria-expanded={speedDialOpen}
+            style={{
+              width: 48, height: 48, borderRadius: '50%',
+              background: 'linear-gradient(135deg,var(--primary-violet-dark),var(--primary-violet))',
+              border: 'none', color: 'white', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: speedDialOpen ? '0 0 28px rgba(139,92,246,0.7)' : '0 0 20px rgba(139,92,246,0.5)',
+              transform: 'translateY(-8px)',
+              transition: 'box-shadow var(--dur-base)',
+              zIndex: 2,
+            }}
           >
-            <Plus size={22}/>
+            <Plus size={22} style={{
+              transition: `transform var(--dur-base) var(--ease-spring)`,
+              transform: speedDialOpen ? 'rotate(45deg)' : 'rotate(0deg)',
+            }}/>
           </button>
         </div>
 
@@ -317,6 +400,7 @@ export default function MobileLayout({ currentUser, onCreated, createOpen, onOpe
         onClose={onCloseCreate}
         currentUser={currentUser}
         onCreated={onCreated}
+        initialStep={createStep}
       />
     </div>
   )
