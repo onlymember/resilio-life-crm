@@ -1,63 +1,72 @@
 import React, { useState, useRef, useEffect } from 'react'
 
-const useIsMobile = () => {
-  const [mobile, setMobile] = useState(() => window.innerWidth < 640)
-  useEffect(() => {
-    const h = () => setMobile(window.innerWidth < 640)
-    window.addEventListener('resize', h)
-    return () => window.removeEventListener('resize', h)
-  }, [])
-  return mobile
-}
-
-export default function ManualNav({ categories, activeCode, onSelect }) {
-  const isMobile = useIsMobile()
+export default function ManualNav({ categories, activeCode, onSelect, topOffset = 0 }) {
   const barRef  = useRef(null)
   const btnRefs = useRef({})
+  const [ind, setInd] = useState({ left: 0, width: 0, opacity: 0 })
 
-  // Auto-scroll the active chip into view within the bar
   useEffect(() => {
     const btn = btnRefs.current[activeCode]
+    if (!btn) return
+    setInd({ left: btn.offsetLeft, width: btn.offsetWidth, opacity: 1 })
     const bar = barRef.current
-    if (!btn || !bar) return
-    const bRect = btn.getBoundingClientRect()
-    const pRect = bar.getBoundingClientRect()
-    if (bRect.left < pRect.left || bRect.right > pRect.right) {
+    if (!bar) return
+    const b = btn.getBoundingClientRect()
+    const p = bar.getBoundingClientRect()
+    if (b.left < p.left || b.right > p.right) {
       btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
     }
   }, [activeCode])
 
   return (
-    <div
-      ref={barRef}
-      className="nw-manual-nav"
-      style={{
-        display: 'flex', gap: 6, overflowX: 'auto', padding: '10px 20px',
-        position: 'sticky', top: isMobile ? 52 : 0, zIndex: 20,
-        scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch',
-      }}
-    >
-      <style>{`div::-webkit-scrollbar { display: none }`}</style>
-      {categories.map(cat => {
-        const active = activeCode === cat.code
-        return (
-          <button
-            key={cat.code}
-            ref={el => { btnRefs.current[cat.code] = el }}
-            onClick={() => onSelect(cat.code)}
-            style={{
-              padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-              cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-              background: active ? 'rgba(139,92,246,0.25)' : 'rgba(139,92,246,0.07)',
-              color: active ? 'var(--primary-violet-light)' : 'var(--text-secondary)',
-              border: active ? '1px solid rgba(139,92,246,0.5)' : '1px solid var(--border-violet)',
-              transition: 'all 0.15s',
-            }}
-          >
-            {cat.name}
-          </button>
-        )
-      })}
+    <div style={{
+      position: 'sticky', top: topOffset, zIndex: 20,
+      background: 'rgba(14, 6, 32, 0.92)',
+      backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+      borderBottom: '1px solid rgba(107, 47, 179, 0.2)',
+    }}>
+      <div
+        ref={barRef}
+        className="manual-nav-bar"
+        style={{
+          display: 'flex', gap: 4, overflowX: 'auto', padding: '9px 16px',
+          scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', position: 'relative',
+        }}
+      >
+        <style>{`
+          .manual-nav-bar::-webkit-scrollbar { display: none }
+          @media (prefers-reduced-motion: reduce) { .manual-ind { transition: none !important } }
+        `}</style>
+        <div
+          className="manual-ind"
+          style={{
+            position: 'absolute', top: 0, height: '100%', borderRadius: 20, pointerEvents: 'none',
+            background: 'rgba(107, 47, 179, 0.3)', border: '1px solid rgba(107, 47, 179, 0.6)',
+            transition: 'left 0.45s cubic-bezier(0.65,0,0.35,1), width 0.45s cubic-bezier(0.65,0,0.35,1), opacity 0.2s',
+            left: ind.left, width: ind.width, opacity: ind.opacity,
+          }}
+        />
+        {categories.map(cat => {
+          const active = activeCode === cat.code
+          return (
+            <button
+              key={cat.code}
+              ref={el => { btnRefs.current[cat.code] = el }}
+              onClick={() => onSelect(cat.code)}
+              style={{
+                position: 'relative', zIndex: 1,
+                padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+                cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                background: 'transparent', border: 'none',
+                color: active ? '#C4B5FD' : 'var(--text-secondary)',
+                transition: 'color 0.2s',
+              }}
+            >
+              {cat.name}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

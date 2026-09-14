@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { Printer } from 'lucide-react'
 import ManualNav from '../components/ManualNav.jsx'
 import ManualSection from '../components/ManualSection.jsx'
 import { t } from '../../i18n/index.js'
@@ -12,9 +11,11 @@ export default function ManualPage({ currentUser }) {
   const [activeCode, setActiveCode] = useState(null)
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState(null)
+  const [progress,   setProgress]   = useState(0)
 
-  const sectionRefs  = useRef({})   // { sectionId: el }
-  const scrollingRef = useRef(false) // debounce flag: true while programmatic scroll
+  const sectionRefs  = useRef({})
+  const scrollingRef = useRef(false)
+  const scrollRef    = useRef(null)
   const canEdit      = COMMAND_ROLES.includes(currentUser?.rol)
 
   useEffect(() => {
@@ -28,13 +29,24 @@ export default function ManualPage({ currentUser }) {
       .finally(() => setLoading(false))
   }, [])
 
-  // Scrollspy — IntersectionObserver on each section element
+  // Progress bar tracking
   useEffect(() => {
-    if (!sections.length) return
+    const el = scrollRef.current
+    if (!el) return
+    const onScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = el
+      setProgress(scrollTop / Math.max(1, scrollHeight - clientHeight))
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [loading])
+
+  // Scrollspy — root is the manual's own scroll container
+  useEffect(() => {
+    if (!sections.length || !scrollRef.current) return
     const obs = new IntersectionObserver(
       (entries) => {
         if (scrollingRef.current) return
-        // Find the topmost visible entry
         const visible = entries
           .filter(e => e.isIntersecting)
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
@@ -43,7 +55,7 @@ export default function ManualPage({ currentUser }) {
           if (cat) setActiveCode(cat)
         }
       },
-      { threshold: 0.15, rootMargin: '-60px 0px -40% 0px' }
+      { threshold: 0.1, rootMargin: '-56px 0px -30% 0px', root: scrollRef.current }
     )
     Object.values(sectionRefs.current).forEach(el => { if (el) obs.observe(el) })
     return () => obs.disconnect()
@@ -51,17 +63,15 @@ export default function ManualPage({ currentUser }) {
 
   const handleSelectCategory = useCallback((code) => {
     setActiveCode(code)
-    // Find first section of this category
     const first = sections.find(s => s.category === code)
     if (!first) return
     const el = sectionRefs.current[first.id]
     if (!el) return
     scrollingRef.current = true
     el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    setTimeout(() => { scrollingRef.current = false }, 800)
+    setTimeout(() => { scrollingRef.current = false }, 900)
   }, [sections])
 
-  // Group sections by category for rendering
   const byCategory = categories.map(cat => ({
     ...cat,
     sections: sections.filter(s => s.category === cat.code),
@@ -69,19 +79,17 @@ export default function ManualPage({ currentUser }) {
 
   if (loading) {
     return (
-      <div style={{ padding: 20 }}>
-        <div style={{ height: 44, borderRadius: 8, background: 'rgba(139,92,246,0.07)', marginBottom: 20 }}/>
+      <div style={{ padding: '20px 24px' }}>
+        <div style={{ height: 51, borderRadius: 0, background: 'rgba(139,92,246,0.07)', marginBottom: 0 }}/>
         {[0,1,2,3].map(i => (
-          <div key={i} style={{ height: 120, borderRadius: 10, background: 'rgba(139,92,246,0.05)', marginBottom: 16, animation: 'pulse 1.5s ease-in-out infinite' }}/>
+          <div key={i} style={{ height: 120, borderRadius: 0, background: 'rgba(139,92,246,0.05)', marginBottom: 0, borderBottom: '1px solid rgba(139,92,246,0.06)', animation: 'pulse 1.5s ease-in-out infinite' }}/>
         ))}
       </div>
     )
   }
 
   if (error) {
-    return (
-      <div style={{ padding: 20, color: '#F87171', fontSize: 13 }}>{error}</div>
-    )
+    return <div style={{ padding: 20, color: '#F87171', fontSize: 13 }}>{error}</div>
   }
 
   if (sections.length === 0) {
@@ -93,91 +101,66 @@ export default function ManualPage({ currentUser }) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
-      {/* Sticky category nav — hidden on print */}
-      <div className="no-print">
-        <ManualNav
-          categories={categories}
-          activeCode={activeCode}
-          onSelect={handleSelectCategory}
-        />
+    <div
+      ref={scrollRef}
+      style={{
+        height: 'calc(100dvh - 44px)',
+        overflowY: 'auto',
+        scrollSnapType: 'y proximity',
+        background: 'var(--bg-primary)',
+      }}
+    >
+      {/* Progress bar */}
+      <div style={{ position: 'sticky', top: 0, height: 3, zIndex: 30, background: 'rgba(59,22,96,0.25)' }}>
+        <div style={{
+          height: '100%',
+          background: 'linear-gradient(90deg, #E6337F, #B81F63)',
+          width: `${Math.round(progress * 100)}%`,
+          transition: 'width 0.08s linear',
+        }}/>
       </div>
 
-      {/* Document sheet */}
-      <div style={{ padding: '24px 20px 80px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div style={{
-          width: '100%', maxWidth: 800,
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-violet)',
-          borderRadius: 12,
-          padding: '40px 48px',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
-        }}>
+      <ManualNav
+        categories={categories}
+        activeCode={activeCode}
+        onSelect={handleSelectCategory}
+        topOffset={3}
+      />
 
-          {/* Document header */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32, paddingBottom: 20, borderBottom: '2px solid var(--border-violet)' }}>
-            <div>
-              <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6, letterSpacing: -0.5 }}>
-                {t('manual.title')}
-              </h1>
-              <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-                {t('manual.subtitle')}
-              </p>
+      {byCategory.map(group => (
+        <div key={group.code} style={{ scrollSnapAlign: 'start' }}>
+
+          {/* Category header */}
+          <div style={{
+            background: '#3B1660',
+            padding: 'clamp(32px,5vw,56px) clamp(20px,4vw,48px) clamp(20px,4vw,36px)',
+            borderBottom: '3px solid #6B2FB3',
+          }}>
+            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2.5, textTransform: 'uppercase', color: '#E6337F', marginBottom: 10 }}>
+              {t('manual.title')} /
             </div>
-            <button
-              onClick={() => window.print()}
-              className="no-print"
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9, background: 'transparent', border: '1px solid var(--border-violet)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 12, fontWeight: 600, flexShrink: 0, transition: 'all 0.15s' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.08)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' }}
-            >
-              <Printer size={13}/>{t('manual.print')}
-            </button>
+            <h2 style={{ fontSize: 'clamp(22px,4vw,32px)', fontWeight: 800, color: '#F2EBFB', margin: 0, letterSpacing: -0.5, lineHeight: 1.2 }}>
+              {group.name}
+            </h2>
           </div>
 
-          {/* Category groups */}
-          {byCategory.map(group => (
-            <div key={group.code} style={{ marginBottom: 40 }}>
-              {/* Category heading */}
-              <div style={{
-                marginBottom: 16,
-                fontSize: 10, fontWeight: 800, letterSpacing: 2,
-                textTransform: 'uppercase', color: 'var(--primary-violet-light)',
-                paddingBottom: 8, borderBottom: '1px solid rgba(139,92,246,0.15)',
-              }}>
-                {group.name}
-              </div>
-
-              {/* Sections */}
-              {group.sections.map(sec => (
-                <ManualSection
-                  key={sec.id}
-                  section={sec}
-                  canEdit={canEdit}
-                  sectionRef={el => { sectionRefs.current[sec.id] = el }}
-                />
-              ))}
-            </div>
-          ))}
-
-          {/* Document footer */}
-          <div style={{ marginTop: 40, paddingTop: 16, borderTop: '1px solid var(--border-violet)', fontSize: 10, color: 'var(--text-secondary)', textAlign: 'right', letterSpacing: 0.5 }}>
-            RESILIO NETWORK
+          {/* Sections */}
+          <div style={{ padding: '0 clamp(20px,4vw,48px) 56px' }}>
+            {group.sections.map(sec => (
+              <ManualSection
+                key={sec.id}
+                section={sec}
+                canEdit={canEdit}
+                sectionRef={el => { sectionRefs.current[sec.id] = el }}
+              />
+            ))}
           </div>
         </div>
-      </div>
+      ))}
 
-      <style>{`
-        @media print {
-          .no-print { display: none !important; }
-          body { background: white !important; }
-          [style*="--bg-secondary"] { background: white !important; }
-          [style*="--text-primary"] { color: #111 !important; }
-          [style*="--text-secondary"] { color: #555 !important; }
-          [style*="--primary-violet-light"] { color: #6d28d9 !important; }
-          [style*="--border-violet"] { border-color: #e5e7eb !important; }
-        }
-      `}</style>
+      <div style={{ padding: '28px clamp(20px,4vw,48px)', borderTop: '1px solid rgba(107,47,179,0.15)', fontSize: 10, color: 'rgba(242,235,251,0.3)', letterSpacing: 2, textTransform: 'uppercase' }}>
+        Resilio Network
+      </div>
     </div>
   )
 }
