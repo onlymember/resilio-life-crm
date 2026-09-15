@@ -749,6 +749,15 @@
         "confirmed": "Confirmado",
         "declined":  "Declinado"
       }
+    },
+    "convert": {
+      "title":        "Convertir a Colaboración",
+      "button":       "Convertir a Colaboración",
+      "buttonSync":   "Sincronizar colaboraciones",
+      "needConfirmed":"Confirmá al menos un influencer para convertir.",
+      "willConvert":  "{n} influencer(s) confirmado(s) · {amount} en total",
+      "done":         "{n} colaboración(es) vinculada(s)",
+      "error":        "Error: {msg}"
     }
   },
   "notifications": {
@@ -757,6 +766,36 @@
     "kind": {
       "due":      "Vencido",
       "assigned": "Nuevo"
+    }
+  },
+  "relationshipHistory": {
+    "title":        "Historial de relación",
+    "empty":        "Todavía no trabajaron juntos.",
+    "timesWorked":  "{n} vez(ces)",
+    "totalValue":   "Valor total",
+    "avgEngagement":"Eng. prom.",
+    "lastCollab":   "Última vez"
+  },
+  "monthlyReport": {
+    "title":       "Reporte mensual",
+    "subtitle":    "Fotos cerradas del período — datos al momento del cierre",
+    "byScouter":   "Por scouter",
+    "byCity":      "Por ciudad",
+    "close":       "Cerrar mes",
+    "closing":     "Cerrando…",
+    "empty":       "No hay datos para este período.",
+    "notClosedYet":"Este mes todavía no fue cerrado.",
+    "closedAt":    "Cerrado el {date}",
+    "period":      "Período",
+    "metrics": {
+      "newInfluencers":       "Influencers nuevos",
+      "newBrands":            "Marcas nuevas",
+      "newOpportunities":     "Opps nuevas",
+      "opportunitiesWon":     "Ganadas",
+      "opportunitiesLost":    "Perdidas",
+      "collaborationsClosed": "Colaboraciones",
+      "totalValue":           "Valor total",
+      "avgEngagement":        "Eng. prom."
     }
   }
 }

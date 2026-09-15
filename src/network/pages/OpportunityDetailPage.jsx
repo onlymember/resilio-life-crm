@@ -13,6 +13,7 @@ import {
   dbUpdateOpportunityInfluencerStatus, dbDeleteOpportunityInfluencer,
   dbGetOpportunityInfluencerItems, dbAddOpportunityInfluencerItem,
   dbDeleteOpportunityInfluencerItem,
+  dbConvertOpportunityToCollaboration,
 } from '../../lib/database.js'
 import { supabase } from '../../lib/supabase.js'
 
@@ -290,6 +291,9 @@ export default function OpportunityDetailPage({ currentUser }) {
   const [candidates,  setCandidates]  = useState([])
   const [actTypes,    setActTypes]    = useState([])
   const [addInfOpen,  setAddInfOpen]  = useState(false)
+  const [converting,  setConverting]  = useState(false)
+  const [convertResult, setConvertResult] = useState(null)
+  const [convertError,  setConvertError]  = useState(null)
 
   const get = (f) => f in dirty ? dirty[f] : entity?.[f]
   const set = (f, v) => setDirty(prev => ({ ...prev, [f]: v }))
@@ -351,6 +355,22 @@ export default function OpportunityDetailPage({ currentUser }) {
 
   const handleCandidateAdded = (candidate) => {
     setCandidates(prev => [...prev, candidate])
+  }
+
+  const handleConvert = async () => {
+    setConverting(true)
+    setConvertError(null)
+    setConvertResult(null)
+    try {
+      await dbConvertOpportunityToCollaboration(entity.id)
+      const updated = await fetchOpportunity(entity.id)
+      setEntity(updated)
+      setConvertResult(updated.linkedCollaborations.length)
+    } catch(e) {
+      setConvertError(e.message)
+    } finally {
+      setConverting(false)
+    }
   }
 
   if (loading) return <div style={{ padding:40, textAlign:'center', color:'var(--text-secondary)' }}>{t('loading.generic')}</div>
@@ -526,6 +546,47 @@ export default function OpportunityDetailPage({ currentUser }) {
               {t('opportunities.influencers.total')}: {fmtMoney(candidates.reduce((s,c) => s + (c.totalValue||0), 0))}
             </div>
           )}
+
+          {get('status') === 'won' && (() => {
+            const confirmed = candidates.filter(c => c.status === 'confirmed')
+            const hasLinked = entity.linkedCollaborations?.length > 0
+            const totalConf = confirmed.reduce((s, c) => s + (c.totalValue || 0), 0)
+            return (
+              <div style={{ marginTop:12, padding:12, borderRadius:10, background:'rgba(139,92,246,0.05)', border:'1px solid var(--border-violet)' }}>
+                <div style={{ fontSize:10, fontWeight:700, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginBottom:8 }}>
+                  {t('opportunities.convert.title')}
+                </div>
+                {confirmed.length === 0 ? (
+                  <div style={{ fontSize:12, color:'var(--text-secondary)' }}>
+                    {t('opportunities.convert.needConfirmed')}
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ fontSize:12, color:'var(--text-secondary)', marginBottom:8 }}>
+                      {t('opportunities.convert.willConvert', { n: confirmed.length, amount: fmtMoney(totalConf) })}
+                    </div>
+                    <button
+                      onClick={handleConvert}
+                      disabled={converting}
+                      style={{ padding:'7px 16px', borderRadius:9, background: converting ? 'rgba(139,92,246,0.3)' : 'var(--primary-violet)', color:'white', border:'none', cursor: converting ? 'default' : 'pointer', fontSize:12, fontWeight:700 }}
+                    >
+                      {converting ? '…' : hasLinked ? t('opportunities.convert.buttonSync') : t('opportunities.convert.button')}
+                    </button>
+                  </div>
+                )}
+                {convertResult != null && (
+                  <div style={{ marginTop:8, fontSize:12, color:'#34D399' }}>
+                    {t('opportunities.convert.done', { n: convertResult })}
+                  </div>
+                )}
+                {convertError && (
+                  <div style={{ marginTop:8, fontSize:12, color:'#F87171' }}>
+                    {t('opportunities.convert.error', { msg: convertError })}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
         </div>
 
         {addInfOpen && (

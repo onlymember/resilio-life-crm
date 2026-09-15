@@ -749,6 +749,15 @@
         "confirmed": "Confirmed",
         "declined":  "Declined"
       }
+    },
+    "convert": {
+      "title":        "Convert to Collaboration",
+      "button":       "Convert to Collaboration",
+      "buttonSync":   "Sync collaborations",
+      "needConfirmed":"Confirm at least one influencer to convert.",
+      "willConvert":  "{n} confirmed influencer(s) · {amount} total",
+      "done":         "{n} linked collaboration(s)",
+      "error":        "Error: {msg}"
     }
   },
   "notifications": {
@@ -757,6 +766,36 @@
     "kind": {
       "due":      "Due",
       "assigned": "New"
+    }
+  },
+  "relationshipHistory": {
+    "title":        "Relationship history",
+    "empty":        "No collaborations together yet.",
+    "timesWorked":  "{n} time(s)",
+    "totalValue":   "Total value",
+    "avgEngagement":"Avg. engagement",
+    "lastCollab":   "Last time"
+  },
+  "monthlyReport": {
+    "title":       "Monthly report",
+    "subtitle":    "Closed snapshots — data as of closing time",
+    "byScouter":   "By scouter",
+    "byCity":      "By city",
+    "close":       "Close month",
+    "closing":     "Closing…",
+    "empty":       "No data for this period.",
+    "notClosedYet":"This month hasn't been closed yet.",
+    "closedAt":    "Closed on {date}",
+    "period":      "Period",
+    "metrics": {
+      "newInfluencers":       "New influencers",
+      "newBrands":            "New brands",
+      "newOpportunities":     "New opps",
+      "opportunitiesWon":     "Won",
+      "opportunitiesLost":    "Lost",
+      "collaborationsClosed": "Collaborations",
+      "totalValue":           "Total value",
+      "avgEngagement":        "Avg. engagement"
     }
   }
 }
