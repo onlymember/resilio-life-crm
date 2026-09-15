@@ -114,22 +114,26 @@ export default function CalendarPage() {
             <div key={i} style={{ height: isMobile ? 60 : 80, borderRadius: 8, background: 'rgba(139,92,246,0.06)', animation: 'pulse 1.5s ease-in-out infinite' }}/>
           ))}
         </div>
-      ) : isMobile ? (
-        <CalendarAgendaList items={items} month={month} onItemClick={handleItemClick}/>
       ) : (
-        items.length === 0 ? (
-          <div style={{ padding: '48px 0', textAlign: 'center' }}>
-            <Calendar size={40} style={{ color: 'var(--text-secondary)', opacity: 0.35, display: 'block', margin: '0 auto 16px' }}/>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6, textTransform: 'capitalize' }}>
-              {t('calendar.empty')}
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 280, margin: '0 auto' }}>
-              {t('calendar.emptyCta')}
-            </div>
-          </div>
-        ) : (
+        <>
           <CalendarMonthGrid items={items} month={month} onItemClick={handleItemClick}/>
-        )
+
+          <div style={{ marginTop: 8 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
+              {t('calendar.listTitle')}
+            </div>
+            {items.length === 0 ? (
+              <div style={{ padding: '28px 0', textAlign: 'center' }}>
+                <Calendar size={32} style={{ color: 'var(--text-secondary)', opacity: 0.3, display: 'block', margin: '0 auto 12px' }}/>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t('calendar.emptyMonth')}</div>
+              </div>
+            ) : (
+              <div style={{ maxWidth: 640 }}>
+                <CalendarAgendaList items={items} month={month} onItemClick={handleItemClick}/>
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   )
