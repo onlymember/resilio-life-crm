@@ -317,7 +317,7 @@ const DashboardSection = ({ users, log }) => {
 }
 
 // ─── Section: Usuarios ─────────────────────────────────────────
-const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
+const UsersSection = ({ users: initialUsers, onRefresh, currentUser, pendingAction, onClearPending }) => {
   const [users,       setUsers]       = useState(initialUsers)
   const [search,      setSearch]      = useState('')
   const [filterEst,   setFilterEst]   = useState('all')
@@ -347,6 +347,20 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
 
   const loadGeography = () => dbGetGeography(true).then(setGeography).catch(() => {})
   useEffect(() => { loadGeography() }, [])
+
+  useEffect(() => {
+    if (!pendingAction) return
+    const { mode, user: u } = pendingAction
+    if (mode === 'approve') {
+      setApproveMode('approve'); setApproveModal(u); setApproveRol('viewer'); setApproveGeoIds([]); setApproveAllScope(false)
+    } else {
+      setApproveMode('reassign'); setApproveModal(u)
+      setApproveRol(u.roles?.[0]?.role || u.rolProfile || 'scouter')
+      setApproveGeoIds((u.roles || []).filter(r => r.scope !== 'global' && r.scopeId).map(r => r.scopeId))
+      setApproveAllScope((u.roles || []).some(r => r.scope === 'global'))
+    }
+    onClearPending?.()
+  }, [pendingAction])
 
   const geoName = (kind, id) => {
     if (!id) return null
@@ -879,14 +893,32 @@ const ConfigSection = ({ currentUser }) => {
     setTimeout(() => setSaved(false), 2000)
   }
 
-  const handleExport = () => {
-    const keys = ['auth_users','crm_brands','crm_locations','crm_influencers','crm_benefits','crm_codes','crm_cr_projects','crm_events','crm_team','crm_missions','activity_log']
-    const data = {}
-    keys.forEach(k => { try { data[k] = JSON.parse(localStorage.getItem(k)||'null') } catch {} })
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' })
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
-    a.download = `resilio-backup-${new Date().toISOString().slice(0,10)}.json`
-    a.click()
+  const handleExport = async () => {
+    try {
+      const users = await getUsers()
+      const geo = await dbGetGeography(true)
+      const payload = {
+        exportado_en:  new Date().toISOString(),
+        exportado_por: currentUser?.email || null,
+        nota: 'Export de usuarios y accesos. NO es un backup completo del sistema — los datos de negocio viven en Supabase.',
+        usuarios: users.map(u => ({
+          id:            u.id,
+          email:         u.email,
+          nombre:        u.nombre,
+          estado:        u.estado,
+          rol_efectivo:  u.rol,
+          rol_profiles:  u.rolProfile,
+          accesos:       u.roles,
+          ecosistemas:   u.permisos?.ecosistemas || [],
+          ultimo_acceso: u.ultimo_acceso,
+        })),
+        geografia: { regiones:geo.regions, paises:geo.countries, ciudades:geo.cities },
+      }
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' })
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
+      a.download = `resilio-usuarios-accesos-${new Date().toISOString().slice(0,10)}.json`
+      a.click()
+    } catch (e) { alert('No se pudo exportar: ' + (e?.message || 'error')) }
   }
 
   const inpStyle = { width:'100%', padding:'10px 12px', background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.25)', borderRadius:8, color:'#F9FAFB', fontSize:13, outline:'none', boxSizing:'border-box', fontFamily:'inherit' }
@@ -921,8 +953,11 @@ const ConfigSection = ({ currentUser }) => {
           <div style={{ fontSize:14, fontWeight:600, color:'#A78BFA', marginBottom:12 }}>Datos del sistema</div>
           <div style={{ display:'flex', gap:10 }}>
             <button onClick={handleExport} style={{ flex:1, padding:'10px 16px', borderRadius:9, background:'rgba(6,182,212,0.12)', border:'1px solid rgba(6,182,212,0.3)', color:'#06B6D4', fontWeight:600, fontSize:13, cursor:'pointer' }}>
-              📥 Exportar backup JSON
+              📥 Exportar usuarios y accesos (JSON)
             </button>
+          </div>
+          <div style={{ fontSize:11, color:'rgba(196,181,253,0.4)', marginTop:6 }}>
+            El backup de los datos de negocio se hace desde el dashboard de Supabase, no desde acá.
           </div>
         </div>
       </div>
@@ -930,39 +965,60 @@ const ConfigSection = ({ currentUser }) => {
   )
 }
 
-// ─── Section: Notificaciones ───────────────────────────────────
-const NotificacionesSection = ({ onUpdateBadge }) => {
-  const [notifs, setNotifs] = useState(() => getAdminNotifs())
+// ─── Section: Pendientes ───────────────────────────────────────
+const PendientesSection = ({ users, onOpenApprove, onOpenReassign }) => {
+  const pendingApproval = users.filter(u => u.estado === 'pendiente')
+  const sinPermisos     = users.filter(u => u.estado === 'aprobado' && (!u.roles || u.roles.length === 0))
+  const desincronizado  = users.filter(u => u.roles && u.roles.length > 0 && u.rolProfile && !u.roles.some(r => r.role === u.rolProfile))
+  const scouterSinCiudad = users.filter(u =>
+    u.roles && u.roles.length > 0 &&
+    u.roles.every(r => r.role === 'scouter') &&
+    u.roles.every(r => r.scope !== 'global' && !r.scopeId)
+  )
 
-  const refresh = () => { const n = getAdminNotifs(); setNotifs(n); onUpdateBadge(n.filter(x=>!x.read).length) }
+  const groups = [
+    { id:'approval',  icon:'⏳', label:'Pendientes de aprobación', color:'#F59E0B', items:pendingApproval,  actionLabel:'✅ Aprobar',          onAction:onOpenApprove },
+    { id:'sinperms',  icon:'🔴', label:'Aprobados sin permisos reales', color:'#EF4444', items:sinPermisos,  actionLabel:'🔑 Asignar accesos',   onAction:onOpenReassign },
+    { id:'desinc',    icon:'⚠️', label:'Rol desincronizado',       color:'#FBBF24', items:desincronizado, actionLabel:'🔑 Corregir accesos',  onAction:onOpenReassign },
+    { id:'scouter',   icon:'📍', label:'Scouters sin ciudad',      color:'#06B6D4', items:scouterSinCiudad,actionLabel:'🔑 Asignar ciudad',    onAction:onOpenReassign },
+  ]
 
-  const handleRead = (id) => { const n = markNotifRead(id); setNotifs(n); onUpdateBadge(n.filter(x=>!x.read).length) }
-  const handleReadAll = () => { const n = markAllNotifsRead(); setNotifs(n); onUpdateBadge(0) }
-
-  const TYPE_ICON = { new_user:'👤', failed_login:'⚠️', inactive:'😴', overdue:'⏰' }
+  const total = pendingApproval.length + sinPermisos.length + desincronizado.length + scouterSinCiudad.length
 
   return (
     <div>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-        <h3 style={{ fontSize:18, fontWeight:700, color:'#F9FAFB' }}>Notificaciones Admin</h3>
-        <div style={{ display:'flex', gap:8 }}>
-          <button onClick={refresh} style={{ padding:'6px 12px', borderRadius:7, background:'rgba(139,92,246,0.1)', border:'1px solid rgba(139,92,246,0.25)', color:'#A78BFA', fontSize:12, cursor:'pointer' }}>🔄</button>
-          {notifs.some(n=>!n.read) && (
-            <button onClick={handleReadAll} style={{ padding:'6px 12px', borderRadius:7, background:'rgba(139,92,246,0.1)', border:'1px solid rgba(139,92,246,0.25)', color:'#A78BFA', fontSize:12, cursor:'pointer' }}>Marcar todas leídas</button>
-          )}
-        </div>
+      <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
+        <h3 style={{ fontSize:18, fontWeight:700, color:'#F9FAFB' }}>⚠️ Pendientes de acción</h3>
+        {total > 0 && <span style={{ background:'#EF4444', color:'white', borderRadius:10, fontSize:11, fontWeight:800, padding:'2px 8px' }}>{total}</span>}
       </div>
-      <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-        {notifs.length === 0 && <div style={{ textAlign:'center', padding:40, color:'rgba(196,181,253,0.4)', fontSize:14 }}>Sin notificaciones</div>}
-        {notifs.map(n => (
-          <div key={n.id} onClick={() => handleRead(n.id)} style={{ display:'flex', gap:12, padding:'12px 16px', background: n.read ? 'rgba(139,92,246,0.04)' : 'rgba(139,92,246,0.12)', border:`1px solid ${n.read?'rgba(139,92,246,0.12)':'rgba(139,92,246,0.3)'}`, borderRadius:10, cursor:'pointer', transition:'all 0.2s' }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:'rgba(139,92,246,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>{TYPE_ICON[n.type]||'🔔'}</div>
-            <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontSize:13, fontWeight: n.read?500:700, color:'#F9FAFB', marginBottom:2 }}>{n.title}</div>
-              <div style={{ fontSize:12, color:'rgba(196,181,253,0.6)' }}>{n.body}</div>
-              <div style={{ fontSize:10, color:'rgba(196,181,253,0.35)', marginTop:4 }}>{timeAgo(n.timestamp)}</div>
+      {total === 0 && (
+        <div style={{ textAlign:'center', padding:48, color:'rgba(196,181,253,0.4)', fontSize:14 }}>
+          ✅ Todo en orden — no hay usuarios con accesos pendientes o inconsistentes
+        </div>
+      )}
+      <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+        {groups.filter(g => g.items.length > 0).map(g => (
+          <div key={g.id}>
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+              <span style={{ fontSize:16 }}>{g.icon}</span>
+              <span style={{ fontSize:14, fontWeight:700, color:g.color }}>{g.label}</span>
+              <span style={{ background:g.color+'33', color:g.color, borderRadius:8, fontSize:10, fontWeight:700, padding:'1px 7px', border:`1px solid ${g.color}55` }}>{g.items.length}</span>
             </div>
-            {!n.read && <div style={{ width:8, height:8, borderRadius:'50%', background:'#E879F9', flexShrink:0, marginTop:4 }}/>}
+            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+              {g.items.map(u => (
+                <div key={u.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', background:'rgba(139,92,246,0.05)', border:`1px solid rgba(139,92,246,0.15)`, borderRadius:10, flexWrap:'wrap' }}>
+                  <Avatar user={u} size={32}/>
+                  <div style={{ flex:1, minWidth:120 }}>
+                    <div style={{ fontSize:13, fontWeight:600, color:'#F9FAFB' }}>{u.nombre}</div>
+                    <div style={{ fontSize:11, color:'rgba(196,181,253,0.5)' }}>{u.email}</div>
+                  </div>
+                  <button onClick={() => g.onAction(u)}
+                    style={{ padding:'6px 12px', borderRadius:7, background:'rgba(139,92,246,0.15)', border:'1px solid rgba(139,92,246,0.3)', color:'#A78BFA', fontSize:11, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>
+                    {g.actionLabel}
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>
@@ -978,9 +1034,9 @@ export default function AdminPanel({ onClose, currentUser }) {
   const [section,   setSection]   = useState('dashboard')
   const [users,     setUsers]     = useState([])
   const [log,       setLog]       = useState([])
-  const [badgeNotif,setBadgeNotif]= useState(() => getAdminNotifs().filter(n=>!n.read).length)
   const [badgePend, setBadgePend] = useState(0)
   const [isMobile,  setIsMobile]  = useState(() => window.innerWidth < 768)
+  const [pendingAction, setPendingAction] = useState(null)
 
   const refreshUsers = useCallback(async (u) => {
     const list = u || await getUsers().catch(() => [])
@@ -1007,26 +1063,36 @@ export default function AdminPanel({ onClose, currentUser }) {
     return () => clearInterval(interval)
   }, [refreshUsers])
 
+  const badgePendientes = users.filter(u =>
+    u.estado === 'pendiente' ||
+    (u.estado === 'aprobado' && (!u.roles || u.roles.length === 0)) ||
+    (u.roles && u.roles.length > 0 && u.rolProfile && !u.roles.some(r => r.role === u.rolProfile)) ||
+    (u.roles && u.roles.length > 0 && u.roles.every(r => r.role === 'scouter') && u.roles.every(r => r.scope !== 'global' && !r.scopeId))
+  ).length
+
+  const openApprove = (u) => { setSection('usuarios'); setPendingAction({ mode:'approve', user:u }) }
+  const openReassign = (u) => { setSection('usuarios'); setPendingAction({ mode:'reassign', user:u }) }
+
   const sections = [
-    { id:'dashboard',     icon:'📊', label:'Dashboard',       badge:0 },
-    { id:'usuarios',      icon:'👥', label:'Usuarios',        badge:badgePend },
-    { id:'permisos',      icon:'🔒', label:'Matriz Permisos', badge:0 },
-    { id:'actividad',     icon:'📋', label:'Actividad',       badge:0 },
-    { id:'monitor',       icon:'📡', label:'Monitor Live',    badge:0 },
-    { id:'config',        icon:'⚙️', label:'Configuración',   badge:0 },
-    { id:'notificaciones',icon:'🔔', label:'Notificaciones',  badge:badgeNotif },
+    { id:'dashboard',   icon:'📊', label:'Dashboard',       badge:0 },
+    { id:'usuarios',    icon:'👥', label:'Usuarios',        badge:badgePend },
+    { id:'permisos',    icon:'🔒', label:'Matriz Permisos', badge:0 },
+    { id:'actividad',   icon:'📋', label:'Actividad',       badge:0 },
+    { id:'monitor',     icon:'📡', label:'Monitor Live',    badge:0 },
+    { id:'config',      icon:'⚙️', label:'Configuración',   badge:0 },
+    { id:'pendientes',  icon:'⚠️', label:'Pendientes',      badge:badgePendientes },
   ]
 
   const renderSection = () => {
     switch (section) {
-      case 'dashboard':      return <DashboardSection users={users} log={log}/>
-      case 'usuarios':       return <UsersSection users={users} onRefresh={refreshUsers} currentUser={currentUser}/>
-      case 'permisos':       return <MatrizSection users={users} onRefresh={refreshUsers}/>
-      case 'actividad':      return <ActividadSection users={users}/>
-      case 'monitor':        return <MonitorSection users={users}/>
-      case 'config':         return <ConfigSection currentUser={currentUser}/>
-      case 'notificaciones': return <NotificacionesSection onUpdateBadge={setBadgeNotif}/>
-      default:               return null
+      case 'dashboard':  return <DashboardSection users={users} log={log}/>
+      case 'usuarios':   return <UsersSection users={users} onRefresh={refreshUsers} currentUser={currentUser} pendingAction={pendingAction} onClearPending={() => setPendingAction(null)}/>
+      case 'permisos':   return <MatrizSection users={users} onRefresh={refreshUsers}/>
+      case 'actividad':  return <ActividadSection users={users}/>
+      case 'monitor':    return <MonitorSection users={users}/>
+      case 'config':     return <ConfigSection currentUser={currentUser}/>
+      case 'pendientes': return <PendientesSection users={users} onOpenApprove={openApprove} onOpenReassign={openReassign}/>
+      default:           return null
     }
   }
 
