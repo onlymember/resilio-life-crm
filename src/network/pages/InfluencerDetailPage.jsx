@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, Users } from 'lucide-react'
 import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import EmptyState from '../components/EmptyState.jsx'
+import RelationshipHistory from '../components/RelationshipHistory.jsx'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { isoToDatetimeLocal, datetimeLocalToIso } from '../utils/date.js'
@@ -286,6 +287,12 @@ export default function InfluencerDetailPage() {
               />
             </div>
           </div>
+        </div>
+
+        {/* HISTORIAL DE RELACIÓN */}
+        <div style={sectionStyle}>
+          <SectionHeader label={t('relationshipHistory.title')} fields={[]} dirty={dirty}/>
+          <RelationshipHistory influencerId={entity.id}/>
         </div>
 
         {/* ACTIVIDAD */}

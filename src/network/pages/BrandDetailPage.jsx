@@ -4,6 +4,7 @@ import { ChevronLeft, Building2, ExternalLink } from 'lucide-react'
 import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import AssignModal from '../components/AssignModal.jsx'
 import EmptyState from '../components/EmptyState.jsx'
+import RelationshipHistory from '../components/RelationshipHistory.jsx'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { isoToDatetimeLocal, datetimeLocalToIso } from '../utils/date.js'
@@ -345,6 +346,12 @@ export default function BrandDetailPage({ currentUser }) {
             </div>
           </div>
         )}
+
+        {/* HISTORIAL DE RELACIÓN */}
+        <div style={sectionStyle}>
+          <SectionHeader label={t('relationshipHistory.title')} fields={[]} dirty={dirty}/>
+          <RelationshipHistory brandId={entity.id}/>
+        </div>
 
         {/* ACTIVIDAD */}
         <div style={sectionStyle}>
