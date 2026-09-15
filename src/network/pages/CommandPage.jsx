@@ -13,7 +13,7 @@ import {
   getNetworkScouters, getUnassignedSummary,
   getScouterPerformance,
 } from '../../lib/metrics.js'
-import { dbGetGoals, dbGetGeography } from '../../lib/database.js'
+import { dbGetGoals, dbGetGeography, dbGetMonthlySnapshots, dbCloseMonthlySnapshot } from '../../lib/database.js'
 
 const SectionTitle = ({ children, action }) => (
   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
@@ -21,6 +21,23 @@ const SectionTitle = ({ children, action }) => (
     {action}
   </div>
 )
+
+const DIRECTION_ROLES = ['super_admin', 'network_direction']
+
+const fmtMoney = (n) => {
+  if (!n) return '—'
+  return n >= 1000000 ? `${(n/1000000).toFixed(1)}M` : n >= 1000 ? `${(n/1000).toFixed(0)}K` : String(n)
+}
+
+const getPeriods = () => {
+  const now = new Date()
+  return Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`
+    const label = d.toLocaleDateString('es', { month: 'long', year: 'numeric' })
+    return { value, label }
+  })
+}
 
 const goalBehind = (goal) => {
   if (!goal.periodStart || !goal.periodEnd) return false
@@ -61,8 +78,17 @@ export default function CommandPage({ currentUser }) {
   const [assignAlert,  setAssignAlert]  = useState(null)      // alert entity for AssignModal
   const [period, setPeriod] = useState(null)
 
+  const PERIODS = getPeriods()
+  const [snapPeriod,    setSnapPeriod]    = useState(PERIODS[0].value)
+  const [snapshots,     setSnapshots]     = useState([])
+  const [snapLoading,   setSnapLoading]   = useState(false)
+  const [snapError,     setSnapError]     = useState(null)
+  const [closingSnap,   setClosingSnap]   = useState(false)
+  const [allScouters,   setAllScouters]   = useState([])
+
   useEffect(() => {
     dbGetGeography().then(setGeo).catch(() => {})
+    getNetworkScouters({}).then(setAllScouters).catch(() => {})
   }, [])
 
   const load = useCallback(async () => {
@@ -88,6 +114,29 @@ export default function CommandPage({ currentUser }) {
   }, [cityId, countryId, regionId, from, to])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    setSnapLoading(true)
+    setSnapError(null)
+    dbGetMonthlySnapshots({ period: snapPeriod })
+      .then(setSnapshots)
+      .catch(e => setSnapError(e.message))
+      .finally(() => setSnapLoading(false))
+  }, [snapPeriod])
+
+  const handleCloseMonth = async () => {
+    setClosingSnap(true)
+    setSnapError(null)
+    try {
+      await dbCloseMonthlySnapshot(snapPeriod)
+      const data = await dbGetMonthlySnapshots({ period: snapPeriod })
+      setSnapshots(data)
+    } catch(e) {
+      setSnapError(e.message)
+    } finally {
+      setClosingSnap(false)
+    }
+  }
 
   const handlePeriod = (p) => {
     setPeriod(p)
@@ -319,6 +368,120 @@ export default function CommandPage({ currentUser }) {
             })}
           </div>
         )}
+      </section>
+
+      {/* ── 5. REPORTE MENSUAL ───────────────────────────────── */}
+      <section style={{ marginBottom: 40 }}>
+        <SectionTitle
+          action={
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <select
+                value={snapPeriod}
+                onChange={e => setSnapPeriod(e.target.value)}
+                style={{ padding:'4px 8px', borderRadius:7, background:'rgba(139,92,246,0.07)', border:'1px solid var(--border-violet)', color:'var(--text-primary)', fontSize:11, cursor:'pointer' }}
+              >
+                {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+              </select>
+              {DIRECTION_ROLES.includes(currentUser?.rol) && (
+                <button
+                  onClick={handleCloseMonth}
+                  disabled={closingSnap}
+                  style={{ padding:'4px 12px', borderRadius:7, background: closingSnap ? 'rgba(139,92,246,0.3)' : 'var(--primary-violet)', color:'white', border:'none', cursor: closingSnap ? 'default' : 'pointer', fontSize:11, fontWeight:700 }}
+                >
+                  {closingSnap ? t('monthlyReport.closing') : t('monthlyReport.close')}
+                </button>
+              )}
+            </div>
+          }
+        >
+          {t('monthlyReport.title')}
+        </SectionTitle>
+
+        <div style={{ fontSize:11, color:'var(--text-secondary)', marginBottom:10, fontStyle:'italic' }}>
+          {t('monthlyReport.subtitle')}
+        </div>
+
+        {snapError && (
+          <div style={{ fontSize:12, color:'#F87171', background:'rgba(248,113,113,0.08)', border:'1px solid rgba(248,113,113,0.25)', borderRadius:8, padding:'8px 12px', marginBottom:10 }}>
+            {snapError}
+          </div>
+        )}
+
+        {snapLoading ? (
+          <div style={{ height:60, borderRadius:10, background:'rgba(139,92,246,0.06)', animation:'pulse 1.5s ease-in-out infinite' }}/>
+        ) : snapshots.length === 0 ? (
+          <div style={{ padding:'14px 16px', borderRadius:10, background:'rgba(139,92,246,0.05)', border:'1px solid var(--border-violet)', fontSize:12, color:'var(--text-secondary)', textAlign:'center' }}>
+            <div>{t('monthlyReport.notClosedYet')}</div>
+            {!DIRECTION_ROLES.includes(currentUser?.rol) && (
+              <div style={{ marginTop:4, fontSize:11 }}>{t('monthlyReport.empty')}</div>
+            )}
+          </div>
+        ) : (() => {
+          const scouterSnaps = snapshots.filter(s => s.scope === 'scouter')
+          const citySnaps    = snapshots.filter(s => s.scope === 'city')
+          const closedAt     = snapshots.find(s => s.closedAt)?.closedAt
+
+          const MetricCell = ({ label, value }) => (
+            <div style={{ textAlign:'center', minWidth:52 }}>
+              <div style={{ fontSize:13, fontWeight:700, color:'var(--text-primary)' }}>{value}</div>
+              <div style={{ fontSize:9, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:0.5 }}>{label}</div>
+            </div>
+          )
+
+          const SnapRow = ({ snap, name }) => (
+            <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 12px', borderRadius:8, background:'rgba(139,92,246,0.04)', border:'1px solid rgba(139,92,246,0.1)', flexWrap:'wrap' }}>
+              <div style={{ minWidth:100, flex:'1 1 100px', fontSize:12, fontWeight:600, color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name || snap.scopeId}</div>
+              <div style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
+                <MetricCell label={t('monthlyReport.metrics.newInfluencers')} value={snap.newInfluencers}/>
+                <MetricCell label={t('monthlyReport.metrics.newBrands')} value={snap.newBrands}/>
+                <MetricCell label={t('monthlyReport.metrics.opportunitiesWon')} value={snap.opportunitiesWon}/>
+                <MetricCell label={t('monthlyReport.metrics.collaborationsClosed')} value={snap.collaborationsClosed}/>
+                <MetricCell label={t('monthlyReport.metrics.totalValue')} value={fmtMoney(snap.totalValue)}/>
+                {snap.avgEngagementRate != null && (
+                  <MetricCell label={t('monthlyReport.metrics.avgEngagement')} value={`${(snap.avgEngagementRate * 100).toFixed(1)}%`}/>
+                )}
+              </div>
+            </div>
+          )
+
+          return (
+            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+              {closedAt && (
+                <div style={{ fontSize:11, color:'var(--text-secondary)' }}>
+                  {t('monthlyReport.closedAt', { date: new Date(closedAt).toLocaleDateString() })}
+                </div>
+              )}
+
+              {scouterSnaps.length > 0 && (
+                <div>
+                  <div style={{ fontSize:10, fontWeight:700, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginBottom:6 }}>
+                    {t('monthlyReport.byScouter')}
+                  </div>
+                  <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+                    {scouterSnaps.map(snap => {
+                      const sc = allScouters.find(s => s.userId === snap.scopeId)
+                      return <SnapRow key={snap.id} snap={snap} name={sc?.nombre || snap.scopeId}/>
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {citySnaps.length > 0 && (
+                <div>
+                  <div style={{ fontSize:10, fontWeight:700, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginBottom:6 }}>
+                    {t('monthlyReport.byCity')}
+                  </div>
+                  <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+                    {citySnaps.map(snap => {
+                      const city = geo.cities.find(c => c.id === snap.scopeId)
+                      return <SnapRow key={snap.id} snap={snap} name={city?.name || snap.scopeId}/>
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })()}
       </section>
 
       {/* Modals */}
