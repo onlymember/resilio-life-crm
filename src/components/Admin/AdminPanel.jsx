@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import {
   getUsers, getActivityLog, getAdminNotifs, markNotifRead, markAllNotifsRead,
   getSystemConfig, saveSystemConfig, approveUser, blockUser, unblockUser, updateUser,
-  deleteUser, getRolePerms, logActivity, timeAgo, genId, getGeography,
+  deleteUser, getRolePerms, logActivity, timeAgo, genId, getGeography, setUserEcosistemas,
 } from '../../lib/auth.js'
 import { dbGetGeography, dbCreateCity } from '../../lib/database.js'
 
@@ -128,16 +128,24 @@ const EditUserModal = ({ user, onSave, onClose, currentUser }) => {
     setForm(p => ({ ...p, rol, ecosistemas: [...perms.ecosistemas], acciones: { ...perms.acciones } }))
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const changes = {
       nombre:      form.nombre,
       sobrenombre: form.sobrenombre,
       rol:         form.rol,
       estado:      form.estado,
       notas_admin: form.notas_admin,
-      permisos: { ecosistemas: form.ecosistemas, acciones: form.acciones },
     }
-    onSave(user.id, changes)
+    const ecosChanged = JSON.stringify([...(user.permisos?.ecosistemas||[])].sort()) !==
+                        JSON.stringify([...form.ecosistemas].sort())
+    try {
+      await onSave(user.id, changes)
+      if (ecosChanged && form.rol !== 'super_admin' && form.rol !== 'admin') {
+        await setUserEcosistemas(user.id, form.ecosistemas)
+      }
+    } catch (e) {
+      alert('Error al guardar: ' + (e?.message || 'error desconocido'))
+    }
   }
 
   const isSA = user.rol === 'super_admin'
@@ -205,7 +213,8 @@ const EditUserModal = ({ user, onSave, onClose, currentUser }) => {
           {tab === 'permisos' && (
             <div>
               <div style={{ marginBottom:20 }}>
-                <div style={{ fontSize:13, fontWeight:600, color:'#A78BFA', marginBottom:12 }}>Ecosistemas con acceso</div>
+                <div style={{ fontSize:13, fontWeight:600, color:'#A78BFA', marginBottom:4 }}>Ecosistemas con acceso</div>
+                <div style={{ fontSize:11, color:'rgba(196,181,253,0.5)', marginBottom:12 }}>Se guarda en user_roles. Aplica solo a usuarios con rol activo en la base.</div>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
                   {ALL_ECOS.map(eco => (
                     <Checkbox key={eco.id} checked={form.ecosistemas.includes(eco.id) || form.rol==='super_admin' || form.rol==='admin'}
@@ -216,11 +225,12 @@ const EditUserModal = ({ user, onSave, onClose, currentUser }) => {
               </div>
               <div style={{ height:1, background:'rgba(139,92,246,0.15)', margin:'16px 0' }}/>
               <div>
-                <div style={{ fontSize:13, fontWeight:600, color:'#A78BFA', marginBottom:12 }}>Acciones permitidas</div>
-                <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                <div style={{ fontSize:13, fontWeight:600, color:'#A78BFA', marginBottom:4 }}>Acciones permitidas</div>
+                <div style={{ fontSize:11, color:'rgba(251,191,36,0.7)', marginBottom:12 }}>Las acciones se derivan del rol. Para cambiarlas, cambiá el rol.</div>
+                <div style={{ display:'flex', flexDirection:'column', gap:8, opacity:0.5, pointerEvents:'none' }}>
                   {ALL_ACTIONS.map(a => (
                     <Checkbox key={a.id} checked={form.acciones[a.id] || form.rol==='super_admin' || form.rol==='admin'}
-                      onChange={() => (form.rol!=='super_admin'&&form.rol!=='admin') && toggleAction(a.id)}
+                      onChange={() => {}}
                       label={a.label}/>
                   ))}
                 </div>
@@ -254,7 +264,7 @@ const DashboardSection = ({ users, log }) => {
   const approved  = users.filter(u=>u.estado==='aprobado').length
   const pending   = users.filter(u=>u.estado==='pendiente').length
   const blocked   = users.filter(u=>u.estado==='bloqueado').length
-  const recent24h = log.filter(e=>Date.now()-new Date(e.timestamp).getTime()<86400000).length
+  const recent24h = log.filter(e=>Date.now()-new Date(e.created_at).getTime()<86400000).length
   const logins    = log.filter(e=>e.accion==='login').slice(0,15)
 
   const stats = [
@@ -295,10 +305,10 @@ const DashboardSection = ({ users, log }) => {
           <div key={l.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 16px', borderBottom: i<logins.length-1?'1px solid rgba(139,92,246,0.1)':'none' }}>
             <span style={{ fontSize:14 }}>⚪</span>
             <div style={{ flex:1 }}>
-              <span style={{ fontSize:13, color:'#F9FAFB', fontWeight:500 }}>{l.usuario_nombre}</span>
+              <span style={{ fontSize:13, color:'#F9FAFB', fontWeight:500 }}>{l.userName}</span>
               <span style={{ fontSize:12, color:'rgba(196,181,253,0.5)', marginLeft:8 }}>{l.detalle}</span>
             </div>
-            <span style={{ fontSize:11, color:'rgba(196,181,253,0.4)' }}>{timeAgo(l.timestamp)}</span>
+            <span style={{ fontSize:11, color:'rgba(196,181,253,0.4)' }}>{timeAgo(l.created_at)}</span>
           </div>
         ))}
       </div>
@@ -647,32 +657,46 @@ const MatrizSection = ({ users: initialUsers, onRefresh }) => {
 
   const nonAdmin = users.filter(u => u.rol !== 'super_admin' && u.rol !== 'admin')
 
-  const toggleEco = (userId, eco) => {
+  const toggleEco = async (userId, eco) => {
     const u = users.find(x => x.id === userId)
     if (!u || u.rol === 'super_admin' || u.rol === 'admin') return
     const ecos = u.permisos?.ecosistemas || []
     const newEcos = ecos.includes(eco) ? ecos.filter(e=>e!==eco) : [...ecos, eco]
-    const updated = updateUser(userId, { permisos: { ...u.permisos, ecosistemas:newEcos } })
-    setUsers(updated); onRefresh(updated)
+    try {
+      await setUserEcosistemas(userId, newEcos)
+      const list = await getUsers()
+      setUsers(list); onRefresh(list)
+    } catch (e) {
+      alert('No se pudo actualizar el acceso: ' + (e?.message || 'error desconocido'))
+    }
   }
 
-  const cellStyle = (has, isAdmin) => ({
+  const cellStyle = (has) => ({
     textAlign:'center', padding:'10px 4px', fontSize:13,
-    color: isAdmin ? '#A78BFA' : has ? '#10B981' : '#EF4444',
-    cursor: isAdmin ? 'not-allowed' : 'pointer',
+    color: has ? '#10B981' : '#EF4444',
+    cursor: 'pointer',
     background:'transparent', border:'none',
     transition:'background 0.15s',
   })
 
+  const accessLabel = (u) => {
+    if (!u.roles || u.roles.length === 0) return '⚠️ sin rol activo'
+    return u.roles.map(r => {
+      const scope = r.scope === 'global' ? 'global' : r.scope
+      return (ROLE_LABEL[r.role] || r.role) + (scope !== 'global' ? ' (' + scope + ')' : '')
+    }).join(', ')
+  }
+
   return (
     <div>
       <h3 style={{ fontSize:18, fontWeight:700, marginBottom:8, color:'#F9FAFB' }}>Matriz de Permisos</h3>
-      <p style={{ fontSize:13, color:'rgba(196,181,253,0.6)', marginBottom:20 }}>Click en cada celda para activar/desactivar el acceso. Los admin tienen acceso total.</p>
+      <p style={{ fontSize:13, color:'rgba(196,181,253,0.6)', marginBottom:20 }}>Click en cada celda para activar/desactivar el acceso en user_roles. Los admin tienen acceso total.</p>
       <div style={{ overflowX:'auto' }}>
         <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
           <thead>
             <tr style={{ borderBottom:'1px solid rgba(139,92,246,0.25)' }}>
               <th style={{ textAlign:'left', padding:'10px 12px', color:'rgba(196,181,253,0.7)', fontWeight:600, whiteSpace:'nowrap' }}>Usuario</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', color:'rgba(34,211,238,0.7)', fontWeight:600, whiteSpace:'nowrap', fontSize:11 }}>Accesos reales</th>
               {ALL_ECOS.map(e => (
                 <th key={e.id} style={{ padding:'10px 8px', color:'rgba(196,181,253,0.7)', fontWeight:600, textAlign:'center', whiteSpace:'nowrap', fontSize:11 }}>{e.label}</th>
               ))}
@@ -680,7 +704,7 @@ const MatrizSection = ({ users: initialUsers, onRefresh }) => {
           </thead>
           <tbody>
             {nonAdmin.length === 0 && (
-              <tr><td colSpan={ALL_ECOS.length+1} style={{ textAlign:'center', padding:'32px', color:'rgba(196,181,253,0.4)', fontSize:13 }}>No hay usuarios editor/viewer/custom</td></tr>
+              <tr><td colSpan={ALL_ECOS.length+2} style={{ textAlign:'center', padding:'32px', color:'rgba(196,181,253,0.4)', fontSize:13 }}>No hay usuarios editor/viewer/custom</td></tr>
             )}
             {nonAdmin.map((u,i) => (
               <tr key={u.id} style={{ borderBottom:'1px solid rgba(139,92,246,0.1)', background: i%2===0 ? 'rgba(139,92,246,0.03)' : 'transparent' }}>
@@ -693,12 +717,17 @@ const MatrizSection = ({ users: initialUsers, onRefresh }) => {
                     </div>
                   </div>
                 </td>
+                <td style={{ padding:'10px 8px', fontSize:10, color:'rgba(34,211,238,0.7)', whiteSpace:'nowrap' }}>
+                  {accessLabel(u)}
+                </td>
                 {ALL_ECOS.map(eco => {
                   const has = (u.permisos?.ecosistemas||[]).includes(eco.id)
+                  const sinRol = !u.roles || u.roles.length === 0
                   return (
                     <td key={eco.id}>
-                      <button style={cellStyle(has, false)} onClick={() => toggleEco(u.id, eco.id)}
-                        title={has ? `Quitar acceso a ${eco.label}` : `Dar acceso a ${eco.label}`}>
+                      <button style={{...cellStyle(has), cursor: sinRol ? 'not-allowed' : 'pointer', opacity: sinRol ? 0.4 : 1}}
+                        onClick={() => !sinRol && toggleEco(u.id, eco.id)}
+                        title={sinRol ? 'Sin rol activo — asigná rol primero' : has ? `Quitar acceso a ${eco.label}` : `Dar acceso a ${eco.label}`}>
                         {has ? '✅' : '❌'}
                       </button>
                     </td>
@@ -724,9 +753,9 @@ const ActividadSection = ({ users }) => {
 
   const now = Date.now()
   const filtered = log.filter(e => {
-    const mu = filterUser === 'all' || e.usuario_id === filterUser
+    const mu = filterUser === 'all' || e.userId === filterUser
     const ma = filterAcc  === 'all' || e.accion === filterAcc
-    const ts = new Date(e.timestamp).getTime()
+    const ts = new Date(e.created_at).getTime()
     const md = filterDate === 'all'     ? true
              : filterDate === 'today'   ? now-ts < 86400000
              : filterDate === 'ayer'    ? now-ts >= 86400000 && now-ts < 172800000
@@ -769,13 +798,13 @@ const ActividadSection = ({ users }) => {
           <div key={e.id} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'10px 14px', background:'rgba(139,92,246,0.05)', border:'1px solid rgba(139,92,246,0.12)', borderRadius:10 }}>
             <span style={{ fontSize:14, flexShrink:0 }}>{ACTION_ICON[e.accion] || '⚡'}</span>
             <div style={{ flex:1, minWidth:0 }}>
-              <span style={{ fontSize:13, color:'#F9FAFB', fontWeight:500 }}>{e.usuario_nombre}</span>
+              <span style={{ fontSize:13, color:'#F9FAFB', fontWeight:500 }}>{e.userName}</span>
               <span style={{ fontSize:12, color:'rgba(196,181,253,0.6)', marginLeft:6 }}>{e.detalle}</span>
               {e.seccion && e.seccion !== 'sistema' && (
                 <span style={{ fontSize:10, color:'rgba(196,181,253,0.35)', marginLeft:6 }}>— {e.seccion}</span>
               )}
             </div>
-            <span style={{ fontSize:11, color:'rgba(196,181,253,0.35)', flexShrink:0 }}>{timeAgo(e.timestamp)}</span>
+            <span style={{ fontSize:11, color:'rgba(196,181,253,0.35)', flexShrink:0 }}>{timeAgo(e.created_at)}</span>
           </div>
         ))}
       </div>
@@ -794,8 +823,8 @@ const MonitorSection = ({ users }) => {
 
   const recent = log.slice(0, 10)
   const activeLast1h = [...new Map(
-    log.filter(e => Date.now()-new Date(e.timestamp).getTime() < 3600000)
-       .map(e => [e.usuario_id, e])
+    log.filter(e => Date.now()-new Date(e.created_at).getTime() < 3600000)
+       .map(e => [e.userId, e])
   ).values()].slice(0,8)
 
   return (
@@ -810,13 +839,13 @@ const MonitorSection = ({ users }) => {
       <div style={{ display:'flex', flexWrap:'wrap', gap:10, marginBottom:24 }}>
         {activeLast1h.length === 0 && <div style={{ color:'rgba(196,181,253,0.4)', fontSize:13 }}>Sin actividad reciente</div>}
         {activeLast1h.map(e => {
-          const u = users.find(x => x.id === e.usuario_id) || { avatar:e.usuario_nombre?.slice(0,2)||'?', avatarColor:'#8B5CF6', nombre:e.usuario_nombre }
+          const u = users.find(x => x.id === e.userId) || { avatar:e.userName?.slice(0,2)||'?', avatarColor:'#8B5CF6', nombre:e.userName }
           return (
             <div key={e.usuario_id} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 14px', background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.2)', borderRadius:20 }}>
               <Avatar user={u} size={26}/>
               <div>
                 <div style={{ fontSize:12, fontWeight:600, color:'#F9FAFB' }}>{u.nombre}</div>
-                <div style={{ fontSize:10, color:'rgba(196,181,253,0.5)' }}>{timeAgo(e.timestamp)}</div>
+                <div style={{ fontSize:10, color:'rgba(196,181,253,0.5)' }}>{timeAgo(e.created_at)}</div>
               </div>
             </div>
           )
@@ -828,8 +857,8 @@ const MonitorSection = ({ users }) => {
         {recent.map(e => (
           <div key={e.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 14px', background:'rgba(139,92,246,0.05)', border:'1px solid rgba(139,92,246,0.12)', borderRadius:8 }}>
             <span style={{ fontSize:13 }}>{ACTION_ICON[e.accion]||'⚡'}</span>
-            <span style={{ flex:1, fontSize:12, color:'#C4B5FD' }}><strong style={{color:'#F9FAFB'}}>{e.usuario_nombre}</strong> — {e.detalle}</span>
-            <span style={{ fontSize:11, color:'rgba(196,181,253,0.4)' }}>{timeAgo(e.timestamp)}</span>
+            <span style={{ flex:1, fontSize:12, color:'#C4B5FD' }}><strong style={{color:'#F9FAFB'}}>{e.userName}</strong> — {e.detalle}</span>
+            <span style={{ fontSize:11, color:'rgba(196,181,253,0.4)' }}>{timeAgo(e.created_at)}</span>
           </div>
         ))}
       </div>

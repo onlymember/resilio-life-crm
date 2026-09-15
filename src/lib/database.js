@@ -1611,7 +1611,7 @@ export const dbAssignEntity = async (entityType, entityId, toOwner, reason = nul
 
 // ═══════════════════════════════════════════════════════════
 // COMPAT SHIMS — mapean la firma vieja del AdminPanel al schema
-// real de la tabla activities.  No modificar AdminPanel.jsx.
+// real de la tabla activities.
 // ═══════════════════════════════════════════════════════════
 
 export const dbLogActivity = async ({ userId, userName, accion, detalle, seccion } = {}) => {
