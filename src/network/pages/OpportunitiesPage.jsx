@@ -218,7 +218,7 @@ export default function OpportunitiesPage({ onOpenCreate, currentUser }) {
             {loading ? t('loading.generic') : `${total} ${t('opportunities.subtitle').toLowerCase()}`}
           </p>
         </div>
-        <button onClick={onOpenCreate} style={{ padding:'7px 14px', borderRadius:10, background:'var(--primary-violet)', color:'white', border:'none', cursor:'pointer', fontSize:12, fontWeight:700 }}>
+        <button onClick={() => onOpenCreate('opportunity')} style={{ padding:'7px 14px', borderRadius:10, background:'var(--primary-violet)', color:'white', border:'none', cursor:'pointer', fontSize:12, fontWeight:700 }}>
           + {t('create.opportunity.label')}
         </button>
       </div>
@@ -234,7 +234,7 @@ export default function OpportunitiesPage({ onOpenCreate, currentUser }) {
           {[0,1,2].map(i=><div key={i} style={{ height:72, borderRadius:12, background:'rgba(139,92,246,0.06)', animation:'pulse 1.5s ease-in-out infinite' }}/>)}
         </div>
       ) : rows.length === 0 ? (
-        <EmptyState icon={Briefcase} title={t('opportunities.empty')} actionLabel={`+ ${t('create.opportunity.label')}`} onAction={onOpenCreate}/>
+        <EmptyState icon={Briefcase} title={t('opportunities.empty')} actionLabel={`+ ${t('create.opportunity.label')}`} onAction={() => onOpenCreate('opportunity')}/>
       ) : isDesktop ? (
         /* ── KANBAN (desktop) ── */
         <div style={{ overflowX:'auto', paddingBottom:20 }}>

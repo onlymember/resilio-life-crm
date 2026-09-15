@@ -246,7 +246,16 @@
     "tasksOverdue": "{n} vencidas",
     "followups": "{n} seguimientos",
     "followupsOverdue": "{n} vencidos",
-    "loadingGreeting": "Cargando…"
+    "loadingGreeting": "Cargando…",
+    "featuredMission": "Active mission",
+    "recentActivity": "Recent activity",
+    "recentActivityEmpty": "No recent activity yet",
+    "pulse": {
+      "influencers": "+{n} influencers",
+      "brands": "+{n} brands",
+      "opportunities": "+{n} opportunities",
+      "collaborations": "{n} collaborations advanced"
+    }
   },
   "agenda": {
     "complete": "Completar",

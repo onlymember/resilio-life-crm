@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, Building2, Briefcase, Handshake } from 'lucide-react'
+import { Users, Building2, Briefcase, Handshake, Sparkles } from 'lucide-react'
 import AgendaItem from '../components/AgendaItem.jsx'
 import StatTile from '../components/StatTile.jsx'
 import MissionProgress from '../components/MissionProgress.jsx'
+import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
-import { getMyAgenda, getMyNetworkStats, getMyMissions } from '../../lib/metrics.js'
+import { getMyAgenda, getMyNetworkStats, getMyMissions, getNetworkPulse, getMyRecentActivity } from '../../lib/metrics.js'
 import { dbCompleteNextAction, dbSetNextAction, dbCompleteTask } from '../../lib/database.js'
 
 const AGENDA_PREVIEW = 5
@@ -28,20 +29,26 @@ export default function HomePage({ currentUser, onOpenCreate }) {
   const [agenda,   setAgenda]   = useState([])
   const [stats,    setStats]    = useState(null)
   const [missions, setMissions] = useState([])
+  const [pulse,    setPulse]    = useState(null)
+  const [activity, setActivity] = useState([])
   const [loading,  setLoading]  = useState(true)
   const [showAll,  setShowAll]  = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [ag, st, ms] = await Promise.all([
+      const [ag, st, ms, pu, ac] = await Promise.all([
         getMyAgenda(7),
         getMyNetworkStats(),
         getMyMissions(),
+        getNetworkPulse(1).catch(() => null),
+        getMyRecentActivity(6).catch(() => []),
       ])
       setAgenda(ag)
       setStats(st)
       setMissions(ms)
+      setPulse(pu)
+      setActivity(ac)
     } catch(e) {
       console.error('HomePage load:', e.message)
     } finally {
@@ -103,6 +110,20 @@ export default function HomePage({ currentUser, onOpenCreate }) {
         : t('home.followups', { n: stats.followupsToday }))
     : '—'
 
+  // Network Pulse — solo cambios relevantes de las últimas 24hs, nunca ruido
+  const pulseParts = pulse ? [
+    pulse.newInfluencers         > 0 && t('home.pulse.influencers',    { n: pulse.newInfluencers }),
+    pulse.newBrands              > 0 && t('home.pulse.brands',         { n: pulse.newBrands }),
+    pulse.newOpportunities       > 0 && t('home.pulse.opportunities',  { n: pulse.newOpportunities }),
+    pulse.collaborationsAdvanced > 0 && t('home.pulse.collaborations', { n: pulse.collaborationsAdvanced }),
+  ].filter(Boolean) : []
+  const hasPulse = pulseParts.length > 0
+
+  // Misión destacada — la de mayor avance, resto queda a un link
+  const sortedMissions   = [...missions].sort((a, b) => (b.pct ?? 0) - (a.pct ?? 0))
+  const featuredMission  = sortedMissions[0]
+  const otherMissions    = sortedMissions.slice(1)
+
   return (
     <div className="nw-home-grid">
 
@@ -110,11 +131,26 @@ export default function HomePage({ currentUser, onOpenCreate }) {
       <div style={{ padding: '20px 20px 0' }}>
 
         {/* 1 · SALUDO */}
-        <div style={{ marginBottom: 20 }}>
+        <div style={{ marginBottom: pulse && hasPulse ? 8 : 20 }}>
           <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>
             {greet}{name ? `, ${name}` : ''}
           </h1>
         </div>
+
+        {/* 1b · NETWORK PULSE — solo si hay algo relevante que contar */}
+        {pulse && hasPulse && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap',
+            fontSize: 12, color: 'var(--text-secondary)', marginBottom: 20,
+          }}>
+            <Sparkles size={13} color="var(--primary-violet-light)" style={{ flexShrink: 0 }}/>
+            {pulseParts.map((p, i) => (
+              <span key={i} style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+                {p}{i < pulseParts.length - 1 && <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}> · </span>}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* 2 · HOY */}
         {stats && (
@@ -160,7 +196,7 @@ export default function HomePage({ currentUser, onOpenCreate }) {
               <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{t('home.allClearSubtitle')}</div>
               {stats && stats.influencers === 0 && (
                 <button
-                  onClick={onOpenCreate}
+                  onClick={() => onOpenCreate('influencer')}
                   style={{ marginTop: 10, padding: '6px 14px', borderRadius: 8, background: 'rgba(139,92,246,0.15)', color: 'var(--primary-violet-light)', border: '1px solid var(--border-violet)', fontSize: 12, cursor: 'pointer' }}
                 >
                   + {t('home.newScouter')}
@@ -208,17 +244,37 @@ export default function HomePage({ currentUser, onOpenCreate }) {
           </section>
         )}
 
-        {/* 5 · MISIONES — solo si hay */}
-        {missions.length > 0 && (
-          <section>
+        {/* 5 · MISIÓN DESTACADA — la de mayor avance; el resto queda a un link */}
+        {featuredMission && (
+          <section style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 8 }}>
-              {t('home.missions')}
+              {t('home.featuredMission')}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {missions.map(m => <MissionProgress key={m.id} mission={m}/>)}
-            </div>
+            <MissionProgress mission={featuredMission}/>
+            {otherMissions.length > 0 && (
+              <button
+                onClick={() => navigate('/network/missions')}
+                style={{ padding: '8px 0 0', fontSize: 12, color: 'var(--primary-violet-light)', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                {t('home.seeAll', { n: otherMissions.length })}
+              </button>
+            )}
           </section>
         )}
+
+        {/* 6 · ACTIVIDAD RECIENTE — compacta, solo lo esencial */}
+        <section>
+          <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 4 }}>
+            {t('home.recentActivity')}
+          </div>
+          {activity.length === 0 ? (
+            <div style={{ padding: '12px 0', fontSize: 12, color: 'var(--text-secondary)' }}>
+              {t('home.recentActivityEmpty')}
+            </div>
+          ) : (
+            <ActivityTimeline activities={activity.slice(0, 4)}/>
+          )}
+        </section>
       </div>
 
     </div>

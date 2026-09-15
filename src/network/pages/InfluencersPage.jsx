@@ -177,7 +177,7 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
           ))}
         </div>
       ) : rows.length === 0 ? (
-        <EmptyState icon={Users} title={search ? t('empty.noResults') : t('empty.noInfluencers')} actionLabel={`+ ${t('create.influencer.label')}`} onAction={onOpenCreate}/>
+        <EmptyState icon={Users} title={search ? t('empty.noResults') : t('empty.noInfluencers')} actionLabel={`+ ${t('create.influencer.label')}`} onAction={() => onOpenCreate('influencer')}/>
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
           {rows.map((inf, i) => (

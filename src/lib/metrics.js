@@ -81,6 +81,34 @@ export const getMyNetworkStats = async () => {
   }
 }
 
+// ── Network Pulse + Actividad Reciente (Home, Fase 6 — 035) ──
+
+export const getNetworkPulse = async (days = 1) => {
+  const { data, error } = await supabase.rpc('network_pulse', { p_days: days })
+  if (error) throw error
+  const d = data || {}
+  return {
+    newInfluencers:        Number(d.new_influencers        ?? 0),
+    newBrands:             Number(d.new_brands             ?? 0),
+    newOpportunities:      Number(d.new_opportunities       ?? 0),
+    collaborationsAdvanced:Number(d.collaborations_advanced ?? 0),
+  }
+}
+
+export const getMyRecentActivity = async (limit = 6) => {
+  const { data, error } = await supabase.rpc('my_recent_activity', { p_limit: limit })
+  if (error) throw error
+  return (data || []).map(r => ({
+    id:          r.id,
+    entityType:  r.entity_type,
+    entityId:    r.entity_id,
+    type:        r.type,
+    title:       r.title,
+    description: r.description,
+    occurredAt:  r.occurred_at,
+  }))
+}
+
 export const getMyMissions = async () => {
   const { data, error } = await supabase.rpc('my_missions')
   if (error) throw error

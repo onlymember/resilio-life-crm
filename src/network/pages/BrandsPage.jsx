@@ -137,7 +137,7 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
           {[0,1,2].map(i=><div key={i} style={{ height:80, borderRadius:14, background:'rgba(139,92,246,0.06)', border:'1px solid var(--border-violet)' }}/>)}
         </div>
       ) : rows.length === 0 ? (
-        <EmptyState icon={Building2} title={search ? t('empty.noResults') : t('empty.noBrands')} actionLabel={`+ ${t('create.brand.label')}`} onAction={onOpenCreate}/>
+        <EmptyState icon={Building2} title={search ? t('empty.noResults') : t('empty.noBrands')} actionLabel={`+ ${t('create.brand.label')}`} onAction={() => onOpenCreate('brand')}/>
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
           {rows.map((b, i) => (

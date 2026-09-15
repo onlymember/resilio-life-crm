@@ -67,7 +67,7 @@ export default function CollaborationsPage({ onOpenCreate }) {
           <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{total > 0 ? `${total} registros` : t('collab.subtitle')}</p>
         </div>
         <button
-          onClick={onOpenCreate}
+          onClick={() => onOpenCreate('collaboration')}
           style={{ padding: '7px 14px', borderRadius: 10, background: 'var(--primary-violet)', color: 'white', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
         >
           + {t('collab.new')}
@@ -97,7 +97,7 @@ export default function CollaborationsPage({ onOpenCreate }) {
           {[0,1,2].map(i => <div key={i} style={{ height: 76, borderRadius: 12, background: 'rgba(139,92,246,0.06)', animation: 'pulse 1.5s ease-in-out infinite' }}/>)}
         </div>
       ) : rows.length === 0 ? (
-        <EmptyState icon={CheckCircle} title={t('collab.empty')} actionLabel={`+ ${t('collab.new')}`} onAction={onOpenCreate}/>
+        <EmptyState icon={CheckCircle} title={t('collab.empty')} actionLabel={`+ ${t('collab.new')}`} onAction={() => onOpenCreate('collaboration')}/>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {rows.map((collab, i) => (
