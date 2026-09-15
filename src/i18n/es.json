@@ -573,7 +573,9 @@
     "emptyCta": "Agendá tu próximo seguimiento desde un influencer u oportunidad.",
     "more": "+{n} más",
     "days": ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
-    "months": ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+    "months": ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
+    "listTitle":  "Detalle del mes",
+    "emptyMonth": "No hay nada agendado este mes."
   },
   "followups": {
     "title":        "Seguimiento",
@@ -767,6 +769,28 @@
       "due":      "Vencido",
       "assigned": "Nuevo"
     }
+  },
+  "import": {
+    "button":        "Importar",
+    "title":         "Importar desde planilla",
+    "paste":         "Pegá acá las celdas copiadas de tu planilla (CSV o TSV)",
+    "orUpload":      "o subí un archivo CSV",
+    "preview":       "Vista previa →",
+    "willImport":    "{n} listas para importar",
+    "duplicates":    "{n} posibles duplicadas",
+    "invalid":       "{n} inválidas",
+    "unknownColumn": "Columnas no reconocidas (se ignoran): {cols}",
+    "noName":        "Nombre vacío",
+    "badTier":       "Tier inválido (se omite)",
+    "badRelation":   "Relación inválida (se omite)",
+    "cityNotFound":  "Ciudad no encontrada — se crea sin ciudad y solo la verá Dirección",
+    "ownerNotice":   "Todas las fichas importadas quedan a tu nombre. Para reasignarlas, usá la asignación en lote del Command Center.",
+    "confirm":       "Importar {n} filas",
+    "importing":     "Importando {done} de {total}…",
+    "done":          "Completado: {created} creadas, {failed} fallidas",
+    "failed":        "Error: {error}",
+    "downloadFailed":"Descargar filas fallidas (CSV)",
+    "close":         "Cerrar"
   },
   "relationshipHistory": {
     "title":        "Historial de relación",

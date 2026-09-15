@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Users, Search, SlidersHorizontal, ChevronDown } from 'lucide-react'
+import { Users, Search, SlidersHorizontal, ChevronDown, Upload } from 'lucide-react'
 import NetworkCard from '../components/NetworkCard.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import FilterSheet from '../components/FilterSheet.jsx'
 import AssignModal from '../components/AssignModal.jsx'
 import BulkBar from '../components/BulkBar.jsx'
+import ImportSheet from '../components/ImportSheet.jsx'
 import { t } from '../../i18n/index.js'
 import { dbGetInfluencers, dbGetGeography, dbLogContact } from '../../lib/database.js'
 import { useNavigate } from 'react-router-dom'
@@ -55,6 +56,7 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
   const [chipId,       setChipId]       = useState('all')
   const [assignTarget, setAssignTarget] = useState(null)
   const [selected,     setSelected]     = useState(new Set())
+  const [importOpen,   setImportOpen]   = useState(false)
 
   const toggleSelect = (id) => setSelected(prev => {
     const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next
@@ -122,9 +124,16 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
           <h1 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>{t('pages.influencers.title')}</h1>
           <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{total > 0 ? `${total} registros` : t('pages.influencers.subtitle')}</p>
         </div>
-        <button onClick={() => setFilterOpen(true)} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:10, background:'rgba(139,92,246,0.08)', border:'1px solid var(--border-violet)', color:'var(--text-secondary)', cursor:'pointer', fontSize:12 }}>
-          <SlidersHorizontal size={14}/>{t('filter.title')}
-        </button>
+        <div style={{ display:'flex', gap:8 }}>
+          {currentUser?.rol === 'super_admin' && (
+            <button onClick={() => setImportOpen(true)} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:10, background:'rgba(139,92,246,0.08)', border:'1px solid var(--border-violet)', color:'var(--text-secondary)', cursor:'pointer', fontSize:12 }}>
+              <Upload size={14}/>{t('import.button')}
+            </button>
+          )}
+          <button onClick={() => setFilterOpen(true)} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:10, background:'rgba(139,92,246,0.08)', border:'1px solid var(--border-violet)', color:'var(--text-secondary)', cursor:'pointer', fontSize:12 }}>
+            <SlidersHorizontal size={14}/>{t('filter.title')}
+          </button>
+        </div>
       </div>
 
       {/* Search */}
@@ -237,6 +246,13 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
           onRefresh={() => load(0)}
         />
       )}
+
+      <ImportSheet
+        isOpen={importOpen}
+        entityType="influencer"
+        onClose={() => setImportOpen(false)}
+        onDone={() => { setImportOpen(false); load(0) }}
+      />
     </div>
   )
 }

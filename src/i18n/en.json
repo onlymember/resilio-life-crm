@@ -573,7 +573,9 @@
     "emptyCta": "Agendá tu próximo seguimiento desde un influencer u oportunidad.",
     "more": "+{n} más",
     "days": ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
-    "months": ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+    "months": ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
+    "listTitle":  "Month detail",
+    "emptyMonth": "Nothing scheduled this month."
   },
   "followups": {
     "title":        "Follow-ups",
@@ -767,6 +769,28 @@
       "due":      "Due",
       "assigned": "New"
     }
+  },
+  "import": {
+    "button":        "Import",
+    "title":         "Import from spreadsheet",
+    "paste":         "Paste cells copied from your spreadsheet here (CSV or TSV)",
+    "orUpload":      "or upload a CSV file",
+    "preview":       "Preview →",
+    "willImport":    "{n} ready to import",
+    "duplicates":    "{n} possible duplicates",
+    "invalid":       "{n} invalid",
+    "unknownColumn": "Unknown columns (ignored): {cols}",
+    "noName":        "Empty name",
+    "badTier":       "Invalid tier (skipped)",
+    "badRelation":   "Invalid relation (skipped)",
+    "cityNotFound":  "City not found — created without city, only visible to Direction",
+    "ownerNotice":   "All imported records will be under your name. To reassign them, use bulk assignment in Command Center.",
+    "confirm":       "Import {n} rows",
+    "importing":     "Importing {done} of {total}…",
+    "done":          "Done: {created} created, {failed} failed",
+    "failed":        "Error: {error}",
+    "downloadFailed":"Download failed rows (CSV)",
+    "close":         "Close"
   },
   "relationshipHistory": {
     "title":        "Relationship history",

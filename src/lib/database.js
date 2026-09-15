@@ -1265,25 +1265,47 @@ const rowToBrand = (r) => ({
   email:             r.email      ?? null,
 })
 
+const BRAND_REL_VALID = new Set(['cold','warm','strong','inactive'])
+
 const brandToRow = async (b) => {
   const geo = await resolveGeo(b.ciudad ?? b.city, b.pais ?? b.country)
   const { id, ...rest } = b
-  return {
-    name:     (b.name || b.nombre || '').trim() || 'Sin nombre',
-    category: b.category ?? b.categoria ?? null,
-    city_id:    b.cityId ?? geo.city_id,
-    country_id: b.countryId ?? geo.country_id,
-    status:   b.status ?? 'active',
-    potential: b.potential ?? null,
-    website:  b.website ?? null,
-    next_follow_up: b.nextFollowUp ?? null,
-    notes:    b.notes ?? null,
-    whatsapp:  b.whatsapp  ?? null,
-    instagram: b.instagram ?? null,
-    phone:     b.phone     ?? null,
-    email:     b.email     ?? null,
-    data:     rest,
+  const catText = b.category ?? b.categoria ?? null
+
+  // Resolve category_id from text, falling back to null without failing
+  let category_id = b.categoryId ?? null
+  if (!category_id && catText) {
+    const cats = await dbGetBrandCategories().catch(() => [])
+    const match = cats.find(c => norm(c.name) === norm(catText))
+    category_id = match?.id ?? null
   }
+
+  const row = {
+    name:          (b.name || b.nombre || '').trim() || 'Sin nombre',
+    category:      catText,
+    category_id,
+    city_id:       b.cityId ?? geo.city_id,
+    country_id:    b.countryId ?? geo.country_id,
+    status:        b.status ?? 'active',
+    potential:     b.potential ?? null,
+    potential_value: b.potentialValue != null ? Number(b.potentialValue) : null,
+    website:       b.website ?? null,
+    next_follow_up: b.nextFollowUp ?? null,
+    next_action:   b.nextAction ?? null,
+    next_action_at: b.nextActionAt ?? null,
+    notes:         b.notes ?? null,
+    whatsapp:      b.whatsapp  ?? null,
+    instagram:     b.instagram ?? null,
+    phone:         b.phone     ?? null,
+    email:         b.email     ?? null,
+    data:          rest,
+  }
+
+  // relationship_status is an enum; only write valid values to avoid insert errors
+  const rel = b.relationshipStatus ?? null
+  if (rel && BRAND_REL_VALID.has(rel)) row.relationship_status = rel
+
+  return row
 }
 
 const rowToLocation = (r) => ({
