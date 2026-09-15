@@ -778,6 +778,17 @@ export const dbSaveCollaboration = async (collab, userId) => {
     currency:           rest.currency         || null,
     notes:              rest.notes            || null,
   }
+  // Derive city from brand then influencer (same cascade as collab_city_id() in SQL).
+  let cityId = rest.cityId || null
+  if (!cityId && row.brand_id) {
+    const { data: b } = await supabase.from('brands').select('city_id').eq('id', row.brand_id).maybeSingle()
+    cityId = b?.city_id || null
+  }
+  if (!cityId && row.influencer_id) {
+    const { data: inf } = await supabase.from('influencers').select('city_id').eq('id', row.influencer_id).maybeSingle()
+    cityId = inf?.city_id || null
+  }
+  row.city_id = cityId
   if (isUuid(id)) {
     const { data, error } = await supabase.from('collaborations')
       .update(row).eq('id', id).select('*').single()
@@ -1909,4 +1920,63 @@ export const dbGetNotifications = async (daysLookback = 3) => {
     at:         r.at,
     isOverdue:  r.is_overdue,
   }))
+}
+
+// ── Fase 6.5: conversión, historial y snapshots ─────────────
+
+export const dbConvertOpportunityToCollaboration = async (opportunityId) => {
+  const { data, error } = await supabase.rpc('convert_opportunity_to_collaboration', {
+    p_opportunity_id: opportunityId,
+  })
+  if (error) throw friendly(error)
+  return (data || []).map(rowToCollaboration)
+}
+
+export const dbGetBrandInfluencerHistory = async ({ brandId = null, influencerId = null } = {}) => {
+  let q = supabase.from('v_brand_influencer_history').select('*')
+  if (brandId)      q = q.eq('brand_id', brandId)
+  if (influencerId) q = q.eq('influencer_id', influencerId)
+  const { data, error } = await q
+  if (error) throw friendly(error)
+  return (data || []).map(r => ({
+    brandId:                  r.brand_id,
+    influencerId:             r.influencer_id,
+    timesWorked:              Number(r.times_worked || 0),
+    firstCollabAt:            r.first_collab_at,
+    lastCollabAt:             r.last_collab_at,
+    totalValue:               Number(r.total_value || 0),
+    totalEstimatedMediaValue: Number(r.total_estimated_media_value || 0),
+    avgEngagementRate:        r.avg_engagement_rate == null ? null : Number(r.avg_engagement_rate),
+  }))
+}
+
+export const dbGetMonthlySnapshots = async ({ period = null, scope = null } = {}) => {
+  let q = supabase.from('monthly_snapshots').select('*').order('period', { ascending: false })
+  if (period) q = q.eq('period', period)
+  if (scope)  q = q.eq('scope', scope)
+  const { data, error } = await q
+  if (error) throw friendly(error)
+  return (data || []).map(r => ({
+    id:                       r.id,
+    period:                   r.period,
+    scope:                    r.scope,
+    scopeId:                  r.scope_id,
+    newInfluencers:           Number(r.new_influencers || 0),
+    newBrands:                Number(r.new_brands || 0),
+    newOpportunities:         Number(r.new_opportunities || 0),
+    opportunitiesWon:         Number(r.opportunities_won || 0),
+    opportunitiesLost:        Number(r.opportunities_lost || 0),
+    collaborationsClosed:     Number(r.collaborations_closed || 0),
+    totalValue:               Number(r.total_value || 0),
+    totalEstimatedMediaValue: Number(r.total_estimated_media_value || 0),
+    avgEngagementRate:        r.avg_engagement_rate == null ? null : Number(r.avg_engagement_rate),
+    closedAt:                 r.closed_at,
+  }))
+}
+
+export const dbCloseMonthlySnapshot = async (period = null) => {
+  const params = {}
+  if (period) params.p_period = period
+  const { error } = await supabase.rpc('close_monthly_snapshot', params)
+  if (error) throw friendly(error)
 }
