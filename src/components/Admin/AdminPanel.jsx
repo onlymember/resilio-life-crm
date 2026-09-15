@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import {
-  getUsers, getActivityLog, getAdminNotifs, markNotifRead, markAllNotifsRead,
+  getUsers, getActivityLog,
   getSystemConfig, saveSystemConfig, approveUser, blockUser, unblockUser, updateUser,
   deleteUser, getRolePerms, logActivity, timeAgo, genId, getGeography, setUserEcosistemas,
 } from '../../lib/auth.js'
@@ -855,7 +855,7 @@ const MonitorSection = ({ users }) => {
         {activeLast1h.map(e => {
           const u = users.find(x => x.id === e.userId) || { avatar:e.userName?.slice(0,2)||'?', avatarColor:'#8B5CF6', nombre:e.userName }
           return (
-            <div key={e.usuario_id} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 14px', background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.2)', borderRadius:20 }}>
+            <div key={e.userId} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 14px', background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.2)', borderRadius:20 }}>
               <Avatar user={u} size={26}/>
               <div>
                 <div style={{ fontSize:12, fontWeight:600, color:'#F9FAFB' }}>{u.nombre}</div>
