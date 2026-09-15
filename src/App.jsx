@@ -1467,17 +1467,6 @@ export default function App() {
   }, [allowedView, currentView, setCurrentView])
 
   const renderView = () => {
-    if (!hasAnyAccess(currentUser)) {
-      return (
-        <div style={{ padding:'80px 24px', textAlign:'center', maxWidth:420, margin:'0 auto' }}>
-          <div style={{ fontSize:40, marginBottom:16 }}>🔒</div>
-          <h2 style={{ fontSize:18, fontWeight:600, marginBottom:8 }}>Tu cuenta todavía no tiene accesos asignados</h2>
-          <p style={{ fontSize:14, color:'var(--text-secondary)' }}>
-            Contactá al administrador para que te asigne un rol.
-          </p>
-        </div>
-      )
-    }
     switch (allowedView) {
       case 'network':
         // Renderizado con layout propio — ver el bypass en el return principal
@@ -1600,6 +1589,26 @@ export default function App() {
       <>
         <GlobalStyles/>
         <LoginScreen onLogin={handleLogin}/>
+      </>
+    )
+  }
+
+  if (currentUser && !hasAnyAccess(currentUser)) {
+    return (
+      <>
+        <GlobalStyles/>
+        <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px', background:`var(--nebula-1), var(--nebula-2), var(--nebula-3), var(--bg-primary)` }}>
+          <div style={{ textAlign:'center', maxWidth:420 }}>
+            <div style={{ fontSize:40, marginBottom:16 }}>🔒</div>
+            <h2 style={{ fontSize:18, fontWeight:600, marginBottom:8 }}>Tu cuenta todavía no tiene accesos asignados</h2>
+            <p style={{ fontSize:14, color:'var(--text-secondary)', marginBottom:24 }}>
+              Contactá al administrador para que te asigne un rol.
+            </p>
+            <button onClick={handleLogout} style={{ padding:'10px 20px', borderRadius:10, background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.3)', color:'#F87171', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+              Cerrar sesión
+            </button>
+          </div>
+        </div>
       </>
     )
   }

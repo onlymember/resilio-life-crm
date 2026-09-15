@@ -5,6 +5,7 @@ import CreateSheet from './components/CreateSheet.jsx'
 import { NAV_SECTIONS } from './nav.js'
 import { t } from '../i18n/index.js'
 import { dbGetNotifications } from '../lib/database.js'
+import { signOut } from '../lib/auth.js'
 
 const PREFERS_REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -155,6 +156,12 @@ function MobileHeader({ currentUser, onOpenDrawer }) {
                 <button onClick={() => { window.location.href = '/' }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 12 }}>
                   <LogOut size={13}/>{t('layout.backToApp')}
                 </button>
+                <button
+                  onClick={async () => { await signOut(); window.location.href = '/' }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: 'none', border: 'none', borderTop: '1px solid var(--border-violet)', color: '#F87171', cursor: 'pointer', fontSize: 12 }}
+                >
+                  <LogOut size={13}/>{t('layout.signOut')}
+                </button>
               </div>
             </>
           )}
@@ -248,6 +255,12 @@ function NavDrawer({ currentUser, onClose }) {
               style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 8, background: 'transparent', border: '1px solid var(--border-violet)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 12 }}
             >
               <LogOut size={12}/>{t('layout.backToApp')}
+            </button>
+            <button
+              onClick={async () => { await signOut(); window.location.href = '/' }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 8, marginTop: 6, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#F87171', cursor: 'pointer', fontSize: 12 }}
+            >
+              <LogOut size={12}/>{t('layout.signOut')}
             </button>
           </div>
         )}

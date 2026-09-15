@@ -392,6 +392,7 @@
   },
   "layout": {
     "backToApp": "Salir de Network",
+    "signOut": "Cerrar sesión",
     "toggleRail": "Contexto"
   },
   "influencer": {

@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, LogOut, Bell, X } from 'lucide-react'
 import { NAV_SECTIONS } from './nav.js'
 import { t } from '../i18n/index.js'
 import { dbGetNotifications } from '../lib/database.js'
+import { signOut } from '../lib/auth.js'
 
 const ENTITY_ROUTE = {
   influencer:    (id) => `/network/influencers/${id}`,
@@ -220,6 +221,14 @@ function NetworkSidebar({ currentUser, collapsed, onToggle }) {
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' }}
           >
             <LogOut size={12}/>{t('layout.backToApp')}
+          </button>
+          <button
+            onClick={async () => { await signOut(); window.location.href = '/' }}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 8, marginTop: 6, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#F87171', cursor: 'pointer', fontSize: 12, transition: 'all 0.15s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)' }}
+          >
+            <LogOut size={12}/>{t('layout.signOut')}
           </button>
         </div>
       )}
