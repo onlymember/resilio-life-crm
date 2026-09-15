@@ -71,6 +71,7 @@ const rowToUser = (profile, roles = []) => {
     avatar:        profile.avatar || av.initials,
     avatarColor:   profile.avatar_color || av.color,
     rol:           primaryRole,
+    rolProfile:    profile.rol || null,
     estado:        profile.estado || 'pendiente',
     permisos: {
       ecosistemas: ecos,
@@ -199,6 +200,23 @@ export const dbUpdateUser = async (id, changes) => {
   const { error } = await supabase.from('profiles').update(cols).eq('id', id)
   if (error) throw error
   return fetchUserById(id)
+}
+
+// Los ecosistemas REALES viven en user_roles.ecosistemas, no en profiles.
+// Esto los reescribe en todas las filas activas del usuario.
+export const dbSetUserEcosistemas = async (userId, ecosistemas) => {
+  const { data: activas, error: qErr } = await supabase.from('user_roles')
+    .select('id').eq('user_id', userId).is('revoked_at', null)
+  if (qErr) throw qErr
+  if (!activas || activas.length === 0) {
+    throw new Error('Este usuario no tiene ningún rol activo. Asignale rol y ciudades primero con "Roles y ciudades".')
+  }
+  const { error } = await supabase.from('user_roles')
+    .update({ ecosistemas })
+    .eq('user_id', userId)
+    .is('revoked_at', null)
+  if (error) throw error
+  return fetchUserById(userId)
 }
 
 export const dbApproveUser = async (userId, rol = 'viewer', opts = {}) => {

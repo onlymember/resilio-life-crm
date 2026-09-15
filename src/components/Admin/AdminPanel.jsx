@@ -192,6 +192,7 @@ const EditUserModal = ({ user, onSave, onClose, currentUser }) => {
                 <div>
                   <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:6 }}>Estado</label>
                   <select value={form.estado} onChange={e=>set('estado',e.target.value)} disabled={isSA} style={{ width:'100%', padding:'9px 12px', background:'rgba(18,10,40,0.95)', border:'1px solid rgba(139,92,246,0.25)', borderRadius:8, color:'#F9FAFB', fontSize:13, outline:'none', cursor:isSA?'not-allowed':'pointer' }}>
+                    <option value="pendiente">Pendiente</option>
                     <option value="aprobado">Aprobado</option>
                     <option value="bloqueado">Bloqueado</option>
                     <option value="suspendido">Suspendido</option>
@@ -317,6 +318,7 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
   const [delConfirm,  setDelConfirm]   = useState(null)
   const [delText,     setDelText]      = useState('')
   const [approveModal,     setApproveModal]     = useState(null)
+  const [approveMode,      setApproveMode]      = useState('approve') // 'approve' | 'reassign'
   const [approveRol,       setApproveRol]       = useState('viewer')
   const [approveGeoIds,    setApproveGeoIds]    = useState([])
   const [approveAllScope,  setApproveAllScope]  = useState(false)
@@ -336,6 +338,33 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
   const loadGeography = () => dbGetGeography(true).then(setGeography).catch(() => {})
   useEffect(() => { loadGeography() }, [])
 
+  const geoName = (kind, id) => {
+    if (!id) return null
+    const list = kind === 'city' ? geography.cities : kind === 'country' ? geography.countries : geography.regions
+    const found = list.find(x => x.id === id)
+    return found ? found.name : '(ciudad no encontrada)'
+  }
+
+  const accessLabel = (u) => {
+    if (!u.roles || u.roles.length === 0) return null
+    const byRole = {}
+    for (const r of u.roles) {
+      if (!byRole[r.role]) byRole[r.role] = []
+      if (r.scope === 'global') byRole[r.role].push('todas')
+      else {
+        const n = geoName(r.scope, r.scopeId)
+        byRole[r.role].push(n || `(${r.scope} sin asignar)`)
+      }
+    }
+    return Object.entries(byRole)
+      .map(([role, scopes]) => `${ROLE_LABEL[role] || role}: ${scopes.join(', ')}`)
+      .join('  ·  ')
+  }
+
+  const sinPermisosReales = (u) => u.estado === 'aprobado' && (!u.roles || u.roles.length === 0)
+  const rolDesincronizado = (u) =>
+    u.roles && u.roles.length > 0 && u.rolProfile && !u.roles.some(r => r.role === u.rolProfile)
+
   const filtered = users.filter(u => {
     const q = search.toLowerCase()
     const mq = !q || u.nombre.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || (u.sobrenombre||'').toLowerCase().includes(q)
@@ -345,7 +374,7 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
   })
 
   const resetApproveForm = () => {
-    setApproveModal(null); setApproveRol('viewer')
+    setApproveModal(null); setApproveRol('viewer'); setApproveMode('approve')
     setApproveGeoIds([]); setApproveAllScope(false)
     setNewCityName(''); setNewCityCountry('')
   }
@@ -357,10 +386,19 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
       scope = geoKind
       scopeIds = approveGeoIds.length ? approveGeoIds : null
     }
-    await approveUser(approveModal.id, approveRol, { scope, scopeIds })
-    logActivity({ userId:currentUser?.id||'admin', userName:currentUser?.nombre||'Admin', accion:'aprobar_usuario', detalle:`Aprobó a ${approveModal.nombre} con rol ${approveRol}${scope!=='global'?` (${scope}: ${scopeIds?.length||0})`:' (todas)'}`, seccion:'admin' })
-    resetApproveForm()
-    refresh()
+    try {
+      await approveUser(approveModal.id, approveRol, { scope, scopeIds })
+      const accion = approveMode === 'reassign' ? 'editar_usuario' : 'aprobar_usuario'
+      const scopeSuffix = scope !== 'global' ? ' (' + scope + ': ' + (scopeIds?.length || 0) + ')' : ' (todas)'
+      const detalle = approveMode === 'reassign'
+        ? 'Reasignó accesos de ' + approveModal.nombre + ': rol ' + approveRol + scopeSuffix
+        : 'Aprobó a ' + approveModal.nombre + ' con rol ' + approveRol + scopeSuffix
+      logActivity({ userId:currentUser?.id||'admin', userName:currentUser?.nombre||'Admin', accion, detalle, seccion:'admin' })
+      resetApproveForm()
+      refresh()
+    } catch (e) {
+      alert('Error al asignar accesos: ' + (e?.message || 'error desconocido') + '\n\nSi el error ocurrió al insertar (después de revocar), los accesos anteriores quedaron revocados y los nuevos no se insertaron. Volvé a intentar ahora mismo desde "Roles y ciudades".')
+    }
   }
 
   const toggleGeoId = (id) => {
@@ -449,6 +487,19 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
               </div>
               <div style={{ fontSize:11, color:'rgba(196,181,253,0.5)' }}>{u.email}</div>
               <div style={{ fontSize:10, color:'rgba(196,181,253,0.35)', marginTop:2 }}>Último acceso: {timeAgo(u.ultimo_acceso)}</div>
+              {accessLabel(u) && (
+                <div style={{ fontSize:10, color:'rgba(34,211,238,0.85)', marginTop:3 }}>🔑 {accessLabel(u)}</div>
+              )}
+              {sinPermisosReales(u) && (
+                <div style={{ fontSize:10, color:'#F87171', fontWeight:700, marginTop:3 }}>
+                  ⚠️ Aprobado pero sin permisos reales en la base — reasignale rol y ciudades
+                </div>
+              )}
+              {rolDesincronizado(u) && (
+                <div style={{ fontSize:10, color:'#FBBF24', fontWeight:700, marginTop:3 }}>
+                  ⚠️ Rol desincronizado: profiles dice "{ROLE_LABEL[u.rolProfile] || u.rolProfile}", user_roles dice "{ROLE_LABEL[u.roles[0].role] || u.roles[0].role}"
+                </div>
+              )}
             </div>
             <div style={{ display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
               <Badge type={ROLE_COLOR[u.rol]} label={ROLE_LABEL[u.rol]}/>
@@ -456,7 +507,16 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
             </div>
             <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
               {u.estado === 'pendiente' && (
-                <button onClick={() => { setApproveModal(u); setApproveRol('viewer'); setApproveGeoIds([]); setApproveAllScope(false) }} style={{ padding:'6px 12px', borderRadius:7, background:'rgba(16,185,129,0.15)', border:'1px solid rgba(16,185,129,0.3)', color:'#10B981', fontSize:11, fontWeight:700, cursor:'pointer' }}>✅ Aprobar</button>
+                <button onClick={() => { setApproveMode('approve'); setApproveModal(u); setApproveRol('viewer'); setApproveGeoIds([]); setApproveAllScope(false) }} style={{ padding:'6px 12px', borderRadius:7, background:'rgba(16,185,129,0.15)', border:'1px solid rgba(16,185,129,0.3)', color:'#10B981', fontSize:11, fontWeight:700, cursor:'pointer' }}>✅ Aprobar</button>
+              )}
+              {u.estado === 'aprobado' && u.rol !== 'super_admin' && (
+                <button onClick={() => {
+                  setApproveMode('reassign')
+                  setApproveModal(u)
+                  setApproveRol(u.roles?.[0]?.role || u.rolProfile || 'scouter')
+                  setApproveGeoIds((u.roles || []).filter(r => r.scope !== 'global' && r.scopeId).map(r => r.scopeId))
+                  setApproveAllScope((u.roles || []).some(r => r.scope === 'global'))
+                }} style={{ padding:'6px 12px', borderRadius:7, background:'rgba(34,211,238,0.12)', border:'1px solid rgba(34,211,238,0.3)', color:'#22D3EE', fontSize:11, fontWeight:700, cursor:'pointer' }}>🔑 Roles y ciudades</button>
               )}
               {u.estado === 'aprobado' && u.rol !== 'super_admin' && (
                 <button onClick={() => setBlockModal(u)} style={{ padding:'6px 12px', borderRadius:7, background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.25)', color:'#F87171', fontSize:11, fontWeight:700, cursor:'pointer' }}>🚫 Bloquear</button>
@@ -477,8 +537,19 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
       {approveModal && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)', zIndex:4000, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }} onClick={resetApproveForm}>
           <div style={{ background:'rgba(18,10,40,0.97)', border:'1px solid rgba(139,92,246,0.4)', borderRadius:16, padding:28, width:'100%', maxWidth:440, maxHeight:'85vh', overflowY:'auto' }} onClick={e=>e.stopPropagation()}>
-            <h4 style={{ fontSize:16, fontWeight:700, marginBottom:8, color:'#F9FAFB' }}>Aprobar usuario</h4>
-            <p style={{ fontSize:13, color:'rgba(196,181,253,0.7)', marginBottom:16 }}>Aprobando a <strong style={{color:'#A78BFA'}}>{approveModal.nombre}</strong></p>
+            <h4 style={{ fontSize:16, fontWeight:700, marginBottom:8, color:'#F9FAFB' }}>
+              {approveMode === 'reassign' ? 'Roles y ciudades' : 'Aprobar usuario'}
+            </h4>
+            <p style={{ fontSize:13, color:'rgba(196,181,253,0.7)', marginBottom:16 }}>
+              {approveMode === 'reassign' ? 'Reasignando accesos de ' : 'Aprobando a '}
+              <strong style={{color:'#A78BFA'}}>{approveModal.nombre}</strong>
+            </p>
+
+            {approveMode === 'reassign' && (
+              <div style={{ fontSize:11, color:'rgba(251,191,36,0.9)', background:'rgba(251,191,36,0.08)', border:'1px solid rgba(251,191,36,0.25)', borderRadius:8, padding:'8px 10px', marginBottom:14 }}>
+                Esto reemplaza todos los accesos actuales de la persona por los que elijas acá. Los anteriores quedan revocados (no se borran, quedan con fecha de revocación).
+              </div>
+            )}
 
             <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:6 }}>Asignar rol inicial</label>
             <select style={{...inpStyle, width:'100%', marginBottom:14, cursor:'pointer'}}
@@ -528,7 +599,7 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
 
             <div style={{ display:'flex', gap:10, justifyContent:'flex-end', marginTop:8 }}>
               <button onClick={resetApproveForm} style={{...inpStyle, cursor:'pointer'}}>Cancelar</button>
-              <button onClick={handleApprove} style={{ padding:'9px 20px', borderRadius:8, background:'linear-gradient(135deg,#10B981,#059669)', border:'none', color:'white', fontWeight:700, cursor:'pointer' }}>Aprobar</button>
+              <button onClick={handleApprove} style={{ padding:'9px 20px', borderRadius:8, background:'linear-gradient(135deg,#10B981,#059669)', border:'none', color:'white', fontWeight:700, cursor:'pointer' }}>{approveMode === 'reassign' ? 'Guardar accesos' : 'Aprobar'}</button>
             </div>
           </div>
         </div>
