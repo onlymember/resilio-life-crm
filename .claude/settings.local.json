@@ -18,7 +18,9 @@
       "Bash(npx playwright *)",
       "Bash(echo \"EXIT:$?\")",
       "Bash(grep -rnE \"[>\\\\\"'][A-ZÁÉÍÓÚÑ][a-záéíóúñ]{3,}\" E:/resilio-life-crm/src/network/ --include=\"*.jsx\")",
-      "Bash(grep -v \"alt=\\\\\"Resilio\\\\\"\\\\|console\\\\.\\\\|//\\\\|import\\\\|t\\('\\\\|t\\(\\\\`\")"
+      "Bash(grep -v \"alt=\\\\\"Resilio\\\\\"\\\\|console\\\\.\\\\|//\\\\|import\\\\|t\\('\\\\|t\\(\\\\`\")",
+      "Bash(node *)",
+      "Bash(grep -rn --include=\"*.jsx\" -E '\"[A-Z][a-z]{3,}|\\\\\"\\(Sin |Ver |Nueva |Agregar |Marcar |Guardar |Cancelar |Nota|Misión|Recompensa|Puntos|Balance|Historial|Notebook|CRM\\)[^{]' src/network/pages/MissionsPage.jsx src/network/pages/NotesPage.jsx src/network/pages/RewardsPage.jsx)"
     ]
   }
 }
