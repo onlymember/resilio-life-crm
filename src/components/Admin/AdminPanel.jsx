@@ -4,6 +4,7 @@ import {
   getSystemConfig, saveSystemConfig, approveUser, blockUser, unblockUser, updateUser,
   deleteUser, getRolePerms, logActivity, timeAgo, genId, getGeography,
 } from '../../lib/auth.js'
+import { dbGetGeography, dbCreateCity } from '../../lib/database.js'
 
 // ─── Constants ────────────────────────────────────────────────
 const ALL_ECOS = [
@@ -24,10 +25,20 @@ const ALL_ACTIONS = [
   { id:'analytics', label:'Ver analytics' },
   { id:'equipo',    label:'Gestionar equipo' },
 ]
-const ROLES = ['super_admin','admin','editor','viewer','custom','scouter']
-
-const ROLE_LABEL = { super_admin:'Super Admin', admin:'Admin', editor:'Editor', viewer:'Viewer', custom:'Custom', scouter:'Scouter' }
-const ROLE_COLOR = { super_admin:'#F59E0B', admin:'#8B5CF6', editor:'#3B82F6', viewer:'#6B7280', custom:'#EC4899', scouter:'#06B6D4' }
+const ROLES = ['super_admin','admin','network_direction','regional_lead','country_lead','city_lead','scouter','editor','viewer','custom']
+const ROLE_LABEL = {
+  super_admin:'Super Admin', admin:'Admin',
+  network_direction:'Dirección Network', regional_lead:'Líder Regional',
+  country_lead:'Líder de País', city_lead:'Líder de Ciudad', scouter:'Scouter',
+  editor:'Editor', viewer:'Viewer', custom:'Custom',
+}
+const ROLE_COLOR = {
+  super_admin:'#F59E0B', admin:'#8B5CF6',
+  network_direction:'#E879F9', regional_lead:'#F472B6', country_lead:'#FB923C', city_lead:'#22D3EE',
+  scouter:'#06B6D4', editor:'#3B82F6', viewer:'#6B7280', custom:'#EC4899',
+}
+const ROLE_GEO_KIND = { scouter:'city', city_lead:'city', country_lead:'country', regional_lead:'region' }
+const GEO_KIND_LABEL = { city:'ciudades', country:'países', region:'regiones' }
 const ESTADO_COLOR = { aprobado:'#10B981', pendiente:'#F59E0B', bloqueado:'#EF4444', suspendido:'#6B7280' }
 const ESTADO_LABEL = { aprobado:'Aprobado', pendiente:'Pendiente', bloqueado:'Bloqueado', suspendido:'Suspendido' }
 const ACTION_ICON = { crear:'🟢', editar:'🔵', borrar:'🔴', login:'⚪', logout:'⚪', cambiar_seccion:'🟣', exportar:'🟠', aprobar_usuario:'🟡', login_fallido:'🔴' }
@@ -305,10 +316,14 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
   const [blockMotivo, setBlockMotivo]  = useState('')
   const [delConfirm,  setDelConfirm]   = useState(null)
   const [delText,     setDelText]      = useState('')
-  const [approveModal,setApproveModal] = useState(null)
-  const [approveRol,  setApproveRol]   = useState('viewer')
-  const [approveScopeId, setApproveScopeId] = useState('')
-  const [geography,   setGeography]    = useState({ regions:[], countries:[], cities:[] })
+  const [approveModal,     setApproveModal]     = useState(null)
+  const [approveRol,       setApproveRol]       = useState('viewer')
+  const [approveGeoIds,    setApproveGeoIds]    = useState([])
+  const [approveAllScope,  setApproveAllScope]  = useState(false)
+  const [newCityName,      setNewCityName]      = useState('')
+  const [newCityCountry,   setNewCityCountry]   = useState('')
+  const [creatingCity,     setCreatingCity]     = useState(false)
+  const [geography,        setGeography]        = useState({ regions:[], countries:[], cities:[] })
 
   useEffect(() => { setUsers(initialUsers) }, [initialUsers])
 
@@ -318,9 +333,8 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
     onRefresh(u)
   }
 
-  useEffect(() => {
-    getGeography().then(setGeography).catch(() => {})
-  }, [])
+  const loadGeography = () => dbGetGeography(true).then(setGeography).catch(() => {})
+  useEffect(() => { loadGeography() }, [])
 
   const filtered = users.filter(u => {
     const q = search.toLowerCase()
@@ -330,14 +344,42 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
     return mq && me && mr
   })
 
+  const resetApproveForm = () => {
+    setApproveModal(null); setApproveRol('viewer')
+    setApproveGeoIds([]); setApproveAllScope(false)
+    setNewCityName(''); setNewCityCountry('')
+  }
+
   const handleApprove = async () => {
-    const needsScope = approveRol === 'scouter'
-    const scopeId = needsScope ? (approveScopeId || null) : null
-    await approveUser(approveModal.id, approveRol, { scope: needsScope ? 'city' : 'global', scopeId })
-    logActivity({ userId:currentUser?.id||'admin', userName:currentUser?.nombre||'Admin', accion:'aprobar_usuario', detalle:`Aprobó a ${approveModal.nombre} con rol ${approveRol}`, seccion:'admin' })
-    setApproveModal(null)
-    setApproveScopeId('')
+    const geoKind = ROLE_GEO_KIND[approveRol]
+    let scope = 'global', scopeIds = null
+    if (geoKind && !approveAllScope) {
+      scope = geoKind
+      scopeIds = approveGeoIds.length ? approveGeoIds : null
+    }
+    await approveUser(approveModal.id, approveRol, { scope, scopeIds })
+    logActivity({ userId:currentUser?.id||'admin', userName:currentUser?.nombre||'Admin', accion:'aprobar_usuario', detalle:`Aprobó a ${approveModal.nombre} con rol ${approveRol}${scope!=='global'?` (${scope}: ${scopeIds?.length||0})`:' (todas)'}`, seccion:'admin' })
+    resetApproveForm()
     refresh()
+  }
+
+  const toggleGeoId = (id) => {
+    setApproveGeoIds(p => p.includes(id) ? p.filter(x=>x!==id) : [...p, id])
+  }
+
+  const handleCreateCity = async () => {
+    if (!newCityName.trim() || !newCityCountry) return
+    setCreatingCity(true)
+    try {
+      const city = await dbCreateCity({ name: newCityName.trim(), countryId: newCityCountry })
+      await loadGeography()
+      toggleGeoId(city.id)
+      setNewCityName(''); setNewCityCountry('')
+    } catch (e) {
+      alert('No se pudo crear la ciudad: ' + (e?.message || 'error desconocido'))
+    } finally {
+      setCreatingCity(false)
+    }
   }
 
   const handleBlock = async () => {
@@ -414,7 +456,7 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
             </div>
             <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
               {u.estado === 'pendiente' && (
-                <button onClick={() => { setApproveModal(u); setApproveRol('viewer') }} style={{ padding:'6px 12px', borderRadius:7, background:'rgba(16,185,129,0.15)', border:'1px solid rgba(16,185,129,0.3)', color:'#10B981', fontSize:11, fontWeight:700, cursor:'pointer' }}>✅ Aprobar</button>
+                <button onClick={() => { setApproveModal(u); setApproveRol('viewer'); setApproveGeoIds([]); setApproveAllScope(false) }} style={{ padding:'6px 12px', borderRadius:7, background:'rgba(16,185,129,0.15)', border:'1px solid rgba(16,185,129,0.3)', color:'#10B981', fontSize:11, fontWeight:700, cursor:'pointer' }}>✅ Aprobar</button>
               )}
               {u.estado === 'aprobado' && u.rol !== 'super_admin' && (
                 <button onClick={() => setBlockModal(u)} style={{ padding:'6px 12px', borderRadius:7, background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.25)', color:'#F87171', fontSize:11, fontWeight:700, cursor:'pointer' }}>🚫 Bloquear</button>
@@ -433,27 +475,59 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser }) => {
 
       {/* Approve Modal */}
       {approveModal && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)', zIndex:4000, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }} onClick={() => setApproveModal(null)}>
-          <div style={{ background:'rgba(18,10,40,0.97)', border:'1px solid rgba(139,92,246,0.4)', borderRadius:16, padding:28, width:'100%', maxWidth:400 }} onClick={e=>e.stopPropagation()}>
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)', zIndex:4000, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }} onClick={resetApproveForm}>
+          <div style={{ background:'rgba(18,10,40,0.97)', border:'1px solid rgba(139,92,246,0.4)', borderRadius:16, padding:28, width:'100%', maxWidth:440, maxHeight:'85vh', overflowY:'auto' }} onClick={e=>e.stopPropagation()}>
             <h4 style={{ fontSize:16, fontWeight:700, marginBottom:8, color:'#F9FAFB' }}>Aprobar usuario</h4>
             <p style={{ fontSize:13, color:'rgba(196,181,253,0.7)', marginBottom:16 }}>Aprobando a <strong style={{color:'#A78BFA'}}>{approveModal.nombre}</strong></p>
+
             <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:6 }}>Asignar rol inicial</label>
-            <select style={{...inpStyle, width:'100%', marginBottom: approveRol==='scouter' ? 12 : 18, cursor:'pointer'}}
-              value={approveRol} onChange={e=>{ setApproveRol(e.target.value); setApproveScopeId('') }}>
-              {['admin','editor','viewer','custom','scouter'].map(r=><option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+            <select style={{...inpStyle, width:'100%', marginBottom:14, cursor:'pointer'}}
+              value={approveRol} onChange={e=>{ setApproveRol(e.target.value); setApproveGeoIds([]); setApproveAllScope(false) }}>
+              {ROLES.filter(r=>r!=='super_admin').map(r=><option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
             </select>
-            {approveRol === 'scouter' && (
-              <>
-                <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:6 }}>Ciudad asignada (scope)</label>
-                <select style={{...inpStyle, width:'100%', marginBottom:18, cursor:'pointer'}}
-                  value={approveScopeId} onChange={e=>setApproveScopeId(e.target.value)}>
-                  <option value="">Sin ciudad específica</option>
-                  {geography.cities.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </>
+
+            {ROLE_GEO_KIND[approveRol] && (
+              <div style={{ marginBottom:14 }}>
+                <Checkbox checked={approveAllScope} onChange={setApproveAllScope}
+                  label={`Todas las ${GEO_KIND_LABEL[ROLE_GEO_KIND[approveRol]]}`}/>
+
+                {!approveAllScope && (
+                  <>
+                    <div style={{ maxHeight:170, overflowY:'auto', marginTop:10, padding:'8px 10px', background:'rgba(139,92,246,0.06)', border:'1px solid rgba(139,92,246,0.2)', borderRadius:8, display:'flex', flexDirection:'column', gap:6 }}>
+                      {ROLE_GEO_KIND[approveRol]==='city' && geography.cities.map(c => (
+                        <Checkbox key={c.id} checked={approveGeoIds.includes(c.id)} onChange={() => toggleGeoId(c.id)} label={c.name}/>
+                      ))}
+                      {ROLE_GEO_KIND[approveRol]==='country' && geography.countries.map(c => (
+                        <Checkbox key={c.id} checked={approveGeoIds.includes(c.id)} onChange={() => toggleGeoId(c.id)} label={c.name}/>
+                      ))}
+                      {ROLE_GEO_KIND[approveRol]==='region' && geography.regions.map(r => (
+                        <Checkbox key={r.id} checked={approveGeoIds.includes(r.id)} onChange={() => toggleGeoId(r.id)} label={r.name}/>
+                      ))}
+                    </div>
+
+                    {ROLE_GEO_KIND[approveRol]==='city' && (
+                      <div style={{ marginTop:10, padding:'10px', background:'rgba(6,182,212,0.06)', border:'1px dashed rgba(6,182,212,0.3)', borderRadius:8 }}>
+                        <div style={{ fontSize:11, color:'#67E8F9', fontWeight:600, marginBottom:8 }}>+ Nueva ciudad</div>
+                        <input value={newCityName} onChange={e=>setNewCityName(e.target.value)} placeholder="Nombre de la ciudad"
+                          style={{...inpStyle, width:'100%', marginBottom:6, boxSizing:'border-box'}}/>
+                        <select value={newCityCountry} onChange={e=>setNewCityCountry(e.target.value)}
+                          style={{...inpStyle, width:'100%', marginBottom:8, cursor:'pointer'}}>
+                          <option value="">Elegir país...</option>
+                          {geography.countries.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                        <button onClick={handleCreateCity} disabled={creatingCity || !newCityName.trim() || !newCityCountry}
+                          style={{ padding:'7px 14px', borderRadius:7, background:'rgba(6,182,212,0.15)', border:'1px solid rgba(6,182,212,0.35)', color:'#22D3EE', fontSize:12, fontWeight:700, cursor: creatingCity?'wait':'pointer', opacity: (!newCityName.trim()||!newCityCountry)?0.5:1 }}>
+                          {creatingCity ? 'Creando...' : '➕ Crear y seleccionar'}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             )}
-            <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
-              <button onClick={() => setApproveModal(null)} style={{...inpStyle, cursor:'pointer'}}>Cancelar</button>
+
+            <div style={{ display:'flex', gap:10, justifyContent:'flex-end', marginTop:8 }}>
+              <button onClick={resetApproveForm} style={{...inpStyle, cursor:'pointer'}}>Cancelar</button>
               <button onClick={handleApprove} style={{ padding:'9px 20px', borderRadius:8, background:'linear-gradient(135deg,#10B981,#059669)', border:'none', color:'white', fontWeight:700, cursor:'pointer' }}>Aprobar</button>
             </div>
           </div>

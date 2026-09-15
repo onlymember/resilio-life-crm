@@ -202,34 +202,48 @@ export const dbUpdateUser = async (id, changes) => {
 }
 
 export const dbApproveUser = async (userId, rol = 'viewer', opts = {}) => {
-  const { scope = 'global', scopeId = null, ecosistemas } = opts
+  const { scope = 'global', scopeId = null, scopeIds = null, ecosistemas } = opts
   const ecos = ecosistemas || getRolePermsDb(rol).ecosistemas
 
-  // Update profile estado + rol
+  // 1. Perfil: estado + rol
   const { error: pErr } = await supabase.from('profiles')
     .update({ estado: 'aprobado', rol })
     .eq('id', userId)
   if (pErr) throw pErr
 
-  // Revoke existing roles and insert new one
-  await supabase.from('user_roles').update({ active: false }).eq('user_id', userId)
-  const { error: rErr } = await supabase.from('user_roles').insert([{
+  // 2. Revocar roles activos previos (columna real: revoked_at, no "active")
+  const { error: revErr } = await supabase.from('user_roles')
+    .update({ revoked_at: new Date().toISOString() })
+    .eq('user_id', userId)
+    .is('revoked_at', null)
+  if (revErr) throw revErr
+
+  // 3. Insertar la(s) fila(s) de rol nueva(s).
+  //    scope='city'/'country'/'region' con varios ids => una fila por id
+  //    (app_visible_city_ids() ya las une todas). scope='global' => una sola fila.
+  const idsList = scope === 'global'
+    ? [null]
+    : (scopeIds && scopeIds.length ? scopeIds : [scopeId])
+  const rows = idsList.map(id => ({
     user_id:     userId,
     role:        rol,
     scope:       scope,
-    scope_id:    scopeId,
+    scope_id:    id,
     ecosistemas: ecos,
-    active:      true,
-  }])
+  }))
+  const { error: rErr } = await supabase.from('user_roles').insert(rows)
   if (rErr) throw rErr
 
-  // Create scouters row if applicable
-  if (rol === 'scouter' && scopeId) {
-    await supabase.from('scouters').upsert([{
-      user_id: userId,
-      city_id: scopeId,
-      active:  true,
-    }], { onConflict: 'user_id' })
+  // 4. Fila en scouters solo si el rol es scouter (columna real: status, no "active")
+  if (rol === 'scouter') {
+    const homeCityId = scopeId || (scopeIds && scopeIds[0]) || null
+    if (homeCityId) {
+      await supabase.from('scouters').upsert([{
+        user_id: userId,
+        city_id: homeCityId,
+        status:  'active',
+      }], { onConflict: 'user_id' })
+    }
   }
 
   return fetchUserById(userId)
@@ -1079,6 +1093,16 @@ export const dbGetGeography = async (force = false) => {
   if (ci.error) throw ci.error
   _geoCache = { regions: r.data || [], countries: c.data || [], cities: ci.data || [] }
   return _geoCache
+}
+
+export const dbCreateCity = async ({ name, countryId, slug = null, timezone = null }) => {
+  const { data, error } = await supabase.from('cities')
+    .insert([{ name, country_id: countryId, slug, timezone, active: true }])
+    .select()
+    .single()
+  if (error) throw error
+  _geoCache = null // fuerza a que el próximo dbGetGeography() la traiga de nuevo
+  return data
 }
 
 // El modelo viejo guarda `ciudad` y `pais` como texto libre.

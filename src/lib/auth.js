@@ -18,6 +18,7 @@ export {
   dbLogActivity  as logActivity,
   dbGetActivityLog as getActivityLog,
   dbGetGeography as getGeography,
+  dbCreateCity   as createCity,
 } from './database.js'
 
 // ── Supabase Auth wrappers ──────────────────────────────────
