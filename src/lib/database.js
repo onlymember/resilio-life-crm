@@ -260,8 +260,22 @@ export const dbUnblockUser = async (id) => dbUpdateUser(id, { estado: 'aprobado'
 export const dbDeleteUser = async (id) => {
   // Real deletion requires service_role (Edge Function Phase 2).
   // Client path: revoke all roles + set estado bloqueado.
-  await supabase.from('user_roles').update({ active: false }).eq('user_id', id)
-  await supabase.from('profiles').update({ estado: 'bloqueado' }).eq('id', id)
+  // OJO: user_roles NO tiene columna "active" — la real es revoked_at.
+  // Con {active:false} este update no revocaba nada y el usuario "desactivado"
+  // conservaba todos sus permisos reales en la base.
+  const { error: revErr } = await supabase.from('user_roles')
+    .update({ revoked_at: new Date().toISOString() })
+    .eq('user_id', id)
+    .is('revoked_at', null)
+  if (revErr) throw revErr
+
+  // Si tenía fila en scouters, dejarla inactiva (update, no upsert: si no existe, no crea nada)
+  await supabase.from('scouters').update({ status: 'inactive' }).eq('user_id', id)
+
+  const { error: pErr } = await supabase.from('profiles')
+    .update({ estado: 'bloqueado' }).eq('id', id)
+  if (pErr) throw pErr
+
   return { success: true }
 }
 
