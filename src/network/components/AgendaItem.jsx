@@ -6,7 +6,7 @@ import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { fmtDateTime, fmtDateTimeOverdue, isoToDatetimeLocal, datetimeLocalToIso } from '../utils/date.js'
 
-export default function AgendaItem({ item, onComplete, onReschedule, onNote }) {
+export default function AgendaItem({ item, onComplete, onReschedule, onNote, onNavigate }) {
   const tz = useTz()
   const [completing,   setCompleting]   = useState(false)
   const [rescheduling, setRescheduling] = useState(false)
@@ -54,7 +54,10 @@ export default function AgendaItem({ item, onComplete, onReschedule, onNote }) {
       transition: 'all 0.2s',
     }}>
       {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+      <div
+        style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: (item.kind === 'task' && onNavigate) ? 'pointer' : 'default' }}
+        onClick={(item.kind === 'task' && onNavigate) ? () => onNavigate(item) : undefined}
+      >
         {item.isOverdue
           ? <AlertCircle size={15} color="#F87171" style={{ flexShrink: 0, marginTop: 2 }}/>
           : <Clock       size={15} color="var(--primary-violet-light)" style={{ flexShrink: 0, marginTop: 2 }}/>

@@ -9,7 +9,7 @@ import EmptyState from '../components/EmptyState.jsx'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { getMyAgenda, getMyNetworkStats, getMyMissions, getNetworkPulse, getMyRecentActivity } from '../../lib/metrics.js'
-import { dbCompleteNextAction, dbSetNextAction, dbCompleteTask } from '../../lib/database.js'
+import { dbCompleteNextAction, dbSetNextAction, dbCompleteTask, dbGetTaskById } from '../../lib/database.js'
 
 const AGENDA_PREVIEW = 5
 
@@ -73,6 +73,16 @@ export default function HomePage({ currentUser, onOpenCreate }) {
       followupsOverdue:(item.kind === 'next_action' && item.isOverdue) ? Math.max(0, prev.followupsOverdue - 1) : prev.followupsOverdue,
     } : prev)
   }, [])
+
+  const handleNavigate = useCallback(async (item) => {
+    const task = await dbGetTaskById(item.entityId).catch(() => null)
+    if (!task?.entityType || !task?.entityId) return
+    const path = {
+      opportunity:   `/network/opportunities/${task.entityId}`,
+      collaboration: `/network/collaborations/${task.entityId}`,
+    }[task.entityType]
+    if (path) navigate(path)
+  }, [navigate])
 
   const handleReschedule = useCallback(async (item, isoAt) => {
     await dbSetNextAction(item.entityType, item.entityId, item.title, isoAt)
@@ -211,6 +221,7 @@ export default function HomePage({ currentUser, onOpenCreate }) {
                   item={item}
                   onComplete={handleComplete}
                   onReschedule={item.kind === 'next_action' ? handleReschedule : undefined}
+                  onNavigate={item.kind === 'task' ? handleNavigate : undefined}
                 />
               ))}
               {agenda.length > AGENDA_PREVIEW && !showAll && (

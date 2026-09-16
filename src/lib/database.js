@@ -967,6 +967,12 @@ export const dbGetTasksForEntity = async (entityType, entityId) => {
   return (data || []).map(rowToTask)
 }
 
+export const dbGetTaskById = async (id) => {
+  const { data, error } = await supabase.from('tasks').select('*').eq('id', id).maybeSingle()
+  if (error) throw friendly(error)
+  return data ? rowToTask(data) : null
+}
+
 export const dbSaveTask = async (task, userId) => {
   const uid = userId || await myId()
   if (!uid) throw new Error('Sesión expirada. Volvé a entrar.')
