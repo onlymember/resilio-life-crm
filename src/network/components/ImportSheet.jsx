@@ -265,14 +265,14 @@ export default function ImportSheet({ kind, onClose, onDone }) {
     background:'var(--bg-secondary)', borderRadius:'20px 20px 0 0',
     border:'1px solid var(--border-violet)', borderBottom:'none',
     maxHeight:'92vh', display:'flex', flexDirection:'column',
-    animation:'slideUp 0.25s ease',
+    animation:'slideUp var(--dur-base) var(--ease-emphasized)',
   }
 
   return (
     <>
       <div
         onClick={step === 'importing' ? undefined : onClose}
-        style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:400, backdropFilter:'blur(8px)' }}
+        style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:400, backdropFilter:'blur(8px)', animation:'backdropIn var(--dur-fast) var(--ease-standard)' }}
       />
       <div style={sheetStyle}>
         {/* Header */}
@@ -448,7 +448,7 @@ export default function ImportSheet({ kind, onClose, onDone }) {
               </div>
               <div style={{ width:'100%', height:6, borderRadius:3, background:'rgba(139,92,246,0.15)', overflow:'hidden' }}>
                 <div style={{
-                  height:'100%', borderRadius:3, background:'var(--primary-violet)', transition:'width 0.2s',
+                  height:'100%', borderRadius:3, background:'var(--primary-violet)', transition:'width var(--dur-base) var(--ease-standard)',
                   width: `${progress.total ? Math.round(progress.done/progress.total*100) : 0}%`,
                 }}/>
               </div>

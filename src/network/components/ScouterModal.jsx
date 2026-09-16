@@ -125,13 +125,13 @@ export default function ScouterModal({ isOpen, onClose, cities = [], onSaved }) 
 
   return (
     <>
-      <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(8px)', zIndex:400 }}/>
+      <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(8px)', zIndex:400, animation:'backdropIn var(--dur-fast) var(--ease-standard)' }}/>
       <div style={{
         position:'fixed', bottom:0, left:0, right:0, zIndex:401,
         background:'var(--bg-secondary)', borderRadius:'20px 20px 0 0',
         border:'1px solid var(--border-violet)', borderBottom:'none',
         padding:'0 20px', maxHeight:'85vh', display:'flex', flexDirection:'column',
-        animation:'slideUp 0.22s ease',
+        animation:'slideUp var(--dur-base) var(--ease-emphasized)',
       }}>
         <div style={{ width:36, height:4, background:'rgba(255,255,255,0.15)', borderRadius:2, margin:'12px auto 16px', flexShrink:0 }}/>
 

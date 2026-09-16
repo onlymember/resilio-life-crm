@@ -243,8 +243,8 @@ function AddInfluencerSheet({ opportunityId, existing, onAdded, onClose }) {
 
   return (
     <>
-      <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:300, backdropFilter:'blur(2px)' }}/>
-      <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:301, background:'var(--bg-secondary)', borderRadius:'20px 20px 0 0', border:'1px solid var(--border-violet)', borderBottom:'none', maxHeight:'70vh', display:'flex', flexDirection:'column', animation:'slideUp 0.2s ease' }}>
+      <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:300, backdropFilter:'blur(8px)', animation:'backdropIn var(--dur-fast) var(--ease-standard)' }}/>
+      <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:301, background:'var(--bg-secondary)', borderRadius:'20px 20px 0 0', border:'1px solid var(--border-violet)', borderBottom:'none', maxHeight:'70vh', display:'flex', flexDirection:'column', animation:'slideUp var(--dur-base) var(--ease-emphasized)' }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 20px 12px' }}>
           <span style={{ fontSize:15, fontWeight:700, color:'var(--text-primary)' }}>{t('opportunities.influencers.add')}</span>
           <button onClick={onClose} style={{ background:'none', border:'none', color:'var(--text-secondary)', cursor:'pointer' }}><X size={18}/></button>
@@ -568,7 +568,7 @@ export default function OpportunityDetailPage({ currentUser }) {
                     <button
                       onClick={handleConvert}
                       disabled={converting}
-                      style={{ padding:'7px 16px', borderRadius:9, background: converting ? 'rgba(139,92,246,0.3)' : 'var(--primary-violet)', color:'white', border:'none', cursor: converting ? 'default' : 'pointer', fontSize:12, fontWeight:700 }}
+                      style={{ padding:'7px 16px', borderRadius:9, background: converting ? 'rgba(139,92,246,0.3)' : 'var(--primary-violet)', color:'white', border:'none', cursor: converting ? 'default' : 'pointer', fontSize:12, fontWeight:700, animation: converting ? 'pulse-glow 1.5s ease-in-out infinite' : 'none' }}
                     >
                       {converting ? '…' : hasLinked ? t('opportunities.convert.buttonSync') : t('opportunities.convert.button')}
                     </button>

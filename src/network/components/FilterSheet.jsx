@@ -50,7 +50,7 @@ export default function FilterSheet({
       {/* Backdrop */}
       <div
         onClick={onClose}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', zIndex: 300 }}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', zIndex: 300, animation: 'backdropIn var(--dur-fast) var(--ease-standard)' }}
       />
 
       {/* Sheet */}
@@ -60,7 +60,7 @@ export default function FilterSheet({
         border: '1px solid var(--border-violet)', borderBottom: 'none',
         padding: '0 20px 32px',
         maxHeight: '80vh', overflowY: 'auto',
-        animation: 'slideUp 0.22s ease',
+        animation: 'slideUp var(--dur-base) var(--ease-emphasized)',
       }}>
         {/* Handle */}
         <div style={{ width: 36, height: 4, background: 'rgba(255,255,255,0.15)', borderRadius: 2, margin: '12px auto 20px' }}/>

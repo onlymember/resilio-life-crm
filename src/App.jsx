@@ -139,7 +139,7 @@ const GlobalStyles = () => (
     ::-webkit-scrollbar-thumb { background: var(--primary-violet-dark); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--primary-violet); }
     input, textarea, select { font-family: inherit; outline: none; border: none; background: transparent; color: var(--text-primary); font-size: 16px; }
-    button { cursor: pointer; font-family: inherit; border: none; background: none; touch-action: manipulation; }
+    button { cursor: pointer; font-family: inherit; border: none; background: none; touch-action: manipulation; transition: background var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard), opacity var(--dur-fast) var(--ease-standard); }
     button:active:not([disabled]) { transform: scale(0.97); transition: transform var(--dur-fast); }
     a { text-decoration: none; color: inherit; }
     @keyframes fadeIn     { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -156,11 +156,17 @@ const GlobalStyles = () => (
     @keyframes badgePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.45); } }
     @keyframes slideInDrawer { from { transform: translateX(-100%); } to { transform: translateX(0); } }
     @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
       @keyframes cardIn      { from { opacity: 0; } to { opacity: 1; } }
       @keyframes backdropIn  { from { opacity: 0; } to { opacity: 1; } }
       @keyframes slideInDrawer { from { opacity: 0; } to { opacity: 1; } }
       @keyframes badgePulse  { 0%, 100% { transform: none; } 50% { transform: none; } }
       @keyframes slideUp     { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes pulse-glow  { 0%, 100% { box-shadow: none; } }
     }
     .animate-fade { animation: fadeIn 0.3s ease; }
     .glass { background: var(--glass-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid var(--border-violet); }
