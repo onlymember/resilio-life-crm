@@ -247,12 +247,13 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
         />
       )}
 
-      <ImportSheet
-        isOpen={importOpen}
-        entityType="influencer"
-        onClose={() => setImportOpen(false)}
-        onDone={() => { setImportOpen(false); load(0) }}
-      />
+      {importOpen && (
+        <ImportSheet
+          kind="influencers"
+          onClose={() => setImportOpen(false)}
+          onDone={() => { setImportOpen(false); load(0) }}
+        />
+      )}
     </div>
   )
 }

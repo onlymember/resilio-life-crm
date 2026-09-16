@@ -208,12 +208,13 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
         />
       )}
 
-      <ImportSheet
-        isOpen={importOpen}
-        entityType="brand"
-        onClose={() => setImportOpen(false)}
-        onDone={() => { setImportOpen(false); load(0) }}
-      />
+      {importOpen && (
+        <ImportSheet
+          kind="brands"
+          onClose={() => setImportOpen(false)}
+          onDone={() => { setImportOpen(false); load(0) }}
+        />
+      )}
     </div>
   )
 }
