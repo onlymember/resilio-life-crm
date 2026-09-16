@@ -21,19 +21,19 @@ const s = {
   logo:    { display:'flex', flexDirection:'column', alignItems:'center', padding:'32px 32px 20px' },
   logoImg: { width:80, height:80, objectFit:'contain', marginBottom:12, filter:'drop-shadow(0 0 16px rgba(139,92,246,0.6))' },
   logoTitle: { fontSize:22, fontWeight:800, letterSpacing:2, background:'linear-gradient(135deg,#A78BFA,#E879F9)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' },
-  logoSub: { fontSize:11, color:'rgba(196,181,253,0.6)', letterSpacing:3, marginTop:4 },
+  logoSub: { fontSize:11, color:'var(--text-secondary)', letterSpacing:3, marginTop:4 },
   tabs:   { display:'flex', borderBottom:'1px solid rgba(139,92,246,0.2)', margin:'0 24px' },
-  tab:    (a) => ({ flex:1, padding:'12px 0', fontSize:13, fontWeight:600, letterSpacing:0.5, color:a?'#A78BFA':'rgba(196,181,253,0.45)', background:'none', border:'none', cursor:'pointer', borderBottom:a?'2px solid #8B5CF6':'2px solid transparent', transition:'all 0.25s', marginBottom:-1 }),
+  tab:    (a) => ({ flex:1, padding:'12px 0', fontSize:13, fontWeight:600, letterSpacing:0.5, color:a?'#A78BFA':'var(--text-tertiary)', background:'none', border:'none', cursor:'pointer', borderBottom:a?'2px solid #8B5CF6':'2px solid transparent', transition:'all 0.25s', marginBottom:-1 }),
   form:   { padding:'24px 32px 32px' },
   field:  { marginBottom:18 },
-  label:  { display:'block', fontSize:12, fontWeight:500, color:'rgba(196,181,253,0.8)', marginBottom:7 },
+  label:  { display:'block', fontSize:12, fontWeight:500, color:'var(--text-secondary)', marginBottom:7 },
   inputWrap: { position:'relative' },
   input:  { width:'100%', padding:'11px 14px', boxSizing:'border-box', background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.25)', borderRadius:10, color:'#F9FAFB', fontSize:14, outline:'none', transition:'all 0.2s', fontFamily:'inherit' },
   btn:    { width:'100%', padding:'12px', borderRadius:10, border:'none', cursor:'pointer', background:'linear-gradient(135deg,#8B5CF6,#7C3AED)', color:'white', fontSize:14, fontWeight:700, letterSpacing:0.5, boxShadow:'0 0 20px rgba(139,92,246,0.4)', transition:'all 0.2s', marginTop:4 },
   err:    { background:'rgba(239,68,68,0.12)', border:'1px solid rgba(239,68,68,0.3)', borderRadius:8, padding:'10px 14px', fontSize:13, color:'#F87171', marginBottom:16, lineHeight:1.5 },
   ok:     { background:'rgba(16,185,129,0.12)', border:'1px solid rgba(16,185,129,0.3)', borderRadius:8, padding:'10px 14px', fontSize:13, color:'#34D399', marginBottom:16, lineHeight:1.5 },
-  link:   { textAlign:'center', marginTop:16, fontSize:12, color:'rgba(196,181,253,0.5)', cursor:'pointer' },
-  eyeBtn: { position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'rgba(196,181,253,0.5)', fontSize:16, padding:0 },
+  link:   { textAlign:'center', marginTop:16, fontSize:12, color:'var(--text-tertiary)', cursor:'pointer' },
+  eyeBtn: { position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text-tertiary)', fontSize:16, padding:0 },
 }
 
 const kf = `
@@ -52,7 +52,7 @@ const PendingScreen = ({ onBack }) => (
       <div style={{padding:'48px 40px'}}>
         <div style={{fontSize:56,marginBottom:20}}>⏳</div>
         <h2 style={{fontSize:20,fontWeight:800,color:'#F9FAFB',marginBottom:12}}>Cuenta creada exitosamente</h2>
-        <p style={{color:'rgba(196,181,253,0.75)',fontSize:13,lineHeight:1.8,marginBottom:28}}>
+        <p style={{color:'var(--text-secondary)',fontSize:13,lineHeight:1.8,marginBottom:28}}>
           Un administrador debe aprobar tu acceso.<br/>
           Te notificaremos cuando esté listo.
         </p>
@@ -311,7 +311,7 @@ export default function LoginScreen({ onLogin, passwordResetMode = false }) {
             {error   && <div style={s.err}>{error}</div>}
             {success && <div style={s.ok}>{success}</div>}
 
-            <p style={{ fontSize:12,color:'rgba(196,181,253,0.7)',marginBottom:18,lineHeight:1.6 }}>
+            <p style={{ fontSize:12,color:'var(--text-secondary)',marginBottom:18,lineHeight:1.6 }}>
               Ingresá tu email y te enviaremos un enlace para restablecer tu contraseña.
             </p>
 

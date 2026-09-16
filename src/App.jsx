@@ -102,7 +102,9 @@ const GlobalStyles = () => (
       --bg-secondary: #120D24;
       --bg-tertiary: #1E1535;
       --text-primary: #F9FAFB;
-      --text-secondary: #C4B5FD;
+      --text-secondary: #C9C4DA;
+      --text-tertiary: #948FA8;
+      --text-muted: #948FA8;
       --border-violet: rgba(139, 92, 246, 0.25);
       --glass-bg: rgba(18, 10, 40, 0.75);
       --glow-violet: 0 0 24px rgba(139, 92, 246, 0.55);
@@ -125,7 +127,7 @@ const GlobalStyles = () => (
     }
     [data-theme="light"] {
       --bg-primary: #F3F0FF; --bg-secondary: #EDE9FE; --bg-tertiary: #DDD6FE;
-      --text-primary: #1E1B4B; --text-secondary: #4C1D95;
+      --text-primary: #1E1B4B; --text-secondary: #4A4458; --text-tertiary: #635C78; --text-muted: #635C78;
       --glass-bg: rgba(237, 233, 254, 0.8); --border-violet: rgba(139, 92, 246, 0.4);
       --nebula-1: none; --nebula-2: none; --nebula-3: none;
     }
