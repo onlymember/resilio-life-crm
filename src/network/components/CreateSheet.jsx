@@ -352,7 +352,7 @@ export default function CreateSheet({ isOpen, onClose, currentUser, onCreated, i
 
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', zIndex: 400, animation: 'backdropIn var(--dur-base) var(--ease-standard)' }}/>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', zIndex: 400, animation: 'backdropIn var(--dur-base) var(--ease-standard)' }}/>
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 401,
         background: 'var(--bg-secondary)', borderRadius: '24px 24px 0 0',

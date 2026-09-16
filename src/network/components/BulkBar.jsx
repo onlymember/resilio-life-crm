@@ -85,7 +85,7 @@ export default function BulkBar({ selected, rows, entityType, onClear, onRefresh
   if (phase === 'picking') {
     return (
       <>
-        <div onClick={() => setPhase('idle')} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(3px)', zIndex:500 }}/>
+        <div onClick={() => setPhase('idle')} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(8px)', zIndex:500 }}/>
         <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:501, background:'var(--bg-secondary)', borderRadius:'20px 20px 0 0', border:'1px solid var(--border-violet)', borderBottom:'none', padding:'0 20px', maxHeight:'70vh', display:'flex', flexDirection:'column', animation:'slideUp 0.22s ease' }}>
           <div style={{ width:36, height:4, background:'rgba(255,255,255,0.15)', borderRadius:2, margin:'12px auto 14px', flexShrink:0 }}/>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12, flexShrink:0 }}>
@@ -130,7 +130,7 @@ export default function BulkBar({ selected, rows, entityType, onClear, onRefresh
   if (phase === 'warning') {
     return (
       <>
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(3px)', zIndex:500 }}/>
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(8px)', zIndex:500 }}/>
         <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:501, background:'var(--bg-secondary)', borderRadius:'20px 20px 0 0', border:'1px solid var(--border-violet)', borderBottom:'none', padding:'20px 20px', display:'flex', flexDirection:'column', gap:14, animation:'slideUp 0.22s ease' }}>
           <div style={{ fontSize:14, fontWeight:700, color:'#FBBF24' }}>⚠ {t('bulk.cityMismatch', { n: mismatchCount, scouter: pickedScouter?.nombre || '' })}</div>
           <div style={{ display:'flex', gap:10 }}>
@@ -164,7 +164,7 @@ export default function BulkBar({ selected, rows, entityType, onClear, onRefresh
   if (phase === 'done') {
     return (
       <>
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(3px)', zIndex:500 }}/>
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(8px)', zIndex:500 }}/>
         <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:501, background:'var(--bg-secondary)', borderRadius:'20px 20px 0 0', border:'1px solid var(--border-violet)', borderBottom:'none', padding:'20px 20px', maxHeight:'60vh', display:'flex', flexDirection:'column', gap:12, animation:'slideUp 0.22s ease' }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
             <div style={{ fontSize:14, fontWeight:700, color:'var(--text-primary)' }}>{t('bulk.resultTitle')}</div>

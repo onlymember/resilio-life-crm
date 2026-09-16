@@ -23,7 +23,7 @@ export default function EntityHeader({ entity, entityType, cityName, backPath, a
 
   return (
     <div style={{
-      background: 'var(--glass-bg)', backdropFilter: 'blur(40px)',
+      background: 'var(--glass-bg)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
       borderBottom: '1px solid var(--border-violet)',
       padding: '16px 20px',
     }}>

@@ -13,7 +13,7 @@ const s = {
   nebula2: { position:'absolute', inset:0, pointerEvents:'none', background:'radial-gradient(ellipse 50% 70% at 80% 70%,rgba(232,121,249,0.08) 0%,transparent 70%)' },
   card: {
     position:'relative', zIndex:1, width:'100%', maxWidth:440,
-    background:'rgba(18,10,40,0.8)', backdropFilter:'blur(40px)', WebkitBackdropFilter:'blur(40px)',
+    background:'rgba(18,10,40,0.85)', backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)',
     border:'1px solid rgba(139,92,246,0.3)', borderRadius:20,
     boxShadow:'0 0 40px rgba(139,92,246,0.2),0 40px 80px rgba(0,0,0,0.6)',
     animation:'fadeSlide 0.4s ease',

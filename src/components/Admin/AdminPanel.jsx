@@ -1097,7 +1097,7 @@ export default function AdminPanel({ onClose, currentUser }) {
   }
 
   return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.85)', backdropFilter:'blur(10px)', zIndex:2500, display:'flex', alignItems:'center', justifyContent:'center', padding: isMobile ? 0 : 16, animation:'fadeIn 0.2s ease' }}>
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.85)', backdropFilter:'blur(8px)', zIndex:2500, display:'flex', alignItems:'center', justifyContent:'center', padding: isMobile ? 0 : 16, animation:'fadeIn 0.2s ease' }}>
       <div style={{
         width:'100%', maxWidth: isMobile ? '100%' : 1100,
         height: isMobile ? '100dvh' : '90vh',

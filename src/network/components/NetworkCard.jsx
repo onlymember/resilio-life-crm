@@ -61,7 +61,7 @@ export default function NetworkCard({
   return (
     <div style={{
       position: 'relative',
-      background: 'var(--glass-bg)', backdropFilter: 'blur(20px)',
+      background: 'var(--card-solid-bg)',
       border: '1px solid var(--border-violet)',
       borderRadius: 14, overflow: 'hidden',
       transition: 'border-color 0.2s, box-shadow 0.2s, transform 0.2s',
