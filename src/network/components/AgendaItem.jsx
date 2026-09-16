@@ -55,8 +55,8 @@ export default function AgendaItem({ item, onComplete, onReschedule, onNote, onN
     }}>
       {/* Header row */}
       <div
-        style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: (item.kind === 'task' && onNavigate) ? 'pointer' : 'default' }}
-        onClick={(item.kind === 'task' && onNavigate) ? () => onNavigate(item) : undefined}
+        style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: onNavigate ? 'pointer' : 'default' }}
+        onClick={onNavigate ? () => onNavigate(item) : undefined}
       >
         {item.isOverdue
           ? <AlertCircle size={15} color="#F87171" style={{ flexShrink: 0, marginTop: 2 }}/>

@@ -92,7 +92,7 @@ export default function CalendarAgendaList({ items, month, onItemClick }) {
             {dayLabel(dk)}
           </div>
           {byDay[dk].map((item, i) => (
-            <AgendaItem key={i} item={item} onClick={onItemClick}/>
+            <AgendaItem key={i} item={item} onNavigate={onItemClick}/>
           ))}
         </div>
       ))}
