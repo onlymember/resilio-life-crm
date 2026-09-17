@@ -792,6 +792,34 @@
     "downloadFailed":"Descargar filas fallidas (CSV)",
     "close":         "Cerrar"
   },
+  "geo": {
+    "title":            "Geografía",
+    "countries":        "Países",
+    "cities":           "Ciudades",
+    "newCountry":       "Nuevo país",
+    "newCity":          "Nueva ciudad",
+    "name":             "Nombre",
+    "code":             "Código",
+    "region":           "Región",
+    "currency":         "Moneda",
+    "timezone":         "Zona horaria",
+    "country":          "País",
+    "active":           "Activa",
+    "inactive":         "Inactiva",
+    "create":           "Crear",
+    "save":             "Guardar",
+    "inUse":            "{n} en uso",
+    "confirmDeactivate":"Esta ciudad tiene {n} entidades asociadas. Al desactivarla dejan de aparecer en los selectores. ¿Continuar?",
+    "rlsError":         "Crear o editar geografía requiere rol super_admin o network_direction.",
+    "empty":            "Sin registros"
+  },
+  "picker": {
+    "searchInfluencer": "Buscar influencer…",
+    "searchBrand":      "Buscar marca…",
+    "noResults":        "Sin resultados",
+    "typeMore":         "Escribí al menos 2 caracteres",
+    "clear":            "Limpiar"
+  },
   "relationshipHistory": {
     "title":        "Historial de relación",
     "empty":        "Todavía no trabajaron juntos.",

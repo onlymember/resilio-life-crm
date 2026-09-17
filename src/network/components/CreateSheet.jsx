@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { X, Users, Building2, Briefcase, Handshake, ChevronLeft, AlertCircle } from 'lucide-react'
 import { t } from '../../i18n/index.js'
-import { dbGetGeography, dbListAllBrands, dbListAllInfluencers, dbSaveInfluencer, dbSaveBrand, dbSaveOpportunity, dbSaveCollaboration, dbGetActivationTypes } from '../../lib/database.js'
+import { dbGetGeography, dbSaveInfluencer, dbSaveBrand, dbSaveOpportunity, dbSaveCollaboration, dbGetActivationTypes } from '../../lib/database.js'
+import EntityPicker from './EntityPicker.jsx'
 
 const CATEGORIES = t('categories') // array desde es.json
 
@@ -106,17 +107,17 @@ function BrandForm({ cities, onSave, saving, error }) {
 
 // ─── Formulario Oportunidad ───────────────────────────────────────────────────
 
-function OpportunityForm({ brands, onSave, saving, error }) {
-  const [form, setForm] = useState({ brandId: '', title: '', value: '', nextAction: '' })
+function OpportunityForm({ onSave, saving, error }) {
+  const [form,  setForm]  = useState({ brandId: '', title: '', value: '', nextAction: '' })
+  const [brand, setBrand] = useState(null)
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
+
+  const handleBrand = (b) => { setBrand(b); set('brandId', b?.id || '') }
 
   return (
     <form onSubmit={e => { e.preventDefault(); onSave(form) }} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <Field label={t('form.brand')}>
-        <select value={form.brandId} onChange={e => set('brandId', e.target.value)} style={SELECT_STYLE}>
-          <option value="">{t('form.selectBrand')}</option>
-          {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-        </select>
+        <EntityPicker kind="brand" value={brand} onChange={handleBrand}/>
       </Field>
       <Field label={t('form.title')} required>
         <input
@@ -152,23 +153,22 @@ function OpportunityForm({ brands, onSave, saving, error }) {
 
 // ─── Formulario Colaboración ──────────────────────────────────────────────────
 
-function CollaborationForm({ influencers, brands, activationTypes, onSave, saving, error }) {
-  const [form, setForm] = useState({ influencerId: '', brandId: '', activationTypeId: '', startDate: '' })
+function CollaborationForm({ activationTypes, onSave, saving, error }) {
+  const [form,       setForm]       = useState({ influencerId: '', brandId: '', activationTypeId: '', startDate: '' })
+  const [influencer, setInfluencer] = useState(null)
+  const [brand,      setBrand]      = useState(null)
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
+
+  const handleInfluencer = (inf) => { setInfluencer(inf); set('influencerId', inf?.id || '') }
+  const handleBrand      = (b)   => { setBrand(b);        set('brandId',      b?.id   || '') }
 
   return (
     <form onSubmit={e => { e.preventDefault(); onSave(form) }} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <Field label={t('form.influencer')} required>
-        <select value={form.influencerId} onChange={e => set('influencerId', e.target.value)} style={SELECT_STYLE}>
-          <option value="">{t('create.collaboration.selectInfluencer')}</option>
-          {influencers.map(i => <option key={i.id} value={i.id}>{i.name || i.username}</option>)}
-        </select>
+        <EntityPicker kind="influencer" value={influencer} onChange={handleInfluencer}/>
       </Field>
       <Field label={t('form.brand')}>
-        <select value={form.brandId} onChange={e => set('brandId', e.target.value)} style={SELECT_STYLE}>
-          <option value="">{t('form.selectBrand')}</option>
-          {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-        </select>
+        <EntityPicker kind="brand" value={brand} onChange={handleBrand}/>
       </Field>
       <Field label={t('form.activationType')}>
         {activationTypes.length === 0 ? (
@@ -252,16 +252,12 @@ export default function CreateSheet({ isOpen, onClose, currentUser, onCreated, i
   const [saving,         setSaving]         = useState(false)
   const [error,          setError]          = useState(null)
   const [cities,         setCities]         = useState([])
-  const [brands,         setBrands]         = useState([])
-  const [influencers,    setInfluencers]    = useState([])
   const [activationTypes,setActivationTypes]= useState([])
 
   useEffect(() => {
     if (!isOpen) return
     setStep(initialStep || 'select'); setError(null)
     dbGetGeography().then(g => setCities(g.cities || [])).catch(() => {})
-    dbListAllBrands().then(b => setBrands(b)).catch(() => {})
-    dbListAllInfluencers().then(i => setInfluencers(i)).catch(() => {})
     dbGetActivationTypes().then(a => setActivationTypes(a)).catch(() => {})
   }, [isOpen])
 
@@ -390,10 +386,10 @@ export default function CreateSheet({ isOpen, onClose, currentUser, onCreated, i
           </div>
         )}
 
-        {step === 'influencer'    && <InfluencerForm    cities={cities} onSave={handleSaveInfluencer}    saving={saving} error={error}/>}
-        {step === 'brand'         && <BrandForm          cities={cities} onSave={handleSaveBrand}          saving={saving} error={error}/>}
-        {step === 'opportunity'   && <OpportunityForm    brands={brands} onSave={handleSaveOpportunity}    saving={saving} error={error}/>}
-        {step === 'collaboration' && <CollaborationForm  influencers={influencers} brands={brands} activationTypes={activationTypes} onSave={handleSaveCollaboration} saving={saving} error={error}/>}
+        {step === 'influencer'    && <InfluencerForm    cities={cities}                        onSave={handleSaveInfluencer}    saving={saving} error={error}/>}
+        {step === 'brand'         && <BrandForm          cities={cities}                        onSave={handleSaveBrand}          saving={saving} error={error}/>}
+        {step === 'opportunity'   && <OpportunityForm                                           onSave={handleSaveOpportunity}    saving={saving} error={error}/>}
+        {step === 'collaboration' && <CollaborationForm  activationTypes={activationTypes}      onSave={handleSaveCollaboration} saving={saving} error={error}/>}
       </div>
     </>
   )

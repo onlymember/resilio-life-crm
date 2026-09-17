@@ -1150,8 +1150,40 @@ export const dbCreateCity = async ({ name, countryId, slug = null, timezone = nu
     .select()
     .single()
   if (error) throw error
-  _geoCache = null // fuerza a que el próximo dbGetGeography() la traiga de nuevo
+  _geoCache = null
   return data
+}
+
+export const dbCreateCountry = async ({ name, code = null, regionId = null, currency = null, timezone = null }) => {
+  const { data, error } = await supabase.from('countries')
+    .insert([{ name, code, region_id: regionId, currency, timezone, active: true }])
+    .select().single()
+  if (error) throw friendly(error)
+  _geoCache = null
+  return data
+}
+
+export const dbUpdateCity = async (id, patch) => {
+  const row = {}
+  if ('name'      in patch) row.name       = patch.name
+  if ('countryId' in patch) row.country_id = patch.countryId
+  if ('timezone'  in patch) row.timezone   = patch.timezone
+  if ('active'    in patch) row.active     = patch.active
+  const { error } = await supabase.from('cities').update(row).eq('id', id)
+  if (error) throw friendly(error)
+  _geoCache = null
+}
+
+export const dbUpdateCountry = async (id, patch) => {
+  const row = {}
+  if ('name'     in patch) row.name      = patch.name
+  if ('code'     in patch) row.code      = patch.code
+  if ('regionId' in patch) row.region_id = patch.regionId
+  if ('currency' in patch) row.currency  = patch.currency
+  if ('active'   in patch) row.active    = patch.active
+  const { error } = await supabase.from('countries').update(row).eq('id', id)
+  if (error) throw friendly(error)
+  _geoCache = null
 }
 
 // El modelo viejo guarda `ciudad` y `pais` como texto libre.
@@ -1344,6 +1376,8 @@ const locationToRow = async (l) => {
 const INF_NULLS_LAST_COLS = new Set(['engagement','last_contact_at','followers','next_action_at'])
 
 // Paginada — Network. Siempre devuelve { rows, total, hasMore }.
+const safe = (s) => String(s).replace(/[,()"']/g, ' ').trim()
+
 export const dbGetInfluencers = async ({
   page = 0, pageSize = 30,
   search, cityId, countryId, ownerId, status, relationshipStatus, category,
@@ -1362,7 +1396,7 @@ export const dbGetInfluencers = async ({
   if (noOwner)            q = q.is('owner_scouter_id', null)
   if (relationshipStatus) q = q.eq('relationship_status', relationshipStatus)
   if (category)           q = q.eq('category', category)
-  if (search)             q = q.or(`name.ilike.%${search}%,username.ilike.%${search}%`)
+  if (search)             q = q.or(`name.ilike.%${safe(search)}%,username.ilike.%${safe(search)}%`)
   const { data, count, error } = await q
   if (error) throw friendly(error)
   const rows = (data || []).map(rowToInfluencer)
@@ -1461,7 +1495,7 @@ export const dbGetBrands = async ({
   if (category)           q = q.eq('category', category)
   if (categoryId)         q = q.eq('category_id', categoryId)
   if (overdueFollowup)    q = q.lt('next_action_at', new Date().toISOString())
-  if (search)             q = q.ilike('name', `%${search}%`)
+  if (search)             q = q.or(`name.ilike.%${safe(search)}%`)
   const { data, count, error } = await q
   if (error) throw friendly(error)
   const rows = (data || []).map(rowToBrand)

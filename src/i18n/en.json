@@ -792,6 +792,34 @@
     "downloadFailed":"Download failed rows (CSV)",
     "close":         "Close"
   },
+  "geo": {
+    "title":            "Geography",
+    "countries":        "Countries",
+    "cities":           "Cities",
+    "newCountry":       "New country",
+    "newCity":          "New city",
+    "name":             "Name",
+    "code":             "Code",
+    "region":           "Region",
+    "currency":         "Currency",
+    "timezone":         "Timezone",
+    "country":          "Country",
+    "active":           "Active",
+    "inactive":         "Inactive",
+    "create":           "Create",
+    "save":             "Save",
+    "inUse":            "{n} in use",
+    "confirmDeactivate":"This city has {n} associated entities. Deactivating it will hide them from selectors. Continue?",
+    "rlsError":         "Creating or editing geography requires super_admin or network_direction role.",
+    "empty":            "No records"
+  },
+  "picker": {
+    "searchInfluencer": "Search influencer…",
+    "searchBrand":      "Search brand…",
+    "noResults":        "No results",
+    "typeMore":         "Type at least 2 characters",
+    "clear":            "Clear"
+  },
   "relationshipHistory": {
     "title":        "Relationship history",
     "empty":        "No collaborations together yet.",

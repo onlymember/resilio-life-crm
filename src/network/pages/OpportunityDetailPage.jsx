@@ -2,8 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Briefcase, ChevronLeft, ChevronDown, ChevronUp, Plus, Trash2, Check, X } from 'lucide-react'
 import ActivityTimeline from '../components/ActivityTimeline.jsx'
+import AssignModal from '../components/AssignModal.jsx'
 import EmptyState from '../components/EmptyState.jsx'
+import EntityPicker from '../components/EntityPicker.jsx'
 import { t } from '../../i18n/index.js'
+import { COMMAND_ROLES } from '../routes.js'
 import { useTz } from '../utils/tz.js'
 import { isoToDatetimeLocal, datetimeLocalToIso } from '../utils/date.js'
 import {
@@ -217,58 +220,47 @@ function CandidateRow({ candidate, actTypes, onStatusChange, onDelete, onTotalCh
 }
 
 function AddInfluencerSheet({ opportunityId, existing, onAdded, onClose }) {
-  const [search,  setSearch]  = useState('')
-  const [results, setResults] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [adding,  setAdding]  = useState(null)
+  const [picked,  setPicked]  = useState(null)
+  const [adding,  setAdding]  = useState(false)
+  const [error,   setError]   = useState(null)
 
-  useEffect(() => {
-    if (search.length < 2) { setResults([]); return }
-    setLoading(true)
-    dbGetInfluencers({ search, pageSize: 10, status: 'active' })
-      .then(r => setResults(r.rows.filter(inf => !existing.includes(inf.id))))
-      .finally(() => setLoading(false))
-  }, [search, existing])
-
-  const handleAdd = async (inf) => {
-    setAdding(inf.id)
+  const handleAdd = async () => {
+    if (!picked || adding) return
+    setAdding(true); setError(null)
     try {
-      const candidate = await dbAddOpportunityInfluencer(opportunityId, inf.id)
+      const candidate = await dbAddOpportunityInfluencer(opportunityId, picked.id)
       onAdded(candidate)
       onClose()
     } catch (e) {
-      console.warn(e.message)
-    } finally { setAdding(null) }
+      setError(e.message)
+    } finally { setAdding(false) }
   }
 
   return (
     <>
       <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:300, backdropFilter:'blur(8px)', animation:'backdropIn var(--dur-fast) var(--ease-standard)' }}/>
-      <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:301, background:'var(--bg-secondary)', borderRadius:'20px 20px 0 0', border:'1px solid var(--border-violet)', borderBottom:'none', maxHeight:'70vh', display:'flex', flexDirection:'column', animation:'slideUp var(--dur-base) var(--ease-emphasized)' }}>
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 20px 12px' }}>
+      <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:301, background:'var(--bg-secondary)', borderRadius:'20px 20px 0 0', border:'1px solid var(--border-violet)', borderBottom:'none', padding:'0 20px', maxHeight:'70vh', display:'flex', flexDirection:'column', animation:'slideUp var(--dur-base) var(--ease-emphasized)' }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 0 12px' }}>
           <span style={{ fontSize:15, fontWeight:700, color:'var(--text-primary)' }}>{t('opportunities.influencers.add')}</span>
           <button onClick={onClose} style={{ background:'none', border:'none', color:'var(--text-secondary)', cursor:'pointer' }}><X size={18}/></button>
         </div>
-        <div style={{ padding:'0 20px 12px' }}>
-          <input value={search} onChange={e => setSearch(e.target.value)} autoFocus
-            placeholder={t('opportunities.influencers.searchPlaceholder')}
-            style={{ width:'100%', padding:'8px 12px', borderRadius:8, background:'rgba(139,92,246,0.07)', border:'1px solid var(--border-violet)', color:'var(--text-primary)', fontSize:13, outline:'none' }}/>
+        <div style={{ flex:1, overflowY:'visible', paddingBottom:12 }}>
+          <EntityPicker
+            kind="influencer"
+            value={picked}
+            onChange={setPicked}
+            excludeIds={existing}
+          />
         </div>
-        <div style={{ flex:1, overflowY:'auto', padding:'0 20px 24px' }}>
-          {loading && <div style={{ fontSize:12, color:'var(--text-secondary)', textAlign:'center', padding:16 }}>…</div>}
-          {!loading && search.length >= 2 && results.length === 0 && (
-            <div style={{ fontSize:12, color:'var(--text-secondary)', textAlign:'center', padding:16 }}>{t('opportunities.influencers.noResults')}</div>
-          )}
-          {results.map(inf => (
-            <button key={inf.id} onClick={() => handleAdd(inf)} disabled={adding === inf.id}
-              style={{ width:'100%', textAlign:'left', padding:'10px 0', background:'none', border:'none', borderBottom:'1px solid rgba(139,92,246,0.08)', cursor:'pointer', display:'flex', alignItems:'center', gap:8 }}>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:13, fontWeight:600, color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{inf.name}</div>
-                {inf.username && <div style={{ fontSize:11, color:'var(--text-secondary)' }}>@{inf.username}</div>}
-              </div>
-              <Plus size={14} style={{ color:'var(--primary-violet-light)', flexShrink:0 }}/>
-            </button>
-          ))}
+        {error && <div style={{ fontSize:11, color:'#F87171', marginBottom:8 }}>{error}</div>}
+        <div style={{ paddingBottom:'max(20px,env(safe-area-inset-bottom,20px))', flexShrink:0 }}>
+          <button
+            onClick={handleAdd}
+            disabled={!picked || adding}
+            style={{ width:'100%', padding:'12px 0', borderRadius:10, fontSize:14, fontWeight:700, background: picked && !adding ? 'var(--primary-violet)' : 'rgba(139,92,246,0.2)', color: picked && !adding ? 'white' : 'var(--text-secondary)', border:'none', cursor: picked && !adding ? 'pointer' : 'default' }}
+          >
+            {adding ? '…' : t('opportunities.influencers.add')}
+          </button>
         </div>
       </div>
     </>
@@ -279,6 +271,7 @@ export default function OpportunityDetailPage({ currentUser }) {
   const { id }   = useParams()
   const navigate = useNavigate()
   const tz       = useTz()
+  const canReassign = COMMAND_ROLES.includes(currentUser?.rol)
 
   const [entity,      setEntity]      = useState(null)
   const [timeline,    setTimeline]    = useState([])
@@ -294,6 +287,7 @@ export default function OpportunityDetailPage({ currentUser }) {
   const [converting,  setConverting]  = useState(false)
   const [convertResult, setConvertResult] = useState(null)
   const [convertError,  setConvertError]  = useState(null)
+  const [assignOpen,    setAssignOpen]    = useState(false)
 
   const get = (f) => f in dirty ? dirty[f] : entity?.[f]
   const set = (f, v) => setDirty(prev => ({ ...prev, [f]: v }))
@@ -393,6 +387,11 @@ export default function OpportunityDetailPage({ currentUser }) {
             {t(`opportunities.status.${get('status')}`)}
           </span>
         </div>
+        {canReassign && (
+          <button onClick={() => setAssignOpen(true)} style={{ fontSize:11, fontWeight:600, color:'var(--primary-violet-light)', background:'rgba(139,92,246,0.1)', border:'1px solid rgba(139,92,246,0.3)', borderRadius:8, padding:'5px 10px', cursor:'pointer', flexShrink:0 }}>
+            {t('network.assign')}
+          </button>
+        )}
         {isDirty && (
           <button onClick={handleSave} disabled={saving} style={{ padding:'7px 16px', borderRadius:9, background:'var(--primary-violet)', color:'white', border:'none', cursor:'pointer', fontSize:12, fontWeight:700, flexShrink:0 }}>
             {saving ? t('brand.saving') : t('brand.save')}
@@ -629,6 +628,14 @@ export default function OpportunityDetailPage({ currentUser }) {
           <ActivityTimeline activities={timeline}/>
         </div>
       </div>
+
+      <AssignModal
+        isOpen={assignOpen}
+        onClose={() => setAssignOpen(false)}
+        entity={entity}
+        entityType="opportunity"
+        onAssigned={(_, scouter) => setEntity(prev => ({ ...prev, ownerScouterId: scouter.userId }))}
+      />
     </div>
   )
 }
