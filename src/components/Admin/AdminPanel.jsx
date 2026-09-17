@@ -4,7 +4,7 @@ import {
   getSystemConfig, saveSystemConfig, approveUser, blockUser, unblockUser, updateUser,
   deleteUser, getRolePerms, logActivity, timeAgo, genId, getGeography, setUserEcosistemas,
 } from '../../lib/auth.js'
-import { dbGetGeography, dbCreateCity } from '../../lib/database.js'
+import { dbGetGeography, dbCreateCity, dbCreateCountry, dbUpdateCity, dbUpdateCountry } from '../../lib/database.js'
 
 // ─── Constants ────────────────────────────────────────────────
 const ALL_ECOS = [
@@ -880,6 +880,239 @@ const MonitorSection = ({ users }) => {
   )
 }
 
+// ─── Section: Geografía ────────────────────────────────────────
+const GEO_RLS_MSG = 'Crear o editar geografía requiere rol super_admin o network_direction.'
+
+const GeografiaSection = () => {
+  const [regions,   setRegions]   = useState([])
+  const [countries, setCountries] = useState([])
+  const [cities,    setCities]    = useState([])
+  const [usage,     setUsage]     = useState({}) // cityId → { brands, influencers, scouters }
+  const [loading,   setLoading]   = useState(true)
+  const [error,     setError]     = useState(null)
+
+  // New country form
+  const [newCountry, setNewCountry] = useState({ name:'', code:'', regionId:'', currency:'' })
+  const [savingCountry, setSavingCountry] = useState(false)
+
+  // New city form
+  const [newCity, setNewCity] = useState({ name:'', countryId:'', timezone:'' })
+  const [savingCity, setSavingCity] = useState(false)
+
+  const loadAll = useCallback(async () => {
+    setLoading(true); setError(null)
+    try {
+      const [r, c, ci] = await Promise.all([
+        supabase.from('regions').select('*').order('name'),
+        supabase.from('countries').select('*').order('name'),
+        supabase.from('cities').select('*').order('name'),
+      ])
+      if (r.error) throw r.error
+      if (c.error) throw c.error
+      if (ci.error) throw ci.error
+      setRegions(r.data || [])
+      setCountries(c.data || [])
+      setCities(ci.data || [])
+
+      // Load entity counts per city in one query each
+      const [brands, influencers, scouters] = await Promise.all([
+        supabase.from('brands').select('city_id').not('city_id','is',null),
+        supabase.from('influencers').select('city_id').not('city_id','is',null),
+        supabase.from('scouters').select('city_id').not('city_id','is',null),
+      ])
+      const counts = {}
+      ;[...(brands.data||[])].forEach(x => { counts[x.city_id] = counts[x.city_id] || { brands:0, influencers:0, scouters:0 }; counts[x.city_id].brands++ })
+      ;[...(influencers.data||[])].forEach(x => { counts[x.city_id] = counts[x.city_id] || { brands:0, influencers:0, scouters:0 }; counts[x.city_id].influencers++ })
+      ;[...(scouters.data||[])].forEach(x => { counts[x.city_id] = counts[x.city_id] || { brands:0, influencers:0, scouters:0 }; counts[x.city_id].scouters++ })
+      setUsage(counts)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { loadAll() }, [loadAll])
+
+  const handleCreateCountry = async (e) => {
+    e.preventDefault()
+    if (!newCountry.name.trim()) return
+    setSavingCountry(true); setError(null)
+    try {
+      await dbCreateCountry({ name: newCountry.name.trim(), code: newCountry.code || null, regionId: newCountry.regionId || null, currency: newCountry.currency || null })
+      setNewCountry({ name:'', code:'', regionId:'', currency:'' })
+      await loadAll()
+    } catch (e) {
+      setError(/row-level security/i.test(e.message) ? GEO_RLS_MSG : e.message)
+    } finally { setSavingCountry(false) }
+  }
+
+  const handleCreateCity = async (e) => {
+    e.preventDefault()
+    if (!newCity.name.trim() || !newCity.countryId) return
+    setSavingCity(true); setError(null)
+    try {
+      await dbCreateCity({ name: newCity.name.trim(), countryId: newCity.countryId, timezone: newCity.timezone || null })
+      setNewCity({ name:'', countryId:'', timezone:'' })
+      await loadAll()
+    } catch (e) {
+      setError(/row-level security/i.test(e.message) ? GEO_RLS_MSG : e.message)
+    } finally { setSavingCity(false) }
+  }
+
+  const handleToggleCity = async (city) => {
+    const u = usage[city.id]
+    const total = u ? (u.brands + u.influencers + u.scouters) : 0
+    if (city.active && total > 0) {
+      const msg = `Esta ciudad tiene ${total} entidades asociadas. Al desactivarla dejan de aparecer en los selectores. ¿Continuar?`
+      if (!window.confirm(msg)) return
+    }
+    try {
+      await dbUpdateCity(city.id, { active: !city.active })
+      await loadAll()
+    } catch (e) {
+      setError(/row-level security/i.test(e.message) ? GEO_RLS_MSG : e.message)
+    }
+  }
+
+  const handleToggleCountry = async (country) => {
+    try {
+      await dbUpdateCountry(country.id, { active: !country.active })
+      await loadAll()
+    } catch (e) {
+      setError(/row-level security/i.test(e.message) ? GEO_RLS_MSG : e.message)
+    }
+  }
+
+  const S = { // shared inline styles
+    card:  { background:'rgba(139,92,246,0.04)', border:'1px solid rgba(139,92,246,0.15)', borderRadius:12, padding:16, marginBottom:16 },
+    label: { fontSize:10, fontWeight:700, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, display:'block', marginBottom:4 },
+    input: { width:'100%', padding:'7px 10px', borderRadius:8, background:'rgba(139,92,246,0.07)', border:'1px solid rgba(139,92,246,0.25)', color:'var(--text-primary)', fontSize:12, outline:'none' },
+    btn:   { padding:'7px 14px', borderRadius:8, background:'rgba(139,92,246,0.15)', border:'1px solid rgba(139,92,246,0.4)', color:'var(--text-secondary)', fontSize:12, fontWeight:700, cursor:'pointer' },
+    row:   { display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 10px', borderRadius:8, marginBottom:4, background:'rgba(139,92,246,0.03)', border:'1px solid rgba(139,92,246,0.08)' },
+  }
+
+  const countryMap = Object.fromEntries(countries.map(c => [c.id, c.name]))
+
+  if (loading) return <div style={{ padding:24, textAlign:'center', color:'var(--text-secondary)', fontSize:12 }}>Cargando…</div>
+
+  return (
+    <div style={{ padding:20, maxWidth:700, overflowY:'auto' }}>
+      <div style={{ fontSize:16, fontWeight:700, color:'var(--text-primary)', marginBottom:16 }}>🌍 Geografía</div>
+
+      {error && (
+        <div style={{ fontSize:12, color:'#F87171', background:'rgba(248,113,113,0.08)', border:'1px solid rgba(248,113,113,0.25)', borderRadius:8, padding:'8px 12px', marginBottom:16 }}>
+          {error}
+        </div>
+      )}
+
+      {/* ── PAÍSES ── */}
+      <div style={S.card}>
+        <div style={{ fontSize:13, fontWeight:700, color:'var(--text-primary)', marginBottom:12 }}>Países</div>
+
+        {/* Form */}
+        <form onSubmit={handleCreateCountry} style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr auto', gap:6, marginBottom:14, alignItems:'flex-end' }}>
+          <div><label style={S.label}>Nombre *</label><input value={newCountry.name} onChange={e => setNewCountry(p => ({...p, name:e.target.value}))} placeholder="Argentina" style={S.input}/></div>
+          <div><label style={S.label}>Código</label><input value={newCountry.code} onChange={e => setNewCountry(p => ({...p, code:e.target.value}))} placeholder="AR" style={S.input}/></div>
+          <div><label style={S.label}>Región</label>
+            <select value={newCountry.regionId} onChange={e => setNewCountry(p => ({...p, regionId:e.target.value}))} style={S.input}>
+              <option value="">—</option>
+              {regions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            </select>
+          </div>
+          <div><label style={S.label}>Moneda</label><input value={newCountry.currency} onChange={e => setNewCountry(p => ({...p, currency:e.target.value}))} placeholder="ARS" style={S.input}/></div>
+          <button type="submit" disabled={savingCountry || !newCountry.name.trim()} style={{ ...S.btn, height:32, alignSelf:'flex-end', whiteSpace:'nowrap' }}>
+            {savingCountry ? '…' : '+ Crear'}
+          </button>
+        </form>
+
+        {/* List */}
+        {countries.length === 0 ? (
+          <div style={{ fontSize:12, color:'var(--text-secondary)', textAlign:'center', padding:12 }}>Sin registros</div>
+        ) : (
+          countries.map(c => {
+            const cityCount = cities.filter(ci => ci.country_id === c.id).length
+            return (
+              <div key={c.id} style={{ ...S.row, opacity: c.active ? 1 : 0.5 }}>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <span style={{ fontSize:13, fontWeight:600, color:'var(--text-primary)' }}>{c.name}</span>
+                  {c.code && <span style={{ fontSize:10, color:'var(--text-secondary)', marginLeft:6 }}>{c.code}</span>}
+                  <span style={{ fontSize:10, color:'var(--text-secondary)', marginLeft:8 }}>{cityCount} ciudad{cityCount !== 1 ? 'es' : ''}</span>
+                </div>
+                <button
+                  onClick={() => handleToggleCountry(c)}
+                  style={{ fontSize:10, fontWeight:700, padding:'3px 8px', borderRadius:6, cursor:'pointer', background: c.active ? 'rgba(52,211,153,0.1)' : 'rgba(248,113,113,0.1)', color: c.active ? '#34D399' : '#F87171', border: `1px solid ${c.active ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)'}` }}
+                >
+                  {c.active ? 'Activo' : 'Inactivo'}
+                </button>
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      {/* ── CIUDADES ── */}
+      <div style={S.card}>
+        <div style={{ fontSize:13, fontWeight:700, color:'var(--text-primary)', marginBottom:12 }}>Ciudades</div>
+
+        {/* Form */}
+        <form onSubmit={handleCreateCity} style={{ display:'grid', gridTemplateColumns:'2fr 2fr 1fr auto', gap:6, marginBottom:14, alignItems:'flex-end' }}>
+          <div><label style={S.label}>Nombre *</label><input value={newCity.name} onChange={e => setNewCity(p => ({...p, name:e.target.value}))} placeholder="Buenos Aires" style={S.input}/></div>
+          <div><label style={S.label}>País *</label>
+            <select value={newCity.countryId} onChange={e => setNewCity(p => ({...p, countryId:e.target.value}))} style={S.input}>
+              <option value="">—</option>
+              {countries.filter(c => c.active).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div><label style={S.label}>Zona horaria</label><input value={newCity.timezone} onChange={e => setNewCity(p => ({...p, timezone:e.target.value}))} placeholder="America/Argentina/Buenos_Aires" style={S.input}/></div>
+          <button type="submit" disabled={savingCity || !newCity.name.trim() || !newCity.countryId} style={{ ...S.btn, height:32, alignSelf:'flex-end', whiteSpace:'nowrap' }}>
+            {savingCity ? '…' : '+ Crear'}
+          </button>
+        </form>
+
+        {/* List grouped by country */}
+        {cities.length === 0 ? (
+          <div style={{ fontSize:12, color:'var(--text-secondary)', textAlign:'center', padding:12 }}>Sin registros</div>
+        ) : (
+          countries.map(c => {
+            const cc = cities.filter(ci => ci.country_id === c.id)
+            if (cc.length === 0) return null
+            return (
+              <div key={c.id} style={{ marginBottom:12 }}>
+                <div style={{ fontSize:10, fontWeight:700, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginBottom:6 }}>{c.name}</div>
+                {cc.map(city => {
+                  const u = usage[city.id] || { brands:0, influencers:0, scouters:0 }
+                  const total = u.brands + u.influencers + u.scouters
+                  return (
+                    <div key={city.id} style={{ ...S.row, opacity: city.active ? 1 : 0.5 }}>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <span style={{ fontSize:12, fontWeight:600, color:'var(--text-primary)' }}>{city.name}</span>
+                        {total > 0 && (
+                          <span style={{ fontSize:10, color:'var(--text-secondary)', marginLeft:8 }}>
+                            {u.brands > 0 ? `${u.brands} marcas` : ''}
+                            {u.influencers > 0 ? `${u.brands > 0 ? ', ' : ''}${u.influencers} influencers` : ''}
+                            {u.scouters > 0 ? `${(u.brands + u.influencers) > 0 ? ', ' : ''}${u.scouters} scouters` : ''}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleToggleCity(city)}
+                        style={{ fontSize:10, fontWeight:700, padding:'3px 8px', borderRadius:6, cursor:'pointer', background: city.active ? 'rgba(52,211,153,0.1)' : 'rgba(248,113,113,0.1)', color: city.active ? '#34D399' : '#F87171', border: `1px solid ${city.active ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)'}` }}
+                      >
+                        {city.active ? 'Activa' : 'Inactiva'}
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Section: Config ───────────────────────────────────────────
 const ConfigSection = ({ currentUser }) => {
   const [cfg, setCfg] = useState(() => getSystemConfig())
@@ -1079,6 +1312,7 @@ export default function AdminPanel({ onClose, currentUser }) {
     { id:'permisos',    icon:'🔒', label:'Matriz Permisos', badge:0 },
     { id:'actividad',   icon:'📋', label:'Actividad',       badge:0 },
     { id:'monitor',     icon:'📡', label:'Monitor Live',    badge:0 },
+    { id:'geografia',   icon:'🌍', label:'Geografía',       badge:0 },
     { id:'config',      icon:'⚙️', label:'Configuración',   badge:0 },
     { id:'pendientes',  icon:'⚠️', label:'Pendientes',      badge:badgePendientes },
   ]
@@ -1090,6 +1324,7 @@ export default function AdminPanel({ onClose, currentUser }) {
       case 'permisos':   return <MatrizSection users={users} onRefresh={refreshUsers}/>
       case 'actividad':  return <ActividadSection users={users}/>
       case 'monitor':    return <MonitorSection users={users}/>
+      case 'geografia':  return <GeografiaSection/>
       case 'config':     return <ConfigSection currentUser={currentUser}/>
       case 'pendientes': return <PendientesSection users={users} onOpenApprove={openApprove} onOpenReassign={openReassign}/>
       default:           return null
