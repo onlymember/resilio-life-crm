@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Briefcase } from 'lucide-react'
+import AssignModal from '../components/AssignModal.jsx'
+import BulkBar from '../components/BulkBar.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { t } from '../../i18n/index.js'
 import { dbGetOpportunities, dbPatchOpportunity } from '../../lib/database.js'
 import { useNavigate } from 'react-router-dom'
+import { COMMAND_ROLES } from '../routes.js'
 
 const STATUSES = ['new','qualifying','contacted','in_conversation','proposal','won','lost','on_hold']
 
@@ -147,14 +150,22 @@ function MobileCard({ opp, onStatusChange, onClick }) {
 }
 
 export default function OpportunitiesPage({ onOpenCreate, currentUser }) {
-  const navigate   = useNavigate()
-  const isDesktop  = useIsDesktop()
-  const dragRef    = useRef({ id: null, fromStatus: null })
+  const navigate    = useNavigate()
+  const isDesktop   = useIsDesktop()
+  const dragRef     = useRef({ id: null, fromStatus: null })
+  const canReassign = COMMAND_ROLES.includes(currentUser?.rol)
 
-  const [rows,    setRows]    = useState([])
-  const [total,   setTotal]   = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [hasMore, setHasMore] = useState(false)
+  const [rows,         setRows]         = useState([])
+  const [total,        setTotal]        = useState(0)
+  const [loading,      setLoading]      = useState(true)
+  const [hasMore,      setHasMore]      = useState(false)
+  const [selected,     setSelected]     = useState(new Set())
+  const [assignTarget, setAssignTarget] = useState(null)
+
+  const toggleSelect = (id) => setSelected(prev => {
+    const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next
+  })
+  const clearSelect = () => setSelected(new Set())
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -261,17 +272,47 @@ export default function OpportunitiesPage({ onOpenCreate, currentUser }) {
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
                 {byStatus[status].map(opp => (
-                  <MobileCard
-                    key={opp.id}
-                    opp={opp}
-                    onStatusChange={handleMobileStatusChange}
-                    onClick={() => navigate(`/network/opportunities/${opp.id}`)}
-                  />
+                  <div key={opp.id} style={{ position:'relative' }}>
+                    {canReassign && (
+                      <input
+                        type="checkbox"
+                        checked={selected.has(opp.id)}
+                        onChange={() => toggleSelect(opp.id)}
+                        onClick={e => e.stopPropagation()}
+                        style={{ position:'absolute', left:10, top:14, zIndex:2, cursor:'pointer', accentColor:'var(--primary-violet)', width:14, height:14 }}
+                      />
+                    )}
+                    <div style={canReassign ? { paddingLeft:30 } : {}}>
+                      <MobileCard
+                        opp={opp}
+                        onStatusChange={handleMobileStatusChange}
+                        onClick={() => navigate(`/network/opportunities/${opp.id}`)}
+                      />
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
           ))}
         </div>
+      )}
+
+      <AssignModal
+        isOpen={!!assignTarget}
+        onClose={() => setAssignTarget(null)}
+        entity={assignTarget}
+        entityType="opportunity"
+        onAssigned={(entityId, scouter) => setRows(prev => prev.map(r => r.id === entityId ? { ...r, ownerScouterId: scouter.userId } : r))}
+      />
+
+      {canReassign && (
+        <BulkBar
+          selected={selected}
+          rows={rows}
+          entityType="opportunity"
+          onClear={clearSelect}
+          onRefresh={() => load()}
+        />
       )}
     </div>
   )

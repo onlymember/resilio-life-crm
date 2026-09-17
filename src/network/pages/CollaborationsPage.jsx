@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { CheckCircle } from 'lucide-react'
+import AssignModal from '../components/AssignModal.jsx'
+import BulkBar from '../components/BulkBar.jsx'
 import CollaborationCard from '../components/CollaborationCard.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { t } from '../../i18n/index.js'
 import { dbGetCollaborations, dbGetActivationTypes } from '../../lib/database.js'
 import { useNavigate } from 'react-router-dom'
+import { COMMAND_ROLES } from '../routes.js'
 
 const PAGE_SIZE = 30
 
@@ -17,16 +20,25 @@ const STATUS_CHIPS = [
   { id: 'completed',       label: t('collab.status.completed'),       filters: { status: 'completed' } },
 ]
 
-export default function CollaborationsPage({ onOpenCreate }) {
+export default function CollaborationsPage({ onOpenCreate, currentUser }) {
   const navigate    = useNavigate()
-  const [rows,      setRows]      = useState([])
-  const [total,     setTotal]     = useState(0)
-  const [page,      setPage]      = useState(0)
-  const [loading,   setLoading]   = useState(true)
-  const [chipId,    setChipId]    = useState('all')
-  const [filters,   setFilters]   = useState({})
-  const [actTypes,  setActTypes]  = useState([])
-  const [actTypeMap,setActTypeMap]= useState({})
+  const canReassign = COMMAND_ROLES.includes(currentUser?.rol)
+
+  const [rows,         setRows]         = useState([])
+  const [total,        setTotal]        = useState(0)
+  const [page,         setPage]         = useState(0)
+  const [loading,      setLoading]      = useState(true)
+  const [chipId,       setChipId]       = useState('all')
+  const [filters,      setFilters]      = useState({})
+  const [actTypes,     setActTypes]     = useState([])
+  const [actTypeMap,   setActTypeMap]   = useState({})
+  const [selected,     setSelected]     = useState(new Set())
+  const [assignTarget, setAssignTarget] = useState(null)
+
+  const toggleSelect = (id) => setSelected(prev => {
+    const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next
+  })
+  const clearSelect = () => setSelected(new Set())
 
   useEffect(() => {
     dbGetActivationTypes().then(types => {
@@ -101,12 +113,23 @@ export default function CollaborationsPage({ onOpenCreate }) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {rows.map((collab, i) => (
-            <div key={collab.id} style={{ animation: `cardIn var(--dur-base) var(--ease-emphasized) ${Math.min(i, 9) * 40}ms both` }}>
-              <CollaborationCard
-                collab={collab}
-                activationType={actTypeMap[collab.activationTypeId]}
-                onClick={() => navigate(`/network/collaborations/${collab.id}`)}
-              />
+            <div key={collab.id} style={{ position:'relative', animation: `cardIn var(--dur-base) var(--ease-emphasized) ${Math.min(i, 9) * 40}ms both` }}>
+              {canReassign && (
+                <input
+                  type="checkbox"
+                  checked={selected.has(collab.id)}
+                  onChange={() => toggleSelect(collab.id)}
+                  onClick={e => e.stopPropagation()}
+                  style={{ position:'absolute', left:14, top:18, zIndex:2, cursor:'pointer', accentColor:'var(--primary-violet)', width:14, height:14 }}
+                />
+              )}
+              <div style={canReassign ? { paddingLeft:34 } : {}}>
+                <CollaborationCard
+                  collab={collab}
+                  activationType={actTypeMap[collab.activationTypeId]}
+                  onClick={() => navigate(`/network/collaborations/${collab.id}`)}
+                />
+              </div>
             </div>
           ))}
           {rows.length < total && (
@@ -115,6 +138,24 @@ export default function CollaborationsPage({ onOpenCreate }) {
             </button>
           )}
         </div>
+      )}
+
+      <AssignModal
+        isOpen={!!assignTarget}
+        onClose={() => setAssignTarget(null)}
+        entity={assignTarget}
+        entityType="collaboration"
+        onAssigned={(entityId, scouter) => setRows(prev => prev.map(r => r.id === entityId ? { ...r, scouterId: scouter.userId } : r))}
+      />
+
+      {canReassign && (
+        <BulkBar
+          selected={selected}
+          rows={rows}
+          entityType="collaboration"
+          onClear={clearSelect}
+          onRefresh={() => load(0)}
+        />
       )}
     </div>
   )

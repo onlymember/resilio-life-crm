@@ -2,8 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, CheckCircle, Plus, Trash2, ExternalLink, Check } from 'lucide-react'
 import ActivityTimeline from '../components/ActivityTimeline.jsx'
+import AssignModal from '../components/AssignModal.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { t } from '../../i18n/index.js'
+import { COMMAND_ROLES } from '../routes.js'
 import {
   dbPatchCollaboration, dbGetActivationTypes,
   dbGetEntityTimeline,
@@ -83,9 +85,10 @@ const Label = ({ children }) => (
 const numField = (val) => val == null ? '' : String(val)
 const parseNum = (s) => s === '' ? null : Number(s)
 
-export default function CollaborationDetailPage() {
+export default function CollaborationDetailPage({ currentUser }) {
   const { id }   = useParams()
   const navigate = useNavigate()
+  const canReassign = COMMAND_ROLES.includes(currentUser?.rol)
 
   const [entity,    setEntity]    = useState(null)
   const [timeline,  setTimeline]  = useState([])
@@ -104,6 +107,7 @@ export default function CollaborationDetailPage() {
   const [delivSaving,     setDelivSaving]     = useState(false)
   const [completingNext,  setCompletingNext]  = useState(false)
   const [legacyExpanded,  setLegacyExpanded]  = useState(false)
+  const [assignOpen,      setAssignOpen]      = useState(false)
 
   const get = (f) => f in dirty ? dirty[f] : entity?.[f]
   const set = (f, v) => setDirty(prev => ({ ...prev, [f]: v }))
@@ -219,6 +223,11 @@ export default function CollaborationDetailPage() {
             <div style={{ fontSize:11, color: actType.color || 'var(--text-secondary)', fontWeight:600 }}>{actType.name}</div>
           )}
         </div>
+        {canReassign && (
+          <button onClick={() => setAssignOpen(true)} style={{ fontSize:11, fontWeight:600, color:'var(--primary-violet-light)', background:'rgba(139,92,246,0.1)', border:'1px solid rgba(139,92,246,0.3)', borderRadius:8, padding:'5px 10px', cursor:'pointer', flexShrink:0 }}>
+            {t('network.assign')}
+          </button>
+        )}
         {isDirty && (
           <button onClick={handleSave} disabled={saving} style={{ padding:'7px 16px', borderRadius:9, background:'var(--primary-violet)', color:'white', border:'none', cursor:'pointer', fontSize:12, fontWeight:700, flexShrink:0 }}>
             {saving ? t('brand.saving') : t('brand.save')}
@@ -522,6 +531,14 @@ export default function CollaborationDetailPage() {
           <ActivityTimeline activities={timeline}/>
         </div>
       </div>
+
+      <AssignModal
+        isOpen={assignOpen}
+        onClose={() => setAssignOpen(false)}
+        entity={entity}
+        entityType="collaboration"
+        onAssigned={(_, scouter) => setEntity(prev => ({ ...prev, scouterId: scouter.userId }))}
+      />
     </div>
   )
 }
