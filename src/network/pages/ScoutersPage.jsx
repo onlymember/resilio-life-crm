@@ -10,9 +10,20 @@ import { dbGetGeography } from '../../lib/database.js'
 
 const SORT_COLS = ['nombre','ciudad','level','influencers','brands','opportunities','tasksOverdue','daysInactive']
 
+const useIsMobile = () => {
+  const [mobile, setMobile] = useState(window.innerWidth < 640)
+  useEffect(() => {
+    const h = () => setMobile(window.innerWidth < 640)
+    window.addEventListener('resize', h)
+    return () => window.removeEventListener('resize', h)
+  }, [])
+  return mobile
+}
+
 export default function ScoutersPage({ currentUser }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
 
   const cityId    = searchParams.get('city')    || null
   const countryId = searchParams.get('country') || null
@@ -164,11 +175,13 @@ export default function ScoutersPage({ currentUser }) {
         </div>
       ) : (
         <>
-          {/* Column headers — hidden on mobile via media query (inline fallback: always visible) */}
-          <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 50px 55px 55px 55px 55px 70px 28px', gap:8, padding:'4px 14px' }}>
-            {SORT_COLS.map(col => <ColHeader key={col} col={col}/>)}
-            <span/>
-          </div>
+          {/* Column headers — desktop only */}
+          {!isMobile && (
+            <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 50px 55px 55px 55px 55px 70px 28px', gap:8, padding:'4px 14px' }}>
+              {SORT_COLS.map(col => <ColHeader key={col} col={col}/>)}
+              <span/>
+            </div>
+          )}
           <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:40 }}>
             {sorted.map(s => (
               <ScouterRow
@@ -177,6 +190,7 @@ export default function ScoutersPage({ currentUser }) {
                 expanded={!!expanded[s.userId]}
                 onToggle={() => toggleExpand(s.userId)}
                 performance={performance[s.userId]}
+                isMobile={isMobile}
               />
             ))}
           </div>

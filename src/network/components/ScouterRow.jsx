@@ -12,18 +12,97 @@ const initials = (name = '') => {
 
 const num = (v) => <span style={{ fontVariantNumeric: 'tabular-nums' }}>{v ?? '—'}</span>
 
-export default function ScouterRow({ scouter, expanded, onToggle, performance }) {
+const Chip = ({ label, value, color }) => (
+  <span style={{
+    fontSize: 10, padding: '2px 7px', borderRadius: 8,
+    background: 'rgba(139,92,246,0.08)', border: '1px solid var(--border-violet)',
+    color: color || 'var(--text-secondary)',
+    fontWeight: color ? 700 : 400,
+  }}>
+    {label && <span style={{ opacity: 0.7 }}>{label} </span>}{value ?? '—'}
+  </span>
+)
+
+export default function ScouterRow({ scouter, expanded, onToggle, performance, isMobile }) {
   const navigate = useNavigate()
   const inactive = scouter.daysInactive > 14
 
+  const cardBorder = inactive ? '1px solid rgba(248,113,113,0.35)' : '1px solid var(--border-violet)'
+  const cardBg     = inactive ? 'rgba(248,113,113,0.04)' : 'var(--glass-bg)'
+
+  const expandedPanel = expanded && (
+    <div style={{ padding: '0 14px 14px', borderTop: '1px solid var(--border-violet)' }}>
+      {!performance ? (
+        <div style={{ fontSize: 11, color: 'var(--text-secondary)', paddingTop: 10 }}>{t('loading.generic')}</div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 8, paddingTop: 10 }}>
+          {[
+            ['Inf. agregados',    performance.activity?.influencers_added],
+            ['Marcas agregadas',  performance.activity?.brands_added],
+            ['Contactos',         performance.activity?.contacts],
+            ['Tareas completadas',performance.activity?.tasks_completed],
+            ['Perfiles completos',performance.quality?.complete_profiles],
+            ['Oportunidades',     performance.results?.opportunities],
+            ['Ganadas',           performance.results?.won],
+            ['Colaboraciones',    performance.results?.collaborations],
+          ].map(([label, val]) => (
+            <div key={label} style={{ background: 'rgba(139,92,246,0.06)', borderRadius: 8, padding: '8px 10px' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--primary-violet-light)' }}>{val ?? 0}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{label}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
+  if (isMobile) {
+    return (
+      <div style={{ borderRadius: 10, border: cardBorder, background: cardBg, overflow: 'hidden' }}>
+        <button
+          onClick={onToggle}
+          style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: '12px 14px' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+              background: avatarColor(scouter.nombre),
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 12, fontWeight: 700, color: 'white',
+            }}>
+              {initials(scouter.nombre)}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                onClick={e => { e.stopPropagation(); navigate(`/network/scouters/${scouter.userId}`) }}
+                style={{ fontSize: 13, fontWeight: 600, color: 'var(--primary-violet-light)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'rgba(139,92,246,0.3)' }}
+              >
+                {scouter.nombre}
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{scouter.email}</div>
+            </div>
+            <span style={{ color: 'var(--text-secondary)', flexShrink: 0 }}>
+              {expanded ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 8 }}>
+            {scouter.ciudad && <Chip value={scouter.ciudad}/>}
+            <Chip label={t('scouter.level')} value={scouter.level}/>
+            <Chip label="Inf" value={scouter.influencers}/>
+            <Chip label="Marcas" value={scouter.brands}/>
+            <Chip label="Opps" value={scouter.opportunities}/>
+            {scouter.tasksOverdue > 0 && <Chip label="Venc" value={scouter.tasksOverdue} color="#F87171"/>}
+            {inactive && <Chip value={t('scouter.daysInactive', { n: scouter.daysInactive })} color="#F87171"/>}
+          </div>
+        </button>
+        {expandedPanel}
+      </div>
+    )
+  }
+
   return (
-    <div style={{
-      borderRadius: 10,
-      border: inactive ? '1px solid rgba(248,113,113,0.35)' : '1px solid var(--border-violet)',
-      background: inactive ? 'rgba(248,113,113,0.04)' : 'var(--glass-bg)',
-      overflow: 'hidden',
-    }}>
-      {/* Main row */}
+    <div style={{ borderRadius: 10, border: cardBorder, background: cardBg, overflow: 'hidden' }}>
+      {/* Main row — desktop grid */}
       <button
         onClick={onToggle}
         style={{
@@ -34,7 +113,6 @@ export default function ScouterRow({ scouter, expanded, onToggle, performance })
           background: 'none', border: 'none', cursor: 'pointer',
         }}
       >
-        {/* nombre */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
           <div style={{
             width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
@@ -55,67 +133,27 @@ export default function ScouterRow({ scouter, expanded, onToggle, performance })
           </div>
         </div>
 
-        {/* ciudad */}
         <span style={{ fontSize: 11, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {scouter.ciudad}
         </span>
-
-        {/* level */}
         <span style={{ fontSize: 12, color: 'var(--text-secondary)', textAlign: 'center' }}>
           {t('scouter.level')} {scouter.level}
         </span>
-
-        {/* inf */}
         <span style={{ fontSize: 12, color: 'var(--text-primary)', textAlign: 'center' }}>{num(scouter.influencers)}</span>
-
-        {/* brands */}
         <span style={{ fontSize: 12, color: 'var(--text-primary)', textAlign: 'center' }}>{num(scouter.brands)}</span>
-
-        {/* opps */}
         <span style={{ fontSize: 12, color: 'var(--text-primary)', textAlign: 'center' }}>{num(scouter.opportunities)}</span>
-
-        {/* tasks_overdue */}
         <span style={{ fontSize: 12, color: scouter.tasksOverdue > 0 ? '#F87171' : 'var(--text-primary)', textAlign: 'center', fontWeight: scouter.tasksOverdue > 0 ? 700 : 400 }}>
           {num(scouter.tasksOverdue)}
         </span>
-
-        {/* days_inactive */}
         <span style={{ fontSize: 11, textAlign: 'center', color: inactive ? '#F87171' : 'var(--text-secondary)', fontWeight: inactive ? 700 : 400 }}>
           {scouter.daysInactive != null ? t('scouter.daysInactive', { n: scouter.daysInactive }) : '—'}
         </span>
-
-        {/* expand toggle */}
         <span style={{ color: 'var(--text-secondary)', display: 'flex', justifyContent: 'center' }}>
           {expanded ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
         </span>
       </button>
 
-      {/* Expanded: scouter_performance */}
-      {expanded && (
-        <div style={{ padding: '0 14px 14px', borderTop: '1px solid var(--border-violet)' }}>
-          {!performance ? (
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)', paddingTop: 10 }}>{t('loading.generic')}</div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 8, paddingTop: 10 }}>
-              {[
-                ['Inf. agregados',   performance.activity?.influencers_added],
-                ['Marcas agregadas', performance.activity?.brands_added],
-                ['Contactos',        performance.activity?.contacts],
-                ['Tareas completadas',performance.activity?.tasks_completed],
-                ['Perfiles completos',performance.quality?.complete_profiles],
-                ['Oportunidades',    performance.results?.opportunities],
-                ['Ganadas',          performance.results?.won],
-                ['Colaboraciones',   performance.results?.collaborations],
-              ].map(([label, val]) => (
-                <div key={label} style={{ background: 'rgba(139,92,246,0.06)', borderRadius: 8, padding: '8px 10px' }}>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--primary-violet-light)' }}>{val ?? 0}</div>
-                  <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{label}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {expandedPanel}
     </div>
   )
 }

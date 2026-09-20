@@ -48,6 +48,12 @@ const goalBehind = (goal) => {
 export default function CommandPage({ currentUser }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640)
+  useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth < 640)
+    window.addEventListener('resize', h)
+    return () => window.removeEventListener('resize', h)
+  }, [])
 
   // Filters from URL
   const cityId    = searchParams.get('city')    || null
@@ -312,15 +318,16 @@ export default function CommandPage({ currentUser }) {
           </div>
         ) : (
           <>
-            {/* Desktop: table headers */}
-            <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 50px 55px 55px 55px 55px 70px 28px', gap:8, padding:'4px 14px', marginBottom:4 }}>
-              {['nombre','ciudad','level','influencers','brands','opportunities','tasksOverdue','daysInactive'].map(col => (
-                <span key={col} style={{ fontSize:9, fontWeight:700, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:0.8, textAlign: col==='nombre'||col==='ciudad' ? 'left' : 'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                  {t(`scouter.cols.${col}`)}
-                </span>
-              ))}
-              <span/>
-            </div>
+            {!isMobile && (
+              <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 50px 55px 55px 55px 55px 70px 28px', gap:8, padding:'4px 14px', marginBottom:4 }}>
+                {['nombre','ciudad','level','influencers','brands','opportunities','tasksOverdue','daysInactive'].map(col => (
+                  <span key={col} style={{ fontSize:9, fontWeight:700, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:0.8, textAlign: col==='nombre'||col==='ciudad' ? 'left' : 'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                    {t(`scouter.cols.${col}`)}
+                  </span>
+                ))}
+                <span/>
+              </div>
+            )}
             <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
               {problemScouters.map(s => (
                 <ScouterRow
@@ -329,6 +336,7 @@ export default function CommandPage({ currentUser }) {
                   expanded={!!expanded[s.userId]}
                   onToggle={() => toggleExpand(s.userId)}
                   performance={performance[s.userId]}
+                  isMobile={isMobile}
                 />
               ))}
             </div>
