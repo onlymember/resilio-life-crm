@@ -4,11 +4,11 @@ import { t } from '../../i18n/index.js'
 
 const KIND_COLOR = { task: '#A78BFA', next_action: '#22D3EE' }
 
-function AgendaItem({ item, onClick }) {
+function AgendaItem({ item, onNavigate }) {
   const col = KIND_COLOR[item.kind] || 'var(--primary-violet-light)'
   return (
     <button
-      onClick={() => onClick(item)}
+      onClick={() => onNavigate(item)}
       style={{
         width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10,
         padding: '10px 0', background: 'none', border: 'none', cursor: 'pointer',
