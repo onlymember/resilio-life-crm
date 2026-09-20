@@ -538,6 +538,19 @@
       "opportunities":"Opps",
       "tasksOverdue": "T. venc.",
       "daysInactive": "Inactividad"
+    },
+    "notFound": "Scouter not found",
+    "tabs": {
+      "performance": "Performance",
+      "influencers":  "Influencers",
+      "brands":       "Brands",
+      "tasks":        "Tasks",
+      "activity":     "Activity"
+    },
+    "empty": {
+      "influencers": "No influencers assigned",
+      "brands":      "No brands assigned",
+      "tasks":       "No pending tasks"
     }
   },
   "period": {

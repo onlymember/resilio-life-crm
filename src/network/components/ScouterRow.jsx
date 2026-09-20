@@ -1,5 +1,6 @@
 import React from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { t } from '../../i18n/index.js'
 
 const AVATAR_COLORS = ['#8B5CF6','#EC4899','#06B6D4','#10B981','#F59E0B','#EF4444','#6366F1']
@@ -12,6 +13,7 @@ const initials = (name = '') => {
 const num = (v) => <span style={{ fontVariantNumeric: 'tabular-nums' }}>{v ?? '—'}</span>
 
 export default function ScouterRow({ scouter, expanded, onToggle, performance }) {
+  const navigate = useNavigate()
   const inactive = scouter.daysInactive > 14
 
   return (
@@ -43,7 +45,10 @@ export default function ScouterRow({ scouter, expanded, onToggle, performance })
             {initials(scouter.nombre)}
           </div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div
+              onClick={e => { e.stopPropagation(); navigate(`/network/scouters/${scouter.userId}`) }}
+              style={{ fontSize: 13, fontWeight: 600, color: 'var(--primary-violet-light)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'rgba(139,92,246,0.3)' }}
+            >
               {scouter.nombre}
             </div>
             <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{scouter.email}</div>

@@ -16,6 +16,7 @@ import FollowUpsPage from './pages/FollowUpsPage.jsx'
 import TasksPage from './pages/TasksPage.jsx'
 import CommandPage from './pages/CommandPage.jsx'
 import ScoutersPage from './pages/ScoutersPage.jsx'
+import ScouterDetailPage from './pages/ScouterDetailPage.jsx'
 import ComingSoonPage from './pages/ComingSoonPage.jsx'
 import CalendarPage from './pages/CalendarPage.jsx'
 import MissionsPage from './pages/MissionsPage.jsx'
@@ -149,6 +150,11 @@ export default function NetworkApp({ currentUser }) {
           <Route path="scouters"      element={
             <RoleGuard user={currentUser} allowedRoles={COMMAND_ROLES}>
               <ScoutersPage currentUser={currentUser}/>
+            </RoleGuard>
+          }/>
+          <Route path="scouters/:id" element={
+            <RoleGuard user={currentUser} allowedRoles={COMMAND_ROLES}>
+              <ScouterDetailPage currentUser={currentUser}/>
             </RoleGuard>
           }/>
           <Route path="calendar"    element={<CalendarPage currentUser={currentUser}/>}/>
