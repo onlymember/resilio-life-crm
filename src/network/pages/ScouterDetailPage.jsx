@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import PeriodFilter from '../components/PeriodFilter.jsx'
+import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import { t } from '../../i18n/index.js'
 import { getNetworkScouters, getScouterPerformance } from '../../lib/metrics.js'
-import { dbGetInfluencers, dbGetBrands, dbGetTasks } from '../../lib/database.js'
+import { dbGetInfluencers, dbGetBrands, dbGetTasks, dbGetActivitiesByActor } from '../../lib/database.js'
 
 const AVATAR_COLORS = ['#8B5CF6','#EC4899','#06B6D4','#10B981','#F59E0B','#EF4444','#6366F1']
 const avatarColor = (name = '') => AVATAR_COLORS[(name.charCodeAt(0)||0) % AVATAR_COLORS.length]
@@ -58,7 +59,7 @@ export default function ScouterDetailPage() {
   const [tab,     setTab]     = useState('performance')
   const [period,  setPeriod]  = useState(null)
   const [perf,    setPerf]    = useState(null)
-  const [entities, setEntities] = useState({ influencers: null, brands: null, tasks: null })
+  const [entities, setEntities] = useState({ influencers: null, brands: null, tasks: null, activity: null })
 
   useEffect(() => {
     setLoading(true)
@@ -93,6 +94,11 @@ export default function ScouterDetailPage() {
         .then(res => setEntities(e => ({ ...e, tasks: res.rows })))
         .catch(() => setEntities(e => ({ ...e, tasks: [] })))
     }
+    if (tab === 'activity' && entities.activity === null) {
+      dbGetActivitiesByActor(id, 80)
+        .then(rows => setEntities(e => ({ ...e, activity: rows })))
+        .catch(() => setEntities(e => ({ ...e, activity: [] })))
+    }
   }, [tab, entities, scouter, id])
 
   if (loading) {
@@ -123,6 +129,7 @@ export default function ScouterDetailPage() {
     ['influencers', t('scouter.tabs.influencers')],
     ['brands',      t('scouter.tabs.brands')],
     ['tasks',       t('scouter.tabs.tasks')],
+    ['activity',    t('scouter.tabs.activity')],
   ]
 
   return (
@@ -246,6 +253,20 @@ export default function ScouterDetailPage() {
           renderItem={task => task.title}
           subLine={task => task.dueDate ? new Date(task.dueDate).toLocaleDateString('es') : null}
         />
+      )}
+
+      {tab === 'activity' && (
+        entities.activity === null ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {[0,1,2,3].map(i => <div key={i} style={{ height: 52, borderRadius: 10, background: 'rgba(139,92,246,0.06)', animation: 'pulse 1.5s ease-in-out infinite' }}/>)}
+          </div>
+        ) : entities.activity.length === 0 ? (
+          <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>
+            {t('home.recentActivityEmpty')}
+          </div>
+        ) : (
+          <ActivityTimeline activities={entities.activity}/>
+        )
       )}
     </div>
   )

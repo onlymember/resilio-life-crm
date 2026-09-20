@@ -933,6 +933,16 @@ export const dbGetActivities = async (entityType, entityId, limit = 50) => {
   return (data || []).map(rowToActivity)
 }
 
+export const dbGetActivitiesByActor = async (actorId, limit = 50) => {
+  const { data, error } = await supabase.from('activities')
+    .select('*')
+    .eq('actor_id', actorId)
+    .order('occurred_at', { ascending: false })
+    .limit(limit)
+  if (error) throw friendly(error)
+  return (data || []).map(rowToActivity)
+}
+
 // ═══════════════════════════════════════════════════════════
 // TASKS
 // ═══════════════════════════════════════════════════════════
