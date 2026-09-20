@@ -5,7 +5,7 @@ import { fmtDateTime, fmtDateTimeOverdue } from '../utils/date.js'
 
 const PRIORITY_COLOR = { urgent: '#F87171', high: '#FB923C', normal: '#60A5FA', low: '#9CA3AF' }
 
-export default function TaskRow({ task, onComplete }) {
+export default function TaskRow({ task, onComplete, assigneeName }) {
   const tz = useTz()
   const [done,    setDone]    = useState(false)
   const [loading, setLoading] = useState(false)
@@ -76,6 +76,11 @@ export default function TaskRow({ task, onComplete }) {
         {dateLabel && (
           <div style={{ fontSize: 10, color: task.isOverdue ? '#F87171' : 'var(--text-secondary)', marginTop: 2 }}>
             {dateLabel}
+          </div>
+        )}
+        {assigneeName && (
+          <div style={{ fontSize: 10, color: 'var(--primary-violet-light)', marginTop: 2 }}>
+            {t('task.assignedTo', { name: assigneeName })}
           </div>
         )}
       </div>

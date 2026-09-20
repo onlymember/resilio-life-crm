@@ -6,6 +6,8 @@ import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { defaultDueLocal, datetimeLocalToIso } from '../utils/date.js'
 import { dbGetTasks, dbCompleteTask, dbSaveTask } from '../../lib/database.js'
+import { COMMAND_ROLES } from '../routes.js'
+import { getNetworkScouters } from '../../lib/metrics.js'
 
 const PAGE_SIZE = 100
 
@@ -36,25 +38,38 @@ const PRIORITY_OPTS = ['urgent', 'high', 'normal', 'low']
 
 export default function TasksPage({ currentUser }) {
   const tz = useTz()
+  const isCommand = COMMAND_ROLES.includes(currentUser?.rol)
   const [rows,    setRows]    = useState([])
   const [total,   setTotal]   = useState(0)
   const [loading, setLoading] = useState(true)
-  const [filterPriority, setFilterPriority] = useState('')
+  const [filterPriority,  setFilterPriority]  = useState('')
+  const [filterAssignedTo, setFilterAssignedTo] = useState('')
+  const [scouters, setScouters] = useState([])
 
   // Create form
-  const [creating,  setCreating]  = useState(false)
-  const [newTitle,  setNewTitle]  = useState('')
-  const [newDue,    setNewDue]    = useState('')
-  const [newPrio,   setNewPrio]   = useState('normal')
-  const [saving,    setSaving]    = useState(false)
-  const [saveError, setSaveError] = useState(null)
+  const [creating,      setCreating]      = useState(false)
+  const [newTitle,      setNewTitle]      = useState('')
+  const [newDue,        setNewDue]        = useState('')
+  const [newPrio,       setNewPrio]       = useState('normal')
+  const [newAssignedTo, setNewAssignedTo] = useState('')
+  const [saving,        setSaving]        = useState(false)
+  const [saveError,     setSaveError]     = useState(null)
+
+  useEffect(() => {
+    if (!isCommand) return
+    getNetworkScouters().then(setScouters).catch(() => {})
+  }, [isCommand])
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
+      const assignedFilter = isCommand
+        ? (filterAssignedTo || undefined)
+        : (currentUser?.id || undefined)
       const res = await dbGetTasks({
         page: 0, pageSize: PAGE_SIZE,
         status: 'todo',
+        assignedTo: assignedFilter,
         ...(filterPriority ? { orderBy: 'priority' } : {}),
       })
       const filtered = filterPriority
@@ -64,7 +79,7 @@ export default function TasksPage({ currentUser }) {
       setTotal(res.total)
     } catch(e) { console.error('TasksPage:', e.message) }
     finally { setLoading(false) }
-  }, [filterPriority])
+  }, [filterPriority, filterAssignedTo, isCommand, currentUser?.id])
 
   useEffect(() => { load() }, [load])
 
@@ -80,16 +95,17 @@ export default function TasksPage({ currentUser }) {
     setSaving(true)
     setSaveError(null)
     try {
+      const savedAssignee = (isCommand && newAssignedTo) ? newAssignedTo : (currentUser?.id || null)
       const saved = await dbSaveTask({
         title:    newTitle.trim(),
         dueDate:  newDue ? datetimeLocalToIso(newDue, tz) : null,
         priority: newPrio,
         status:   'todo',
-        assignedTo: currentUser?.id || null,
+        assignedTo: savedAssignee,
       }, currentUser?.id)
       setRows(prev => [saved, ...prev])
       setTotal(prev => prev + 1)
-      setNewTitle(''); setNewDue(defaultDueLocal(tz)); setNewPrio('normal')
+      setNewTitle(''); setNewDue(defaultDueLocal(tz)); setNewPrio('normal'); setNewAssignedTo('')
       setCreating(false)
     } catch(e) {
       setSaveError(e.message)
@@ -161,6 +177,22 @@ export default function TasksPage({ currentUser }) {
               {PRIORITY_OPTS.map(p => <option key={p} value={p}>{t(`task.priorities.${p}`)}</option>)}
             </select>
           </div>
+          {isCommand && scouters.length > 0 && (
+            <select
+              value={newAssignedTo}
+              onChange={e => setNewAssignedTo(e.target.value)}
+              style={{
+                width: '100%', padding: '7px 10px', borderRadius: 8, fontSize: 16,
+                background: 'rgba(139,92,246,0.08)', border: '1px solid var(--border-violet)',
+                color: 'var(--text-primary)',
+              }}
+            >
+              <option value="">{t('task.assignee')}: {t('task.assignSelf')}</option>
+              {scouters.map(s => (
+                <option key={s.userId} value={s.userId}>{s.nombre}{s.ciudad ? ` · ${s.ciudad}` : ''}</option>
+              ))}
+            </select>
+          )}
           {saveError && <div style={{ fontSize: 11, color: '#F87171' }}>{saveError}</div>}
           <button
             type="submit"
@@ -193,6 +225,35 @@ export default function TasksPage({ currentUser }) {
           </button>
         ))}
       </div>
+      {isCommand && scouters.length > 0 && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setFilterAssignedTo('')}
+            style={{
+              padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+              background: filterAssignedTo === '' ? 'rgba(34,211,238,0.2)' : 'rgba(34,211,238,0.06)',
+              color: filterAssignedTo === '' ? '#22D3EE' : 'var(--text-secondary)',
+              border: filterAssignedTo === '' ? '1px solid rgba(34,211,238,0.3)' : '1px solid transparent',
+            }}
+          >
+            {t('filter.all')}
+          </button>
+          {scouters.map(s => (
+            <button
+              key={s.userId}
+              onClick={() => setFilterAssignedTo(s.userId)}
+              style={{
+                padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                background: filterAssignedTo === s.userId ? 'rgba(34,211,238,0.2)' : 'rgba(34,211,238,0.06)',
+                color: filterAssignedTo === s.userId ? '#22D3EE' : 'var(--text-secondary)',
+                border: filterAssignedTo === s.userId ? '1px solid rgba(34,211,238,0.3)' : '1px solid transparent',
+              }}
+            >
+              {s.nombre.split(' ')[0]}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Content */}
       {loading ? (
@@ -215,9 +276,12 @@ export default function TasksPage({ currentUser }) {
                 {group.label} · {group.items.length}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {group.items.map(task => (
-                  <TaskRow key={task.id} task={task} onComplete={handleComplete}/>
-                ))}
+                {group.items.map(task => {
+                  const assigneeName = (isCommand && task.assignedTo && task.assignedTo !== currentUser?.id)
+                    ? (scouters.find(s => s.userId === task.assignedTo)?.nombre || null)
+                    : null
+                  return <TaskRow key={task.id} task={task} onComplete={handleComplete} assigneeName={assigneeName}/>
+                })}
               </div>
             </div>
           ))}

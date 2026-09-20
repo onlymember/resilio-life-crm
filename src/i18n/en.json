@@ -286,7 +286,10 @@
       "high": "Alta",
       "normal": "Normal",
       "low": "Baja"
-    }
+    },
+    "assignee": "Assignee",
+    "assignSelf": "Myself",
+    "assignedTo": "For: {name}"
   },
   "missions": {
     "points": "{n} pts",
