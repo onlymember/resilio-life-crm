@@ -5,7 +5,7 @@ import PeriodFilter from '../components/PeriodFilter.jsx'
 import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import { t } from '../../i18n/index.js'
 import { getNetworkScouters, getScouterPerformance } from '../../lib/metrics.js'
-import { dbGetInfluencers, dbGetBrands, dbGetTasks, dbGetActivitiesByActor } from '../../lib/database.js'
+import { dbGetInfluencers, dbGetBrands, dbGetOpportunities, dbGetCollaborations, dbGetTasks, dbGetActivitiesByActor } from '../../lib/database.js'
 
 const AVATAR_COLORS = ['#8B5CF6','#EC4899','#06B6D4','#10B981','#F59E0B','#EF4444','#6366F1']
 const avatarColor = (name = '') => AVATAR_COLORS[(name.charCodeAt(0)||0) % AVATAR_COLORS.length]
@@ -59,7 +59,7 @@ export default function ScouterDetailPage() {
   const [tab,     setTab]     = useState('performance')
   const [period,  setPeriod]  = useState(null)
   const [perf,    setPerf]    = useState(null)
-  const [entities, setEntities] = useState({ influencers: null, brands: null, tasks: null, activity: null })
+  const [entities, setEntities] = useState({ influencers: null, brands: null, opportunities: null, collaborations: null, tasks: null, activity: null })
 
   useEffect(() => {
     setLoading(true)
@@ -88,6 +88,16 @@ export default function ScouterDetailPage() {
       dbGetBrands({ ownerId: id, pageSize: 50 })
         .then(res => setEntities(e => ({ ...e, brands: res.rows })))
         .catch(() => setEntities(e => ({ ...e, brands: [] })))
+    }
+    if (tab === 'opportunities' && entities.opportunities === null) {
+      dbGetOpportunities({ ownerId: id, pageSize: 50 })
+        .then(res => setEntities(e => ({ ...e, opportunities: res.rows })))
+        .catch(() => setEntities(e => ({ ...e, opportunities: [] })))
+    }
+    if (tab === 'collaborations' && entities.collaborations === null) {
+      dbGetCollaborations({ scouterId: id, pageSize: 50 })
+        .then(res => setEntities(e => ({ ...e, collaborations: res.rows })))
+        .catch(() => setEntities(e => ({ ...e, collaborations: [] })))
     }
     if (tab === 'tasks' && entities.tasks === null) {
       dbGetTasks({ assignedTo: id, status: 'todo', pageSize: 50 })
@@ -128,6 +138,8 @@ export default function ScouterDetailPage() {
     ['performance', t('scouter.tabs.performance')],
     ['influencers', t('scouter.tabs.influencers')],
     ['brands',      t('scouter.tabs.brands')],
+    ['opportunities',  t('scouter.tabs.opportunities')],
+    ['collaborations', t('scouter.tabs.collaborations')],
     ['tasks',       t('scouter.tabs.tasks')],
     ['activity',    t('scouter.tabs.activity')],
   ]
@@ -243,6 +255,24 @@ export default function ScouterDetailPage() {
           emptyKey="scouter.empty.brands"
           renderItem={b => b.name || String(b.id)}
           subLine={b => b.ciudad || null}
+        />
+      )}
+
+      {tab === 'opportunities' && (
+        <EntityList
+          items={entities.opportunities}
+          emptyKey="scouter.empty.opportunities"
+          renderItem={o => o.title || String(o.id)}
+          subLine={o => o.status || null}
+        />
+      )}
+
+      {tab === 'collaborations' && (
+        <EntityList
+          items={entities.collaborations}
+          emptyKey="scouter.empty.collaborations"
+          renderItem={c => c.influencerName || c.brandName || String(c.id)}
+          subLine={c => c.status || null}
         />
       )}
 

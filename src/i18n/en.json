@@ -544,12 +544,16 @@
       "performance": "Performance",
       "influencers":  "Influencers",
       "brands":       "Brands",
+      "opportunities":"Opportunities",
+      "collaborations":"Collaborations",
       "tasks":        "Tasks",
       "activity":     "Activity"
     },
     "empty": {
       "influencers": "No influencers assigned",
       "brands":      "No brands assigned",
+      "opportunities":"No opportunities assigned",
+      "collaborations":"No collaborations",
       "tasks":       "No pending tasks"
     }
   },

@@ -544,12 +544,16 @@
       "performance": "Rendimiento",
       "influencers":  "Influencers",
       "brands":       "Marcas",
+      "opportunities":"Oportunidades",
+      "collaborations":"Colaboraciones",
       "tasks":        "Tareas",
       "activity":     "Actividad"
     },
     "empty": {
       "influencers": "Sin influencers asignados",
       "brands":      "Sin marcas asignadas",
+      "opportunities":"Sin oportunidades asignadas",
+      "collaborations":"Sin colaboraciones",
       "tasks":       "Sin tareas pendientes"
     }
   },
