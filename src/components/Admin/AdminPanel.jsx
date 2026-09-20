@@ -4,7 +4,7 @@ import {
   getSystemConfig, saveSystemConfig, approveUser, blockUser, unblockUser, updateUser,
   deleteUser, getRolePerms, logActivity, timeAgo, genId, getGeography, setUserEcosistemas,
 } from '../../lib/auth.js'
-import { dbGetGeography, dbCreateCity, dbCreateCountry, dbUpdateCity, dbUpdateCountry } from '../../lib/database.js'
+import { dbGetGeography, dbCreateCity } from '../../lib/database.js'
 
 // ─── Constants ────────────────────────────────────────────────
 const ALL_ECOS = [
@@ -61,7 +61,7 @@ const Avatar = ({ user, size=34 }) => (
 )
 
 const Checkbox = ({ checked, onChange, label }) => (
-  <label style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer', fontSize:13, color:'var(--text-secondary)', userSelect:'none' }}>
+  <label style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer', fontSize:13, color:'#C4B5FD', userSelect:'none' }}>
     <div onClick={() => onChange(!checked)} style={{
       width:18, height:18, borderRadius:5, border:`2px solid ${checked?'#8B5CF6':'rgba(139,92,246,0.3)'}`,
       background:checked?'#8B5CF6':'transparent', display:'flex', alignItems:'center', justifyContent:'center',
@@ -85,7 +85,7 @@ const SectionBtn = ({ id, label, icon, active, badge, onClick, compact }) => (
     transition:'all 0.2s', textAlign:'left',
     whiteSpace: compact ? 'nowrap' : 'normal',
     background: active ? 'rgba(139,92,246,0.22)' : 'transparent',
-    color: active ? '#A78BFA' : 'var(--text-secondary)',
+    color: active ? '#A78BFA' : 'rgba(196,181,253,0.6)',
     border: active ? '1px solid rgba(139,92,246,0.4)' : '1px solid transparent',
     fontSize: compact ? 12 : 13, fontWeight: active ? 600 : 400,
   }}>
@@ -152,7 +152,7 @@ const EditUserModal = ({ user, onSave, onClose, currentUser }) => {
   const tabStyle = (t) => ({
     padding:'8px 14px', borderRadius:8, fontSize:12, fontWeight:600, border:'none', cursor:'pointer',
     background: tab===t ? 'rgba(139,92,246,0.25)' : 'transparent',
-    color: tab===t ? '#A78BFA' : 'var(--text-tertiary)',
+    color: tab===t ? '#A78BFA' : 'rgba(196,181,253,0.5)',
     transition:'all 0.15s',
   })
 
@@ -165,7 +165,7 @@ const EditUserModal = ({ user, onSave, onClose, currentUser }) => {
           <Avatar user={user} size={42}/>
           <div>
             <div style={{ fontSize:16, fontWeight:700, color:'#F9FAFB' }}>{user.nombre}</div>
-            <div style={{ fontSize:12, color:'var(--text-secondary)' }}>{user.email}</div>
+            <div style={{ fontSize:12, color:'rgba(196,181,253,0.6)' }}>{user.email}</div>
           </div>
           <button onClick={onClose} style={{ marginLeft:'auto', width:30, height:30, borderRadius:8, background:'rgba(239,68,68,0.12)', border:'1px solid rgba(239,68,68,0.25)', color:'#F87171', fontSize:16, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>×</button>
         </div>
@@ -183,22 +183,22 @@ const EditUserModal = ({ user, onSave, onClose, currentUser }) => {
           {tab === 'info' && (
             <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
               <div>
-                <label style={{ fontSize:12, color:'var(--text-secondary)', display:'block', marginBottom:6 }}>Nombre completo</label>
+                <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:6 }}>Nombre completo</label>
                 <input className="input-field" value={form.nombre} onChange={e=>set('nombre',e.target.value)} style={{ width:'100%', padding:'9px 12px', background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.25)', borderRadius:8, color:'#F9FAFB', fontSize:13, outline:'none', boxSizing:'border-box' }}/>
               </div>
               <div>
-                <label style={{ fontSize:12, color:'var(--text-secondary)', display:'block', marginBottom:6 }}>Sobrenombre / Apodo</label>
+                <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:6 }}>Sobrenombre / Apodo</label>
                 <input className="input-field" value={form.sobrenombre} onChange={e=>set('sobrenombre',e.target.value)} placeholder="Opcional" style={{ width:'100%', padding:'9px 12px', background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.25)', borderRadius:8, color:'#F9FAFB', fontSize:13, outline:'none', boxSizing:'border-box' }}/>
               </div>
               <div style={{ display:'grid', gridTemplateColumns: window.innerWidth < 640 ? '1fr' : '1fr 1fr', gap:12 }}>
                 <div>
-                  <label style={{ fontSize:12, color:'var(--text-secondary)', display:'block', marginBottom:6 }}>Rol</label>
+                  <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:6 }}>Rol</label>
                   <select value={form.rol} onChange={e=>applyRoleDefaults(e.target.value)} disabled={isSA} style={{ width:'100%', padding:'9px 12px', background:'rgba(18,10,40,0.95)', border:'1px solid rgba(139,92,246,0.25)', borderRadius:8, color:'#F9FAFB', fontSize:13, outline:'none', cursor:isSA?'not-allowed':'pointer' }}>
                     {ROLES.map(r=><option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize:12, color:'var(--text-secondary)', display:'block', marginBottom:6 }}>Estado</label>
+                  <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:6 }}>Estado</label>
                   <select value={form.estado} onChange={e=>set('estado',e.target.value)} disabled={isSA} style={{ width:'100%', padding:'9px 12px', background:'rgba(18,10,40,0.95)', border:'1px solid rgba(139,92,246,0.25)', borderRadius:8, color:'#F9FAFB', fontSize:13, outline:'none', cursor:isSA?'not-allowed':'pointer' }}>
                     <option value="pendiente">Pendiente</option>
                     <option value="aprobado">Aprobado</option>
@@ -214,7 +214,7 @@ const EditUserModal = ({ user, onSave, onClose, currentUser }) => {
             <div>
               <div style={{ marginBottom:20 }}>
                 <div style={{ fontSize:13, fontWeight:600, color:'#A78BFA', marginBottom:4 }}>Ecosistemas con acceso</div>
-                <div style={{ fontSize:11, color:'var(--text-tertiary)', marginBottom:12 }}>Se guarda en user_roles. Aplica solo a usuarios con rol activo en la base.</div>
+                <div style={{ fontSize:11, color:'rgba(196,181,253,0.5)', marginBottom:12 }}>Se guarda en user_roles. Aplica solo a usuarios con rol activo en la base.</div>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
                   {ALL_ECOS.map(eco => (
                     <Checkbox key={eco.id} checked={form.ecosistemas.includes(eco.id) || form.rol==='super_admin' || form.rol==='admin'}
@@ -240,7 +240,7 @@ const EditUserModal = ({ user, onSave, onClose, currentUser }) => {
 
           {tab === 'notas' && (
             <div>
-              <label style={{ fontSize:12, color:'var(--text-secondary)', display:'block', marginBottom:8 }}>Notas internas del administrador</label>
+              <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:8 }}>Notas internas del administrador</label>
               <textarea value={form.notas_admin} onChange={e=>set('notas_admin',e.target.value)}
                 placeholder="Notas privadas sobre este usuario..."
                 rows={8}
@@ -283,7 +283,7 @@ const DashboardSection = ({ users, log }) => {
           <div key={st.label} style={{ background:'rgba(139,92,246,0.07)', border:'1px solid rgba(139,92,246,0.2)', borderRadius:12, padding:'16px 18px', display:'flex', flexDirection:'column', gap:8 }}>
             <div style={{ fontSize:24 }}>{st.icon}</div>
             <div style={{ fontSize:28, fontWeight:800, color:st.color }}>{st.value}</div>
-            <div style={{ fontSize:12, color:'var(--text-secondary)' }}>{st.label}</div>
+            <div style={{ fontSize:12, color:'rgba(196,181,253,0.7)' }}>{st.label}</div>
           </div>
         ))}
       </div>
@@ -300,15 +300,15 @@ const DashboardSection = ({ users, log }) => {
 
       <div style={{ fontSize:14, fontWeight:600, color:'#A78BFA', marginBottom:12 }}>Últimos inicios de sesión</div>
       <div style={{ background:'rgba(139,92,246,0.05)', border:'1px solid rgba(139,92,246,0.15)', borderRadius:12, overflow:'hidden' }}>
-        {logins.length === 0 && <div style={{ padding:'24px', textAlign:'center', color:'var(--text-tertiary)', fontSize:13 }}>Sin registros aún</div>}
+        {logins.length === 0 && <div style={{ padding:'24px', textAlign:'center', color:'rgba(196,181,253,0.5)', fontSize:13 }}>Sin registros aún</div>}
         {logins.map((l,i) => (
           <div key={l.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 16px', borderBottom: i<logins.length-1?'1px solid rgba(139,92,246,0.1)':'none' }}>
             <span style={{ fontSize:14 }}>⚪</span>
             <div style={{ flex:1 }}>
               <span style={{ fontSize:13, color:'#F9FAFB', fontWeight:500 }}>{l.userName}</span>
-              <span style={{ fontSize:12, color:'var(--text-tertiary)', marginLeft:8 }}>{l.detalle}</span>
+              <span style={{ fontSize:12, color:'rgba(196,181,253,0.5)', marginLeft:8 }}>{l.detalle}</span>
             </div>
-            <span style={{ fontSize:11, color:'var(--text-tertiary)' }}>{timeAgo(l.created_at)}</span>
+            <span style={{ fontSize:11, color:'rgba(196,181,253,0.4)' }}>{timeAgo(l.created_at)}</span>
           </div>
         ))}
       </div>
@@ -499,7 +499,7 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser, pendingActi
       {/* User list */}
       <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
         {filtered.length === 0 && (
-          <div style={{ textAlign:'center', padding:40, color:'var(--text-tertiary)', fontSize:14 }}>Sin usuarios</div>
+          <div style={{ textAlign:'center', padding:40, color:'rgba(196,181,253,0.4)', fontSize:14 }}>Sin usuarios</div>
         )}
         {filtered.map(u => (
           <div key={u.id} style={{ background:'rgba(139,92,246,0.06)', border:'1px solid rgba(139,92,246,0.18)', borderRadius:12, padding:'14px 16px', display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
@@ -507,10 +507,10 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser, pendingActi
             <div style={{ flex:1, minWidth:160 }}>
               <div style={{ fontSize:14, fontWeight:600, color:'#F9FAFB' }}>
                 {u.nombre}
-                {u.sobrenombre && <span style={{ fontSize:11, color:'var(--text-tertiary)', marginLeft:8 }}>"{u.sobrenombre}"</span>}
+                {u.sobrenombre && <span style={{ fontSize:11, color:'rgba(196,181,253,0.5)', marginLeft:8 }}>"{u.sobrenombre}"</span>}
               </div>
-              <div style={{ fontSize:11, color:'var(--text-tertiary)' }}>{u.email}</div>
-              <div style={{ fontSize:10, color:'var(--text-tertiary)', marginTop:2 }}>Último acceso: {timeAgo(u.ultimo_acceso)}</div>
+              <div style={{ fontSize:11, color:'rgba(196,181,253,0.5)' }}>{u.email}</div>
+              <div style={{ fontSize:10, color:'rgba(196,181,253,0.35)', marginTop:2 }}>Último acceso: {timeAgo(u.ultimo_acceso)}</div>
               {accessLabel(u) && (
                 <div style={{ fontSize:10, color:'rgba(34,211,238,0.85)', marginTop:3 }}>🔑 {accessLabel(u)}</div>
               )}
@@ -564,7 +564,7 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser, pendingActi
             <h4 style={{ fontSize:16, fontWeight:700, marginBottom:8, color:'#F9FAFB' }}>
               {approveMode === 'reassign' ? 'Roles y ciudades' : 'Aprobar usuario'}
             </h4>
-            <p style={{ fontSize:13, color:'var(--text-secondary)', marginBottom:16 }}>
+            <p style={{ fontSize:13, color:'rgba(196,181,253,0.7)', marginBottom:16 }}>
               {approveMode === 'reassign' ? 'Reasignando accesos de ' : 'Aprobando a '}
               <strong style={{color:'#A78BFA'}}>{approveModal.nombre}</strong>
             </p>
@@ -575,7 +575,7 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser, pendingActi
               </div>
             )}
 
-            <label style={{ fontSize:12, color:'var(--text-secondary)', display:'block', marginBottom:6 }}>Asignar rol inicial</label>
+            <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:6 }}>Asignar rol inicial</label>
             <select style={{...inpStyle, width:'100%', marginBottom:14, cursor:'pointer'}}
               value={approveRol} onChange={e=>{ setApproveRol(e.target.value); setApproveGeoIds([]); setApproveAllScope(false) }}>
               {ROLES.filter(r=>r!=='super_admin').map(r=><option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
@@ -634,7 +634,7 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser, pendingActi
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)', zIndex:4000, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }} onClick={() => setBlockModal(null)}>
           <div style={{ background:'rgba(18,10,40,0.97)', border:'1px solid rgba(239,68,68,0.3)', borderRadius:16, padding:28, width:'100%', maxWidth:380 }} onClick={e=>e.stopPropagation()}>
             <h4 style={{ fontSize:16, fontWeight:700, marginBottom:8, color:'#F9FAFB' }}>Bloquear usuario</h4>
-            <p style={{ fontSize:13, color:'var(--text-secondary)', marginBottom:16 }}>Bloqueando a <strong style={{color:'#F87171'}}>{blockModal.nombre}</strong></p>
+            <p style={{ fontSize:13, color:'rgba(196,181,253,0.7)', marginBottom:16 }}>Bloqueando a <strong style={{color:'#F87171'}}>{blockModal.nombre}</strong></p>
             <textarea value={blockMotivo} onChange={e=>setBlockMotivo(e.target.value)} placeholder="Motivo (opcional)..." rows={3} style={{ width:'100%', padding:'9px 12px', background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:8, color:'#F9FAFB', fontSize:13, resize:'none', outline:'none', boxSizing:'border-box', fontFamily:'inherit', marginBottom:16 }}/>
             <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
               <button onClick={() => setBlockModal(null)} style={{...inpStyle, cursor:'pointer'}}>Cancelar</button>
@@ -649,7 +649,7 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser, pendingActi
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)', zIndex:4000, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }} onClick={() => setDelConfirm(null)}>
           <div style={{ background:'rgba(18,10,40,0.97)', border:'1px solid rgba(239,68,68,0.3)', borderRadius:16, padding:28, width:'100%', maxWidth:380 }} onClick={e=>e.stopPropagation()}>
             <h4 style={{ fontSize:16, fontWeight:700, marginBottom:8, color:'#F87171' }}>⚠️ Desactivar usuario</h4>
-            <p style={{ fontSize:13, color:'var(--text-secondary)', marginBottom:16 }}>Escribí <strong style={{color:'#F87171'}}>DESACTIVAR</strong> para confirmar. El usuario quedará bloqueado y sin roles activos. <strong style={{color:'#F9FAFB'}}>{delConfirm.nombre}</strong></p>
+            <p style={{ fontSize:13, color:'rgba(196,181,253,0.7)', marginBottom:16 }}>Escribí <strong style={{color:'#F87171'}}>DESACTIVAR</strong> para confirmar. El usuario quedará bloqueado y sin roles activos. <strong style={{color:'#F9FAFB'}}>{delConfirm.nombre}</strong></p>
             <input value={delText} onChange={e=>setDelText(e.target.value)} placeholder="DESACTIVAR" style={{...inpStyle, width:'100%', marginBottom:16, boxSizing:'border-box'}}/>
             <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
               <button onClick={() => setDelConfirm(null)} style={{...inpStyle, cursor:'pointer'}}>Cancelar</button>
@@ -704,21 +704,21 @@ const MatrizSection = ({ users: initialUsers, onRefresh }) => {
   return (
     <div>
       <h3 style={{ fontSize:18, fontWeight:700, marginBottom:8, color:'#F9FAFB' }}>Matriz de Permisos</h3>
-      <p style={{ fontSize:13, color:'var(--text-secondary)', marginBottom:20 }}>Click en cada celda para activar/desactivar el acceso en user_roles. Los admin tienen acceso total.</p>
+      <p style={{ fontSize:13, color:'rgba(196,181,253,0.6)', marginBottom:20 }}>Click en cada celda para activar/desactivar el acceso en user_roles. Los admin tienen acceso total.</p>
       <div style={{ overflowX:'auto' }}>
         <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
           <thead>
             <tr style={{ borderBottom:'1px solid rgba(139,92,246,0.25)' }}>
-              <th style={{ textAlign:'left', padding:'10px 12px', color:'var(--text-secondary)', fontWeight:600, whiteSpace:'nowrap' }}>Usuario</th>
+              <th style={{ textAlign:'left', padding:'10px 12px', color:'rgba(196,181,253,0.7)', fontWeight:600, whiteSpace:'nowrap' }}>Usuario</th>
               <th style={{ textAlign:'left', padding:'10px 8px', color:'rgba(34,211,238,0.7)', fontWeight:600, whiteSpace:'nowrap', fontSize:11 }}>Accesos reales</th>
               {ALL_ECOS.map(e => (
-                <th key={e.id} style={{ padding:'10px 8px', color:'var(--text-secondary)', fontWeight:600, textAlign:'center', whiteSpace:'nowrap', fontSize:11 }}>{e.label}</th>
+                <th key={e.id} style={{ padding:'10px 8px', color:'rgba(196,181,253,0.7)', fontWeight:600, textAlign:'center', whiteSpace:'nowrap', fontSize:11 }}>{e.label}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {nonAdmin.length === 0 && (
-              <tr><td colSpan={ALL_ECOS.length+2} style={{ textAlign:'center', padding:'32px', color:'var(--text-tertiary)', fontSize:13 }}>No hay usuarios editor/viewer/custom</td></tr>
+              <tr><td colSpan={ALL_ECOS.length+2} style={{ textAlign:'center', padding:'32px', color:'rgba(196,181,253,0.4)', fontSize:13 }}>No hay usuarios editor/viewer/custom</td></tr>
             )}
             {nonAdmin.map((u,i) => (
               <tr key={u.id} style={{ borderBottom:'1px solid rgba(139,92,246,0.1)', background: i%2===0 ? 'rgba(139,92,246,0.03)' : 'transparent' }}>
@@ -727,7 +727,7 @@ const MatrizSection = ({ users: initialUsers, onRefresh }) => {
                     <Avatar user={u} size={28}/>
                     <div>
                       <div style={{ fontSize:12, fontWeight:600, color:'#F9FAFB', whiteSpace:'nowrap' }}>{u.nombre}</div>
-                      <div style={{ fontSize:10, color:'var(--text-tertiary)' }}>{ROLE_LABEL[u.rol]}</div>
+                      <div style={{ fontSize:10, color:'rgba(196,181,253,0.4)' }}>{ROLE_LABEL[u.rol]}</div>
                     </div>
                   </div>
                 </td>
@@ -802,23 +802,23 @@ const ActividadSection = ({ users }) => {
         <button onClick={() => getActivityLog().then(setLog).catch(()=>{})} style={{...inpStyle, cursor:'pointer'}}>🔄 Actualizar</button>
       </div>
 
-      <div style={{ fontSize:12, color:'var(--text-tertiary)', marginBottom:12 }}>{filtered.length} registros</div>
+      <div style={{ fontSize:12, color:'rgba(196,181,253,0.5)', marginBottom:12 }}>{filtered.length} registros</div>
 
       <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
         {filtered.length === 0 && (
-          <div style={{ textAlign:'center', padding:'40px', color:'var(--text-tertiary)', fontSize:13 }}>Sin actividad registrada</div>
+          <div style={{ textAlign:'center', padding:'40px', color:'rgba(196,181,253,0.4)', fontSize:13 }}>Sin actividad registrada</div>
         )}
         {filtered.slice(0,100).map(e => (
           <div key={e.id} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'10px 14px', background:'rgba(139,92,246,0.05)', border:'1px solid rgba(139,92,246,0.12)', borderRadius:10 }}>
             <span style={{ fontSize:14, flexShrink:0 }}>{ACTION_ICON[e.accion] || '⚡'}</span>
             <div style={{ flex:1, minWidth:0 }}>
               <span style={{ fontSize:13, color:'#F9FAFB', fontWeight:500 }}>{e.userName}</span>
-              <span style={{ fontSize:12, color:'var(--text-secondary)', marginLeft:6 }}>{e.detalle}</span>
+              <span style={{ fontSize:12, color:'rgba(196,181,253,0.6)', marginLeft:6 }}>{e.detalle}</span>
               {e.seccion && e.seccion !== 'sistema' && (
-                <span style={{ fontSize:10, color:'var(--text-tertiary)', marginLeft:6 }}>— {e.seccion}</span>
+                <span style={{ fontSize:10, color:'rgba(196,181,253,0.35)', marginLeft:6 }}>— {e.seccion}</span>
               )}
             </div>
-            <span style={{ fontSize:11, color:'var(--text-tertiary)', flexShrink:0 }}>{timeAgo(e.created_at)}</span>
+            <span style={{ fontSize:11, color:'rgba(196,181,253,0.35)', flexShrink:0 }}>{timeAgo(e.created_at)}</span>
           </div>
         ))}
       </div>
@@ -851,7 +851,7 @@ const MonitorSection = ({ users }) => {
 
       <div style={{ fontSize:14, fontWeight:600, color:'#A78BFA', marginBottom:12 }}>Activos última hora</div>
       <div style={{ display:'flex', flexWrap:'wrap', gap:10, marginBottom:24 }}>
-        {activeLast1h.length === 0 && <div style={{ color:'var(--text-tertiary)', fontSize:13 }}>Sin actividad reciente</div>}
+        {activeLast1h.length === 0 && <div style={{ color:'rgba(196,181,253,0.4)', fontSize:13 }}>Sin actividad reciente</div>}
         {activeLast1h.map(e => {
           const u = users.find(x => x.id === e.userId) || { avatar:e.userName?.slice(0,2)||'?', avatarColor:'#8B5CF6', nombre:e.userName }
           return (
@@ -859,7 +859,7 @@ const MonitorSection = ({ users }) => {
               <Avatar user={u} size={26}/>
               <div>
                 <div style={{ fontSize:12, fontWeight:600, color:'#F9FAFB' }}>{u.nombre}</div>
-                <div style={{ fontSize:10, color:'var(--text-tertiary)' }}>{timeAgo(e.created_at)}</div>
+                <div style={{ fontSize:10, color:'rgba(196,181,253,0.5)' }}>{timeAgo(e.created_at)}</div>
               </div>
             </div>
           )
@@ -871,243 +871,10 @@ const MonitorSection = ({ users }) => {
         {recent.map(e => (
           <div key={e.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 14px', background:'rgba(139,92,246,0.05)', border:'1px solid rgba(139,92,246,0.12)', borderRadius:8 }}>
             <span style={{ fontSize:13 }}>{ACTION_ICON[e.accion]||'⚡'}</span>
-            <span style={{ flex:1, fontSize:12, color:'var(--text-secondary)' }}><strong style={{color:'#F9FAFB'}}>{e.userName}</strong> — {e.detalle}</span>
-            <span style={{ fontSize:11, color:'var(--text-tertiary)' }}>{timeAgo(e.created_at)}</span>
+            <span style={{ flex:1, fontSize:12, color:'#C4B5FD' }}><strong style={{color:'#F9FAFB'}}>{e.userName}</strong> — {e.detalle}</span>
+            <span style={{ fontSize:11, color:'rgba(196,181,253,0.4)' }}>{timeAgo(e.created_at)}</span>
           </div>
         ))}
-      </div>
-    </div>
-  )
-}
-
-// ─── Section: Geografía ────────────────────────────────────────
-const GEO_RLS_MSG = 'Crear o editar geografía requiere rol super_admin o network_direction.'
-
-const GeografiaSection = () => {
-  const [regions,   setRegions]   = useState([])
-  const [countries, setCountries] = useState([])
-  const [cities,    setCities]    = useState([])
-  const [usage,     setUsage]     = useState({}) // cityId → { brands, influencers, scouters }
-  const [loading,   setLoading]   = useState(true)
-  const [error,     setError]     = useState(null)
-
-  // New country form
-  const [newCountry, setNewCountry] = useState({ name:'', code:'', regionId:'', currency:'' })
-  const [savingCountry, setSavingCountry] = useState(false)
-
-  // New city form
-  const [newCity, setNewCity] = useState({ name:'', countryId:'', timezone:'' })
-  const [savingCity, setSavingCity] = useState(false)
-
-  const loadAll = useCallback(async () => {
-    setLoading(true); setError(null)
-    try {
-      const [r, c, ci] = await Promise.all([
-        supabase.from('regions').select('*').order('name'),
-        supabase.from('countries').select('*').order('name'),
-        supabase.from('cities').select('*').order('name'),
-      ])
-      if (r.error) throw r.error
-      if (c.error) throw c.error
-      if (ci.error) throw ci.error
-      setRegions(r.data || [])
-      setCountries(c.data || [])
-      setCities(ci.data || [])
-
-      // Load entity counts per city in one query each
-      const [brands, influencers, scouters] = await Promise.all([
-        supabase.from('brands').select('city_id').not('city_id','is',null),
-        supabase.from('influencers').select('city_id').not('city_id','is',null),
-        supabase.from('scouters').select('city_id').not('city_id','is',null),
-      ])
-      const counts = {}
-      ;[...(brands.data||[])].forEach(x => { counts[x.city_id] = counts[x.city_id] || { brands:0, influencers:0, scouters:0 }; counts[x.city_id].brands++ })
-      ;[...(influencers.data||[])].forEach(x => { counts[x.city_id] = counts[x.city_id] || { brands:0, influencers:0, scouters:0 }; counts[x.city_id].influencers++ })
-      ;[...(scouters.data||[])].forEach(x => { counts[x.city_id] = counts[x.city_id] || { brands:0, influencers:0, scouters:0 }; counts[x.city_id].scouters++ })
-      setUsage(counts)
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => { loadAll() }, [loadAll])
-
-  const handleCreateCountry = async (e) => {
-    e.preventDefault()
-    if (!newCountry.name.trim()) return
-    setSavingCountry(true); setError(null)
-    try {
-      await dbCreateCountry({ name: newCountry.name.trim(), code: newCountry.code || null, regionId: newCountry.regionId || null, currency: newCountry.currency || null })
-      setNewCountry({ name:'', code:'', regionId:'', currency:'' })
-      await loadAll()
-    } catch (e) {
-      setError(/row-level security/i.test(e.message) ? GEO_RLS_MSG : e.message)
-    } finally { setSavingCountry(false) }
-  }
-
-  const handleCreateCity = async (e) => {
-    e.preventDefault()
-    if (!newCity.name.trim() || !newCity.countryId) return
-    setSavingCity(true); setError(null)
-    try {
-      await dbCreateCity({ name: newCity.name.trim(), countryId: newCity.countryId, timezone: newCity.timezone || null })
-      setNewCity({ name:'', countryId:'', timezone:'' })
-      await loadAll()
-    } catch (e) {
-      setError(/row-level security/i.test(e.message) ? GEO_RLS_MSG : e.message)
-    } finally { setSavingCity(false) }
-  }
-
-  const handleToggleCity = async (city) => {
-    const u = usage[city.id]
-    const total = u ? (u.brands + u.influencers + u.scouters) : 0
-    if (city.active && total > 0) {
-      const msg = `Esta ciudad tiene ${total} entidades asociadas. Al desactivarla dejan de aparecer en los selectores. ¿Continuar?`
-      if (!window.confirm(msg)) return
-    }
-    try {
-      await dbUpdateCity(city.id, { active: !city.active })
-      await loadAll()
-    } catch (e) {
-      setError(/row-level security/i.test(e.message) ? GEO_RLS_MSG : e.message)
-    }
-  }
-
-  const handleToggleCountry = async (country) => {
-    try {
-      await dbUpdateCountry(country.id, { active: !country.active })
-      await loadAll()
-    } catch (e) {
-      setError(/row-level security/i.test(e.message) ? GEO_RLS_MSG : e.message)
-    }
-  }
-
-  const S = { // shared inline styles
-    card:  { background:'rgba(139,92,246,0.04)', border:'1px solid rgba(139,92,246,0.15)', borderRadius:12, padding:16, marginBottom:16 },
-    label: { fontSize:10, fontWeight:700, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, display:'block', marginBottom:4 },
-    input: { width:'100%', padding:'7px 10px', borderRadius:8, background:'rgba(139,92,246,0.07)', border:'1px solid rgba(139,92,246,0.25)', color:'var(--text-primary)', fontSize:12, outline:'none' },
-    btn:   { padding:'7px 14px', borderRadius:8, background:'rgba(139,92,246,0.15)', border:'1px solid rgba(139,92,246,0.4)', color:'var(--text-secondary)', fontSize:12, fontWeight:700, cursor:'pointer' },
-    row:   { display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 10px', borderRadius:8, marginBottom:4, background:'rgba(139,92,246,0.03)', border:'1px solid rgba(139,92,246,0.08)' },
-  }
-
-  const countryMap = Object.fromEntries(countries.map(c => [c.id, c.name]))
-
-  if (loading) return <div style={{ padding:24, textAlign:'center', color:'var(--text-secondary)', fontSize:12 }}>Cargando…</div>
-
-  return (
-    <div style={{ padding:20, maxWidth:700, overflowY:'auto' }}>
-      <div style={{ fontSize:16, fontWeight:700, color:'var(--text-primary)', marginBottom:16 }}>🌍 Geografía</div>
-
-      {error && (
-        <div style={{ fontSize:12, color:'#F87171', background:'rgba(248,113,113,0.08)', border:'1px solid rgba(248,113,113,0.25)', borderRadius:8, padding:'8px 12px', marginBottom:16 }}>
-          {error}
-        </div>
-      )}
-
-      {/* ── PAÍSES ── */}
-      <div style={S.card}>
-        <div style={{ fontSize:13, fontWeight:700, color:'var(--text-primary)', marginBottom:12 }}>Países</div>
-
-        {/* Form */}
-        <form onSubmit={handleCreateCountry} style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr auto', gap:6, marginBottom:14, alignItems:'flex-end' }}>
-          <div><label style={S.label}>Nombre *</label><input value={newCountry.name} onChange={e => setNewCountry(p => ({...p, name:e.target.value}))} placeholder="Argentina" style={S.input}/></div>
-          <div><label style={S.label}>Código</label><input value={newCountry.code} onChange={e => setNewCountry(p => ({...p, code:e.target.value}))} placeholder="AR" style={S.input}/></div>
-          <div><label style={S.label}>Región</label>
-            <select value={newCountry.regionId} onChange={e => setNewCountry(p => ({...p, regionId:e.target.value}))} style={S.input}>
-              <option value="">—</option>
-              {regions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-            </select>
-          </div>
-          <div><label style={S.label}>Moneda</label><input value={newCountry.currency} onChange={e => setNewCountry(p => ({...p, currency:e.target.value}))} placeholder="ARS" style={S.input}/></div>
-          <button type="submit" disabled={savingCountry || !newCountry.name.trim()} style={{ ...S.btn, height:32, alignSelf:'flex-end', whiteSpace:'nowrap' }}>
-            {savingCountry ? '…' : '+ Crear'}
-          </button>
-        </form>
-
-        {/* List */}
-        {countries.length === 0 ? (
-          <div style={{ fontSize:12, color:'var(--text-secondary)', textAlign:'center', padding:12 }}>Sin registros</div>
-        ) : (
-          countries.map(c => {
-            const cityCount = cities.filter(ci => ci.country_id === c.id).length
-            return (
-              <div key={c.id} style={{ ...S.row, opacity: c.active ? 1 : 0.5 }}>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <span style={{ fontSize:13, fontWeight:600, color:'var(--text-primary)' }}>{c.name}</span>
-                  {c.code && <span style={{ fontSize:10, color:'var(--text-secondary)', marginLeft:6 }}>{c.code}</span>}
-                  <span style={{ fontSize:10, color:'var(--text-secondary)', marginLeft:8 }}>{cityCount} ciudad{cityCount !== 1 ? 'es' : ''}</span>
-                </div>
-                <button
-                  onClick={() => handleToggleCountry(c)}
-                  style={{ fontSize:10, fontWeight:700, padding:'3px 8px', borderRadius:6, cursor:'pointer', background: c.active ? 'rgba(52,211,153,0.1)' : 'rgba(248,113,113,0.1)', color: c.active ? '#34D399' : '#F87171', border: `1px solid ${c.active ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)'}` }}
-                >
-                  {c.active ? 'Activo' : 'Inactivo'}
-                </button>
-              </div>
-            )
-          })
-        )}
-      </div>
-
-      {/* ── CIUDADES ── */}
-      <div style={S.card}>
-        <div style={{ fontSize:13, fontWeight:700, color:'var(--text-primary)', marginBottom:12 }}>Ciudades</div>
-
-        {/* Form */}
-        <form onSubmit={handleCreateCity} style={{ display:'grid', gridTemplateColumns:'2fr 2fr 1fr auto', gap:6, marginBottom:14, alignItems:'flex-end' }}>
-          <div><label style={S.label}>Nombre *</label><input value={newCity.name} onChange={e => setNewCity(p => ({...p, name:e.target.value}))} placeholder="Buenos Aires" style={S.input}/></div>
-          <div><label style={S.label}>País *</label>
-            <select value={newCity.countryId} onChange={e => setNewCity(p => ({...p, countryId:e.target.value}))} style={S.input}>
-              <option value="">—</option>
-              {countries.filter(c => c.active).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-          <div><label style={S.label}>Zona horaria</label><input value={newCity.timezone} onChange={e => setNewCity(p => ({...p, timezone:e.target.value}))} placeholder="America/Argentina/Buenos_Aires" style={S.input}/></div>
-          <button type="submit" disabled={savingCity || !newCity.name.trim() || !newCity.countryId} style={{ ...S.btn, height:32, alignSelf:'flex-end', whiteSpace:'nowrap' }}>
-            {savingCity ? '…' : '+ Crear'}
-          </button>
-        </form>
-
-        {/* List grouped by country */}
-        {cities.length === 0 ? (
-          <div style={{ fontSize:12, color:'var(--text-secondary)', textAlign:'center', padding:12 }}>Sin registros</div>
-        ) : (
-          countries.map(c => {
-            const cc = cities.filter(ci => ci.country_id === c.id)
-            if (cc.length === 0) return null
-            return (
-              <div key={c.id} style={{ marginBottom:12 }}>
-                <div style={{ fontSize:10, fontWeight:700, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginBottom:6 }}>{c.name}</div>
-                {cc.map(city => {
-                  const u = usage[city.id] || { brands:0, influencers:0, scouters:0 }
-                  const total = u.brands + u.influencers + u.scouters
-                  return (
-                    <div key={city.id} style={{ ...S.row, opacity: city.active ? 1 : 0.5 }}>
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <span style={{ fontSize:12, fontWeight:600, color:'var(--text-primary)' }}>{city.name}</span>
-                        {total > 0 && (
-                          <span style={{ fontSize:10, color:'var(--text-secondary)', marginLeft:8 }}>
-                            {u.brands > 0 ? `${u.brands} marcas` : ''}
-                            {u.influencers > 0 ? `${u.brands > 0 ? ', ' : ''}${u.influencers} influencers` : ''}
-                            {u.scouters > 0 ? `${(u.brands + u.influencers) > 0 ? ', ' : ''}${u.scouters} scouters` : ''}
-                          </span>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => handleToggleCity(city)}
-                        style={{ fontSize:10, fontWeight:700, padding:'3px 8px', borderRadius:6, cursor:'pointer', background: city.active ? 'rgba(52,211,153,0.1)' : 'rgba(248,113,113,0.1)', color: city.active ? '#34D399' : '#F87171', border: `1px solid ${city.active ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)'}` }}
-                      >
-                        {city.active ? 'Activa' : 'Inactiva'}
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
-            )
-          })
-        )}
       </div>
     </div>
   )
@@ -1161,19 +928,19 @@ const ConfigSection = ({ currentUser }) => {
       <h3 style={{ fontSize:18, fontWeight:700, marginBottom:20, color:'#F9FAFB' }}>Configuración del Sistema</h3>
       <div style={{ display:'flex', flexDirection:'column', gap:16, maxWidth:500 }}>
         <div>
-          <label style={{ fontSize:12, color:'var(--text-secondary)', display:'block', marginBottom:6 }}>Nombre de la empresa</label>
+          <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:6 }}>Nombre de la empresa</label>
           <input style={inpStyle} value={cfg.empresa} onChange={e=>set('empresa',e.target.value)}/>
         </div>
         <div>
-          <label style={{ fontSize:12, color:'var(--text-secondary)', display:'block', marginBottom:6 }}>Mensaje de bienvenida</label>
+          <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:6 }}>Mensaje de bienvenida</label>
           <textarea style={{...inpStyle, resize:'vertical'}} rows={3} value={cfg.mensajeBienvenida} onChange={e=>set('mensajeBienvenida',e.target.value)}/>
         </div>
         <div>
-          <label style={{ fontSize:12, color:'var(--text-secondary)', display:'block', marginBottom:6 }}>Email del admin</label>
+          <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:6 }}>Email del admin</label>
           <input style={inpStyle} value={cfg.adminEmail} readOnly/>
         </div>
         <div>
-          <label style={{ fontSize:12, color:'var(--text-secondary)', display:'block', marginBottom:6 }}>Versión del sistema</label>
+          <label style={{ fontSize:12, color:'rgba(196,181,253,0.7)', display:'block', marginBottom:6 }}>Versión del sistema</label>
           <input style={inpStyle} value={cfg.version} readOnly/>
         </div>
         <button onClick={handleSave} style={{ padding:'11px 24px', borderRadius:9, background:'linear-gradient(135deg,#8B5CF6,#7C3AED)', border:'none', color:'white', fontWeight:700, fontSize:13, cursor:'pointer', boxShadow:'0 0 16px rgba(139,92,246,0.3)' }}>
@@ -1189,7 +956,7 @@ const ConfigSection = ({ currentUser }) => {
               📥 Exportar usuarios y accesos (JSON)
             </button>
           </div>
-          <div style={{ fontSize:11, color:'var(--text-tertiary)', marginTop:6 }}>
+          <div style={{ fontSize:11, color:'rgba(196,181,253,0.4)', marginTop:6 }}>
             El backup de los datos de negocio se hace desde el dashboard de Supabase, no desde acá.
           </div>
         </div>
@@ -1225,7 +992,7 @@ const PendientesSection = ({ users, onOpenApprove, onOpenReassign }) => {
         {total > 0 && <span style={{ background:'#EF4444', color:'white', borderRadius:10, fontSize:11, fontWeight:800, padding:'2px 8px' }}>{total}</span>}
       </div>
       {total === 0 && (
-        <div style={{ textAlign:'center', padding:48, color:'var(--text-tertiary)', fontSize:14 }}>
+        <div style={{ textAlign:'center', padding:48, color:'rgba(196,181,253,0.4)', fontSize:14 }}>
           ✅ Todo en orden — no hay usuarios con accesos pendientes o inconsistentes
         </div>
       )}
@@ -1243,7 +1010,7 @@ const PendientesSection = ({ users, onOpenApprove, onOpenReassign }) => {
                   <Avatar user={u} size={32}/>
                   <div style={{ flex:1, minWidth:120 }}>
                     <div style={{ fontSize:13, fontWeight:600, color:'#F9FAFB' }}>{u.nombre}</div>
-                    <div style={{ fontSize:11, color:'var(--text-tertiary)' }}>{u.email}</div>
+                    <div style={{ fontSize:11, color:'rgba(196,181,253,0.5)' }}>{u.email}</div>
                   </div>
                   <button onClick={() => g.onAction(u)}
                     style={{ padding:'6px 12px', borderRadius:7, background:'rgba(139,92,246,0.15)', border:'1px solid rgba(139,92,246,0.3)', color:'#A78BFA', fontSize:11, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>
@@ -1312,7 +1079,6 @@ export default function AdminPanel({ onClose, currentUser }) {
     { id:'permisos',    icon:'🔒', label:'Matriz Permisos', badge:0 },
     { id:'actividad',   icon:'📋', label:'Actividad',       badge:0 },
     { id:'monitor',     icon:'📡', label:'Monitor Live',    badge:0 },
-    { id:'geografia',   icon:'🌍', label:'Geografía',       badge:0 },
     { id:'config',      icon:'⚙️', label:'Configuración',   badge:0 },
     { id:'pendientes',  icon:'⚠️', label:'Pendientes',      badge:badgePendientes },
   ]
@@ -1324,7 +1090,6 @@ export default function AdminPanel({ onClose, currentUser }) {
       case 'permisos':   return <MatrizSection users={users} onRefresh={refreshUsers}/>
       case 'actividad':  return <ActividadSection users={users}/>
       case 'monitor':    return <MonitorSection users={users}/>
-      case 'geografia':  return <GeografiaSection/>
       case 'config':     return <ConfigSection currentUser={currentUser}/>
       case 'pendientes': return <PendientesSection users={users} onOpenApprove={openApprove} onOpenReassign={openReassign}/>
       default:           return null
@@ -1332,7 +1097,7 @@ export default function AdminPanel({ onClose, currentUser }) {
   }
 
   return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.85)', backdropFilter:'blur(8px)', zIndex:2500, display:'flex', alignItems:'center', justifyContent:'center', padding: isMobile ? 0 : 16, animation:'fadeIn 0.2s ease' }}>
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.85)', backdropFilter:'blur(10px)', zIndex:2500, display:'flex', alignItems:'center', justifyContent:'center', padding: isMobile ? 0 : 16, animation:'fadeIn 0.2s ease' }}>
       <div style={{
         width:'100%', maxWidth: isMobile ? '100%' : 1100,
         height: isMobile ? '100dvh' : '90vh',
@@ -1359,7 +1124,7 @@ export default function AdminPanel({ onClose, currentUser }) {
               <div style={{ fontSize:20 }}>⚙️</div>
               <div>
                 <div style={{ fontSize:14, fontWeight:800, color:'#F9FAFB' }}>Admin Panel</div>
-                <div style={{ fontSize:10, color:'var(--text-tertiary)' }}>{currentUser?.nombre}</div>
+                <div style={{ fontSize:10, color:'rgba(196,181,253,0.5)' }}>{currentUser?.nombre}</div>
               </div>
             </div>
           )}
