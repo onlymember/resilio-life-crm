@@ -1353,9 +1353,12 @@ export default function AdminPanel({ onClose, currentUser }) {
           borderBottom: isMobile ? '1px solid rgba(139,92,246,0.2)' : 'none',
           display:'flex', flexDirection: isMobile ? 'row' : 'column',
           padding: isMobile ? '6px 8px' : '20px 12px',
-          overflowX: isMobile ? 'auto' : 'visible',
+          // Las pestañas se envuelven en varias líneas en móvil en vez de scrollear:
+          // con 8 secciones las últimas (entre ellas Geografía) quedaban fuera de
+          // pantalla y nada indicaba que la fila se podía deslizar.
+          overflowX: 'visible',
           gap: isMobile ? 4 : 0,
-          alignItems: isMobile ? 'center' : 'stretch',
+          alignItems: isMobile ? 'flex-start' : 'stretch',
         }}>
           {!isMobile && (
             <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:24, paddingLeft:4 }}>
@@ -1366,7 +1369,7 @@ export default function AdminPanel({ onClose, currentUser }) {
               </div>
             </div>
           )}
-          <nav style={{ flex:1, display: isMobile ? 'flex' : 'block', gap: isMobile ? 4 : 0 }}>
+          <nav style={{ flex:1, display: isMobile ? 'flex' : 'block', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: isMobile ? 4 : 0 }}>
             {sections.map(s => (
               <SectionBtn key={s.id} {...s} active={section===s.id} onClick={setSection} compact={isMobile}/>
             ))}
