@@ -895,8 +895,9 @@ const GeografiaSection = () => {
   const [error,     setError]     = useState(null)
 
   // New country form
-  const [newCountry, setNewCountry] = useState({ name:'', code:'', regionId:'', currency:'' })
+  const [newCountry, setNewCountry] = useState({ name:'', code:'', regionId:'', currency:'', timezone:'' })
   const [savingCountry, setSavingCountry] = useState(false)
+  const countryReady = !!(newCountry.name.trim() && newCountry.code.trim() && newCountry.currency.trim() && newCountry.regionId && newCountry.timezone.trim())
 
   // New city form
   const [newCity, setNewCity] = useState({ name:'', countryId:'', timezone:'' })
@@ -939,11 +940,17 @@ const GeografiaSection = () => {
 
   const handleCreateCountry = async (e) => {
     e.preventDefault()
-    if (!newCountry.name.trim()) return
+    if (!countryReady) return
     setSavingCountry(true); setError(null)
     try {
-      await dbCreateCountry({ name: newCountry.name.trim(), code: newCountry.code || null, regionId: newCountry.regionId || null, currency: newCountry.currency || null })
-      setNewCountry({ name:'', code:'', regionId:'', currency:'' })
+      await dbCreateCountry({
+        name:     newCountry.name.trim(),
+        code:     newCountry.code.trim(),
+        regionId: newCountry.regionId,
+        currency: newCountry.currency.trim(),
+        timezone: newCountry.timezone.trim(),
+      })
+      setNewCountry({ name:'', code:'', regionId:'', currency:'', timezone:'' })
       await loadAll()
     } catch (e) {
       setError(/row-level security/i.test(e.message) ? GEO_RLS_MSG : e.message)
@@ -1014,20 +1021,27 @@ const GeografiaSection = () => {
         <div style={{ fontSize:13, fontWeight:700, color:'var(--text-primary)', marginBottom:12 }}>Países</div>
 
         {/* Form */}
-        <form onSubmit={handleCreateCountry} style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr auto', gap:6, marginBottom:14, alignItems:'flex-end' }}>
+        {/* Todos los campos son obligatorios: la tabla countries los exige NOT NULL. */}
+        <form onSubmit={handleCreateCountry} style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(110px, 1fr))', gap:6, marginBottom:14, alignItems:'flex-end' }}>
           <div><label style={S.label}>Nombre *</label><input value={newCountry.name} onChange={e => setNewCountry(p => ({...p, name:e.target.value}))} placeholder="Argentina" style={S.input}/></div>
-          <div><label style={S.label}>Código</label><input value={newCountry.code} onChange={e => setNewCountry(p => ({...p, code:e.target.value}))} placeholder="AR" style={S.input}/></div>
-          <div><label style={S.label}>Región</label>
+          <div><label style={S.label}>Código *</label><input value={newCountry.code} onChange={e => setNewCountry(p => ({...p, code:e.target.value}))} placeholder="AR" maxLength={3} style={S.input}/></div>
+          <div><label style={S.label}>Región *</label>
             <select value={newCountry.regionId} onChange={e => setNewCountry(p => ({...p, regionId:e.target.value}))} style={S.input}>
               <option value="">—</option>
               {regions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
             </select>
           </div>
-          <div><label style={S.label}>Moneda</label><input value={newCountry.currency} onChange={e => setNewCountry(p => ({...p, currency:e.target.value}))} placeholder="ARS" style={S.input}/></div>
-          <button type="submit" disabled={savingCountry || !newCountry.name.trim()} style={{ ...S.btn, height:32, alignSelf:'flex-end', whiteSpace:'nowrap' }}>
+          <div><label style={S.label}>Moneda *</label><input value={newCountry.currency} onChange={e => setNewCountry(p => ({...p, currency:e.target.value}))} placeholder="ARS" maxLength={4} style={S.input}/></div>
+          <div><label style={S.label}>Zona horaria *</label><input value={newCountry.timezone} onChange={e => setNewCountry(p => ({...p, timezone:e.target.value}))} placeholder="America/Argentina/Buenos_Aires" style={S.input}/></div>
+          <button type="submit" disabled={savingCountry || !countryReady} style={{ ...S.btn, height:32, alignSelf:'flex-end', whiteSpace:'nowrap', opacity: countryReady ? 1 : 0.5, cursor: countryReady ? 'pointer' : 'not-allowed' }}>
             {savingCountry ? '…' : '+ Crear'}
           </button>
         </form>
+        {regions.length === 0 && (
+          <div style={{ fontSize:11, color:'#FBBF24', marginBottom:12 }}>
+            No hay regiones cargadas y el país necesita una. Cargá al menos una fila en <code>regions</code> antes de crear países.
+          </div>
+        )}
 
         {/* List */}
         {countries.length === 0 ? (

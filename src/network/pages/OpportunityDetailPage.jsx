@@ -85,12 +85,13 @@ const fmtMoney = (n) => {
 function AddItemInline({ candidateId, actTypes, onAdded }) {
   const [form, setForm] = useState({ activationTypeId: '', quantity: 1, unitValue: '' })
   const [saving, setSaving] = useState(false)
+  const [error,  setError]  = useState(null)
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
   const valid = Number(form.quantity) > 0 && form.unitValue !== ''
 
   const handleAdd = async () => {
     if (!valid || saving) return
-    setSaving(true)
+    setSaving(true); setError(null)
     try {
       const item = await dbAddOpportunityInfluencerItem(
         candidateId, form.activationTypeId || null,
@@ -98,11 +99,19 @@ function AddItemInline({ candidateId, actTypes, onAdded }) {
       )
       onAdded(item)
       setForm({ activationTypeId: '', quantity: 1, unitValue: '' })
+    } catch (e) {
+      // Sin esto el click fallaba en silencio: no se agregaba nada y no se decía por qué.
+      setError(e.message)
     } finally { setSaving(false) }
   }
 
   return (
     <div style={{ display:'flex', gap:6, alignItems:'center', flexWrap:'wrap', marginTop:6 }}>
+      {error && (
+        <div style={{ flex:'1 1 100%', fontSize:10, color:'#F87171', background:'rgba(248,113,113,0.08)', borderRadius:6, padding:'3px 6px' }}>
+          {error}
+        </div>
+      )}
       <select value={form.activationTypeId} onChange={e => set('activationTypeId', e.target.value)}
         style={{ padding:'4px 6px', borderRadius:6, background:'rgba(139,92,246,0.07)', border:'1px solid var(--border-violet)', color:'var(--text-primary)', fontSize:11, flex:'1 1 100px' }}>
         <option value="">— {t('opportunities.influencers.type')} —</option>

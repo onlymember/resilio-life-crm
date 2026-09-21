@@ -779,6 +779,10 @@ export const dbSaveCollaboration = async (collab, userId) => {
   const uid = userId || await myId()
   if (!uid) throw new Error('Sesión expirada. Volvé a entrar.')
   const { id, ...rest } = collab
+  // collaborations.influencer_id es NOT NULL: sin influencer el insert muere con un
+  // error crudo de Postgres. El formulario ya lo pide, pero cualquier otra llamada
+  // (importador, automatización) merece un mensaje claro.
+  if (!id && !rest.influencerId) throw new Error('La colaboración necesita una influencer.')
   const row = {
     campaign_id:        rest.campaignId       || null,
     opportunity_id:     rest.opportunityId    || null,
@@ -1188,9 +1192,28 @@ export const dbCreateCity = async ({ name, countryId, slug = null, timezone = nu
   return data
 }
 
+// countries exige name, code, currency, region_id y timezone: todas NOT NULL y sin
+// default. Si falta cualquiera, Postgres rechaza el insert. Validamos acá para dar un
+// mensaje que se entienda en lugar del error crudo. code tiene UNIQUE, así que se
+// normaliza a mayúsculas para que "ar" y "AR" no terminen siendo dos países distintos.
 export const dbCreateCountry = async ({ name, code = null, regionId = null, currency = null, timezone = null }) => {
+  const faltan = []
+  if (!name || !name.trim())         faltan.push('nombre')
+  if (!code || !code.trim())         faltan.push('código (ej. AR)')
+  if (!currency || !currency.trim()) faltan.push('moneda (ej. ARS)')
+  if (!regionId)                     faltan.push('región')
+  if (!timezone || !timezone.trim()) faltan.push('zona horaria (ej. America/Argentina/Buenos_Aires)')
+  if (faltan.length) throw new Error(`Para crear un país falta: ${faltan.join(', ')}.`)
+
   const { data, error } = await supabase.from('countries')
-    .insert([{ name, code, region_id: regionId, currency, timezone, active: true }])
+    .insert([{
+      name: name.trim(),
+      code: code.trim().toUpperCase(),
+      region_id: regionId,
+      currency: currency.trim().toUpperCase(),
+      timezone: timezone.trim(),
+      active: true,
+    }])
     .select().single()
   if (error) throw friendly(error)
   _geoCache = null
@@ -1947,7 +1970,12 @@ export const dbAddOpportunityInfluencer = async (opportunityId, influencerId, no
   const { data, error } = await supabase.from('opportunity_influencers')
     .insert([{ opportunity_id: opportunityId, influencer_id: influencerId, notes, created_by: uid }])
     .select('*, influencers(id, name, username)').single()
-  if (error) throw friendly(error)
+  if (error) {
+    // UNIQUE (opportunity_id, influencer_id): si ya estaba, decirlo con nombre propio
+    // en lugar del "duplicate key" genérico.
+    if (/duplicate key/i.test(error.message || '')) throw new Error('Esa influencer ya está en la oportunidad.')
+    throw friendly(error)
+  }
   return rowToOppInfluencer(data)
 }
 
