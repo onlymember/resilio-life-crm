@@ -1172,12 +1172,18 @@ export const dbGetGeography = async (force = false) => {
   return _geoCache
 }
 
+// cities.slug es NOT NULL y tiene UNIQUE (country_id, slug): si no viene,
+// se genera del nombre. "San Carlos de Bariloche" -> "san-carlos-de-bariloche".
+const slugify = (s) => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+
 export const dbCreateCity = async ({ name, countryId, slug = null, timezone = null }) => {
+  const finalSlug = (slug && slug.trim()) || slugify(name)
+  if (!finalSlug) throw new Error('El nombre de la ciudad no es válido.')
   const { data, error } = await supabase.from('cities')
-    .insert([{ name, country_id: countryId, slug, timezone, active: true }])
+    .insert([{ name, country_id: countryId, slug: finalSlug, timezone, active: true }])
     .select()
     .single()
-  if (error) throw error
+  if (error) throw friendly(error)
   _geoCache = null
   return data
 }
