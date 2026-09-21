@@ -236,21 +236,39 @@ export const dbApproveUser = async (userId, rol = 'viewer', opts = {}) => {
     .is('revoked_at', null)
   if (revErr) throw revErr
 
-  // 3. Insertar la(s) fila(s) de rol nueva(s).
+  // 3. Otorgar la(s) fila(s) de rol nueva(s).
   //    scope='city'/'country'/'region' con varios ids => una fila por id
   //    (app_visible_city_ids() ya las une todas). scope='global' => una sola fila.
+  //
+  //    OJO: user_roles tiene un UNIQUE sobre (user_id, role, scope, scope_id) que
+  //    NO incluye revoked_at, así que una fila revocada sigue ocupando el lugar.
+  //    Insertar a ciegas rompe con "duplicate key" al reasignar el mismo rol en la
+  //    misma ciudad. Por eso: primero intentamos reactivar la fila existente y solo
+  //    insertamos si no había ninguna.
   const idsList = scope === 'global'
     ? [null]
     : (scopeIds && scopeIds.length ? scopeIds : [scopeId])
-  const rows = idsList.map(id => ({
-    user_id:     userId,
-    role:        rol,
-    scope:       scope,
-    scope_id:    id,
-    ecosistemas: ecos,
-  }))
-  const { error: rErr } = await supabase.from('user_roles').insert(rows)
-  if (rErr) throw rErr
+
+  for (const id of idsList) {
+    let q = supabase.from('user_roles')
+      .update({ revoked_at: null, ecosistemas: ecos })
+      .eq('user_id', userId).eq('role', rol).eq('scope', scope)
+    q = id === null ? q.is('scope_id', null) : q.eq('scope_id', id)
+
+    const { data: revived, error: upErr } = await q.select('id')
+    if (upErr) throw upErr
+
+    if (!revived || revived.length === 0) {
+      const { error: insErr } = await supabase.from('user_roles').insert([{
+        user_id:     userId,
+        role:        rol,
+        scope:       scope,
+        scope_id:    id,
+        ecosistemas: ecos,
+      }])
+      if (insErr) throw insErr
+    }
+  }
 
   // 4. Fila en scouters solo si el rol es scouter (columna real: status, no "active")
   if (rol === 'scouter') {
