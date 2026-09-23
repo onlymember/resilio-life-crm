@@ -139,6 +139,40 @@ const GlobalStyles = () => (
     ::-webkit-scrollbar-thumb { background: var(--primary-violet-dark); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--primary-violet); }
     input, textarea, select { font-family: inherit; outline: none; border: none; background: transparent; color: var(--text-primary); font-size: 16px; }
+
+    /* ── Controles nativos sobre fondo oscuro ──────────────────────
+       El desplegable de un <select> lo dibuja el sistema operativo,
+       no la página: hereda el color de texto (casi blanco) pero NO
+       el fondo, que queda blanco. Resultado: blanco sobre blanco.
+       Antes esto solo estaba cubierto por `.select-field option`, y
+       Network no usa esa clase — usa estilos inline. La regla va por
+       elemento, no por clase, para que valga también en lo que se
+       escriba de acá en adelante. */
+    select option, select optgroup { background-color: var(--bg-tertiary); color: var(--text-primary); }
+
+    /* El ícono del calendario también lo dibuja el navegador, y viene
+       casi negro: invisible sobre el violeta oscuro de los campos. */
+    :root:not([data-theme="light"]) input[type="date"]::-webkit-calendar-picker-indicator,
+    :root:not([data-theme="light"]) input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+    :root:not([data-theme="light"]) input[type="time"]::-webkit-calendar-picker-indicator,
+    :root:not([data-theme="light"]) input[type="month"]::-webkit-calendar-picker-indicator { filter: invert(0.85); }
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator,
+    input[type="month"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.8; }
+
+    /* Placeholder: sin esto queda el gris por defecto del navegador,
+       pensado para fondo claro. */
+    input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 1; }
+
+    /* El autocompletado de Chrome pisa el fondo con blanco. */
+    input:-webkit-autofill, input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus, textarea:-webkit-autofill, select:-webkit-autofill {
+      -webkit-text-fill-color: var(--text-primary);
+      -webkit-box-shadow: 0 0 0 1000px var(--bg-tertiary) inset;
+      caret-color: var(--text-primary);
+    }
+
     button { cursor: pointer; font-family: inherit; border: none; background: none; touch-action: manipulation; transition: background var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard), opacity var(--dur-fast) var(--ease-standard); }
     button:active:not([disabled]) { transform: scale(0.97); transition: transform var(--dur-fast); }
     a { text-decoration: none; color: inherit; }
