@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Home, CheckSquare, Plus, Users, Building2, Briefcase, Handshake, Menu, X, LogOut, Bell } from 'lucide-react'
+import { Home, CheckSquare, Plus, Users, Menu, X, LogOut, Bell } from 'lucide-react'
 import CreateSheet from './components/CreateSheet.jsx'
+import { SPEED_DIAL_ITEMS } from './createOptions.js'
 import { NAV_SECTIONS } from './nav.js'
 import { t } from '../i18n/index.js'
 import { dbGetNotifications } from '../lib/database.js'
@@ -23,14 +24,6 @@ function fmtAt(at) {
   if (diffH < 24) return `${diffH}h`
   return `${Math.floor(diffH / 24)}d`
 }
-
-// Speed-dial options — same order as CreateSheet TypeButtons
-const SPEED_DIAL_ITEMS = [
-  { step: 'influencer',    labelKey: 'create.influencer.label',    Icon: Users,     color: '#8B5CF6' },
-  { step: 'brand',         labelKey: 'create.brand.label',         Icon: Building2, color: '#22D3EE' },
-  { step: 'opportunity',   labelKey: 'create.opportunity.label',   Icon: Briefcase, color: '#FBBF24' },
-  { step: 'collaboration', labelKey: 'create.collaboration.label', Icon: Handshake, color: '#34D399' },
-]
 
 function BellNavBtn() {
   const [notifs,    setNotifs]    = useState([])

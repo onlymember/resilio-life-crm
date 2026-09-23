@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, LogOut, Bell, X } from 'lucide-react'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { ChevronLeft, ChevronRight, LogOut, Bell, X, Plus } from 'lucide-react'
+import { SPEED_DIAL_ITEMS } from './createOptions.js'
 import { NAV_SECTIONS } from './nav.js'
 import { t } from '../i18n/index.js'
 import { dbGetNotifications } from '../lib/database.js'
@@ -104,6 +105,88 @@ function NotificationBell({ onNavigate }) {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ── FAB de escritorio ───────────────────────────────────────
+// En mobile el + vive en el bottom nav. En escritorio no existía
+// ninguno: crear algo dependía de que la pantalla actual tuviera su
+// propio botón, y Tareas, Calendario, Seguimiento, Notas, Command y
+// Scouters no lo tienen. Desde acá se crea cualquier entidad estés
+// donde estés.
+//
+// z-index 300: arriba del panel de notificaciones (200) y de la topbar
+// (10), abajo del CreateSheet (400/401) para que el sheet lo tape.
+function DesktopFab({ onOpenCreate }) {
+  const [open, setOpen] = useState(false)
+  const wrapRef = useRef(null)
+  const location = useLocation()
+
+  useEffect(() => { setOpen(false) }, [location.pathname])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey  = (e) => { if (e.key === 'Escape') setOpen(false) }
+    const onDown = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('keydown', onKey)
+    document.addEventListener('mousedown', onDown)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.removeEventListener('mousedown', onDown)
+    }
+  }, [open])
+
+  const select = (step) => { setOpen(false); onOpenCreate(step) }
+
+  return (
+    <div ref={wrapRef} style={{ position:'fixed', bottom:24, right:24, zIndex:300, display:'flex', flexDirection:'column', alignItems:'flex-end', gap:10 }}>
+      {SPEED_DIAL_ITEMS.map((item, i) => {
+        const delay = open ? i * 40 : (SPEED_DIAL_ITEMS.length - 1 - i) * 25
+        return (
+          <button
+            key={item.step}
+            tabIndex={open ? 0 : -1}
+            onClick={() => select(item.step)}
+            style={{
+              display:'flex', alignItems:'center', gap:10,
+              padding:'8px 14px 8px 9px', borderRadius:22, cursor:'pointer',
+              background:'var(--bg-secondary)',
+              border:`1px solid ${item.color}45`,
+              boxShadow:'0 4px 24px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.05)',
+              whiteSpace:'nowrap',
+              opacity: open ? 1 : 0,
+              transform: open ? 'translateY(0) scale(1)' : 'translateY(10px) scale(0.85)',
+              pointerEvents: open ? 'auto' : 'none',
+              transition: `opacity 200ms var(--ease-standard) ${delay}ms, transform 200ms var(--ease-spring) ${delay}ms`,
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = `${item.color}18`}
+            onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
+          >
+            <div style={{ width:28, height:28, borderRadius:9, background:`${item.color}20`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <item.Icon size={14} color={item.color}/>
+            </div>
+            <span style={{ fontSize:12, fontWeight:600, color:item.color }}>{t(item.labelKey)}</span>
+          </button>
+        )
+      })}
+
+      <button
+        onClick={() => setOpen(p => !p)}
+        aria-label={t('create.selectType')}
+        aria-expanded={open}
+        title={t('create.selectType')}
+        style={{
+          width:52, height:52, borderRadius:'50%',
+          background:'linear-gradient(135deg,var(--primary-violet-dark),var(--primary-violet))',
+          border:'none', color:'white', cursor:'pointer',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          boxShadow: open ? '0 0 32px rgba(139,92,246,0.7)' : '0 6px 24px rgba(0,0,0,0.4), 0 0 20px rgba(139,92,246,0.45)',
+          transition:'box-shadow var(--dur-base)',
+        }}
+      >
+        <Plus size={24} style={{ transition:'transform var(--dur-base) var(--ease-spring)', transform: open ? 'rotate(45deg)' : 'rotate(0deg)' }}/>
+      </button>
     </div>
   )
 }
@@ -236,7 +319,7 @@ function NetworkSidebar({ currentUser, collapsed, onToggle }) {
   )
 }
 
-export default function NetworkLayout({ currentUser, railContent }) {
+export default function NetworkLayout({ currentUser, railContent, onOpenCreate }) {
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('nw_sidebar_collapsed') === 'true')
   const navigate = useNavigate()
 
@@ -263,6 +346,8 @@ export default function NetworkLayout({ currentUser, railContent }) {
 
       {/* Context Rail — el contenido lo inyecta cada página vía outlet context */}
       {railContent}
+
+      {onOpenCreate && <DesktopFab onOpenCreate={onOpenCreate}/>}
     </div>
   )
 }

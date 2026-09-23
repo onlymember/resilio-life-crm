@@ -129,7 +129,7 @@ export default function NetworkApp({ currentUser }) {
                   onOpenCreate={handleOpenCreate}
                   onCloseCreate={() => setCreateOpen(false)}
                 />
-              : <NetworkLayout currentUser={currentUser}/>
+              : <NetworkLayout currentUser={currentUser} onOpenCreate={handleOpenCreate}/>
           }
         >
           <Route path="home"          element={<HomePage onOpenCreate={handleOpenCreate} currentUser={currentUser}/>}/>
