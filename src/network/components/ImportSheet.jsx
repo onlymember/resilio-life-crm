@@ -28,6 +28,43 @@ const BRAND_MAP = {
   proximo_seguimiento:'nextFollowUp', notas:'notes',
 }
 
+// ── Columnas de la vista previa ────────────────────────────
+// Se muestra TODO lo que se va a escribir, no una muestra. Si un dato
+// no aparece acá, no se importa — y al revés: si aparece, se importa.
+const fmtNum = (n) => (n == null ? null : Number(n).toLocaleString('es-AR'))
+
+const PREVIEW_COLS = {
+  influencers: [
+    { key:'name',      label:'import.col.name',      primary:true, get: o => o.name },
+    { key:'instagram', label:'import.col.instagram', get: o => o.instagram ? '@' + o.instagram : null },
+    { key:'tiktok',    label:'import.col.tiktok',    get: o => o.tiktok ? '@' + o.tiktok : null },
+    { key:'email',     label:'import.col.email',     get: o => o.email },
+    { key:'phone',     label:'import.col.phone',     get: o => o.phone },
+    { key:'whatsapp',  label:'import.col.whatsapp',  get: o => o.whatsapp },
+    { key:'followers', label:'import.col.followers', get: o => fmtNum(o.followers) },
+    { key:'engagement',label:'import.col.engagement',get: o => o.engagement != null ? o.engagement + '%' : null },
+    { key:'category',  label:'import.col.category',  get: o => o.category },
+    { key:'tier',      label:'import.col.tier',      get: o => o.tier },
+    { key:'ciudad',    label:'import.col.city',      get: o => o.ciudad },
+    { key:'rel',       label:'import.col.relation',  get: o => o.relationshipStatus },
+    { key:'nextAction',label:'import.col.nextAction',get: o => o.nextAction },
+    { key:'notes',     label:'import.col.notes',     get: o => o.notes },
+  ],
+  brands: [
+    { key:'name',      label:'import.col.name',      primary:true, get: o => o.name },
+    { key:'email',     label:'import.col.email',     get: o => o.email },
+    { key:'phone',     label:'import.col.phone',     get: o => o.phone },
+    { key:'whatsapp',  label:'import.col.whatsapp',  get: o => o.whatsapp },
+    { key:'instagram', label:'import.col.instagram', get: o => o.instagram ? '@' + o.instagram : null },
+    { key:'website',   label:'import.col.website',   get: o => o.website },
+    { key:'category',  label:'import.col.category',  get: o => o.category },
+    { key:'potential', label:'import.col.potential', get: o => o.potential },
+    { key:'ciudad',    label:'import.col.city',      get: o => o.ciudad },
+    { key:'rel',       label:'import.col.relation',  get: o => o.relationshipStatus },
+    { key:'notes',     label:'import.col.notes',     get: o => o.notes },
+  ],
+}
+
 // ── CSV/TSV parser ─────────────────────────────────────────
 function parseLine(line, sep) {
   const result = []
@@ -159,6 +196,8 @@ function buildRow(kind, rawRow, headerMap, geo, existingSet) {
 export default function ImportSheet({ kind, onClose, onDone }) {
   const isInfluencers = kind === 'influencers'
   const headerMap     = isInfluencers ? INFLUENCER_MAP : BRAND_MAP
+  const cols          = PREVIEW_COLS[isInfluencers ? 'influencers' : 'brands']
+  const acceptedCols  = Object.keys(headerMap)
 
   const [step,        setStep]        = useState('input')
   const [rawText,     setRawText]     = useState('')
@@ -242,6 +281,18 @@ export default function ImportSheet({ kind, onClose, onDone }) {
     if (created.length > 0) onDone()
   }
 
+  // Plantilla con exactamente las columnas que el importador entiende.
+  // Sin esto hay que adivinar los encabezados, y una columna con otro
+  // nombre se descarta en silencio.
+  const downloadTemplate = () => {
+    const csv = acceptedCols.join(',') + '\n'
+    const a = Object.assign(document.createElement('a'), {
+      href: URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })),
+      download: `plantilla_${kind}.csv`,
+    })
+    a.click(); URL.revokeObjectURL(a.href)
+  }
+
   const downloadFailed = () => {
     if (!results?.failed?.length) return
     const csv = ['nombre,error', ...results.failed.map(f =>
@@ -309,6 +360,29 @@ export default function ImportSheet({ kind, onClose, onDone }) {
                 <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={handleFile} style={{ display:'none' }}/>
               </label>
 
+              {/* Columnas que entiende el importador */}
+              <div style={{ padding:'10px 12px', borderRadius:8, background:'rgba(139,92,246,0.05)', border:'1px solid rgba(139,92,246,0.12)' }}>
+                <div style={{ fontSize:11, fontWeight:700, color:'var(--text-primary)', marginBottom:6 }}>
+                  {t('import.acceptedTitle')}
+                </div>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:4, marginBottom:8 }}>
+                  {acceptedCols.map(c => (
+                    <span key={c} style={{ fontSize:10, fontFamily:'monospace', padding:'2px 6px', borderRadius:5, background:'rgba(139,92,246,0.12)', color:'var(--text-secondary)' }}>
+                      {c}
+                    </span>
+                  ))}
+                </div>
+                <div style={{ fontSize:10, color:'var(--text-secondary)', lineHeight:1.5, marginBottom:8 }}>
+                  {t('import.acceptedHint')}
+                </div>
+                <button
+                  onClick={downloadTemplate}
+                  style={{ padding:'6px 12px', borderRadius:8, background:'transparent', border:'1px solid var(--border-violet)', color:'var(--text-secondary)', cursor:'pointer', fontSize:11, fontWeight:600 }}
+                >
+                  {t('import.downloadTemplate')}
+                </button>
+              </div>
+
               {parseError && (
                 <div style={{ fontSize:12, color:'#F87171', background:'rgba(248,113,113,0.08)', border:'1px solid rgba(248,113,113,0.25)', borderRadius:8, padding:'8px 12px' }}>
                   {parseError}
@@ -371,9 +445,9 @@ export default function ImportSheet({ kind, onClose, onDone }) {
                           style={{ accentColor:'var(--primary-violet)', cursor:'pointer' }}
                         />
                       </th>
-                      {['Nombre', isInfluencers ? 'Instagram' : 'Email', 'Ciudad', 'Estado'].map(col => (
-                        <th key={col} style={{ padding:'6px 8px', textAlign:'left', borderBottom:'1px solid var(--border-violet)', color:'var(--text-secondary)', fontWeight:700, textTransform:'uppercase', letterSpacing:0.5, whiteSpace:'nowrap' }}>
-                          {col}
+                      {[...cols.map(c => ({ k:c.key, label:t(c.label) })), { k:'__status', label:t('import.col.status') }].map(col => (
+                        <th key={col.k} style={{ padding:'6px 8px', textAlign:'left', borderBottom:'1px solid var(--border-violet)', color:'var(--text-secondary)', fontWeight:700, textTransform:'uppercase', letterSpacing:0.5, whiteSpace:'nowrap' }}>
+                          {col.label}
                         </th>
                       ))}
                     </tr>
@@ -393,17 +467,23 @@ export default function ImportSheet({ kind, onClose, onDone }) {
                               style={{ accentColor:'var(--primary-violet)', cursor: isInvalid ? 'default' : 'pointer' }}
                             />
                           </td>
-                          <td style={{ padding:'5px 8px', color: isInvalid ? '#F87171' : 'var(--text-primary)', maxWidth:140, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                            {row.obj.name || <em style={{ color:'#F87171' }}>sin nombre</em>}
-                          </td>
-                          <td style={{ padding:'5px 8px', color:'var(--text-secondary)', whiteSpace:'nowrap' }}>
-                            {isInfluencers
-                              ? (row.obj.instagram ? `@${row.obj.instagram}` : '—')
-                              : (row.obj.email || '—')}
-                          </td>
-                          <td style={{ padding:'5px 8px', color:'var(--text-secondary)', whiteSpace:'nowrap' }}>
-                            {row.obj.ciudad || '—'}
-                          </td>
+                          {cols.map(col => {
+                            const v = col.get(row.obj)
+                            return (
+                              <td key={col.key} style={{
+                                padding:'5px 8px', whiteSpace:'nowrap',
+                                maxWidth: col.primary ? 160 : 180, overflow:'hidden', textOverflow:'ellipsis',
+                                fontWeight: col.primary ? 600 : 400,
+                                color: col.primary
+                                  ? (isInvalid ? '#F87171' : 'var(--text-primary)')
+                                  : (v ? 'var(--text-primary)' : 'var(--text-secondary)'),
+                              }}>
+                                {v || (col.primary && !row.obj.name
+                                  ? <em style={{ color:'#F87171' }}>{t('import.noName')}</em>
+                                  : '—')}
+                              </td>
+                            )
+                          })}
                           <td style={{ padding:'5px 8px', minWidth:160 }}>
                             {isInvalid && row.errors.map((e,i) => (
                               <div key={i} style={{ fontSize:10, color:'#F87171' }}>✗ {e}</div>
