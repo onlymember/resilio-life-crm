@@ -161,6 +161,16 @@
     "daysLeft": "{n} días",
     "daysOverdue": "{n} días de atraso"
   },
+  "chips": {
+    "all": "All",
+    "allF": "All",
+    "active": "Active",
+    "activeF": "Active",
+    "today": "Follow-up today",
+    "overdue": "Overdue",
+    "noOwner": "No owner",
+    "noCity": "No city"
+  },
   "filter": {
     "title": "Filtros",
     "apply": "Aplicar",
@@ -242,10 +252,12 @@
     "allClearSubtitle": "No tenés acciones pendientes para los próximos 7 días.",
     "newScouter": "Cargá tu primer influencer",
     "newScouterSubtitle": "Registrá un creador en menos de 60 segundos.",
-    "tasks": "{n} tareas",
-    "tasksOverdue": "{n} vencidas",
-    "followups": "{n} seguimientos",
-    "followupsOverdue": "{n} vencidos",
+    "tasks": "tasks",
+    "tasksOverdue": "{n} overdue",
+    "tasksOverdueOne": "1 overdue",
+    "followups": "follow-ups",
+    "followupsOverdue": "{n} overdue",
+    "followupsOverdueOne": "1 overdue",
     "loadingGreeting": "Cargando…",
     "featuredMission": "Active mission",
     "recentActivity": "Recent activity",

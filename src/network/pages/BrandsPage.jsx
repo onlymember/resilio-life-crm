@@ -8,7 +8,7 @@ import BulkBar from '../components/BulkBar.jsx'
 import ImportSheet from '../components/ImportSheet.jsx'
 import { t } from '../../i18n/index.js'
 import { dbGetBrands, dbGetGeography, dbGetBrandCategories, dbLogContact } from '../../lib/database.js'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { COMMAND_ROLES } from '../routes.js'
 
 const useIsDesktop = () => {
@@ -24,11 +24,21 @@ const useIsDesktop = () => {
 const PAGE_SIZE = 30
 
 const QUICK_CHIPS = [
-  { id: 'all',     label: 'Todas',              filters: {} },
-  { id: 'active',  label: 'Activas',            filters: { status: 'active' } },
-  { id: 'noowner', label: 'Sin dueño',          filters: { noOwner: true } },
-  { id: 'overdue', label: 'Seguimiento vencido', filters: { overdueFollowup: true } },
+  { id: 'all',     labelKey: 'chips.allF',     filters: {} },
+  { id: 'active',  labelKey: 'chips.activeF',  filters: { status: 'active' } },
+  { id: 'noowner', labelKey: 'chips.noOwner',  filters: { noOwner: true } },
+  { id: 'nocity',  labelKey: 'chips.noCity',   filters: { noCity: true } },
+  { id: 'overdue', labelKey: 'chips.overdue',  filters: { overdueFollowup: true } },
 ]
+
+// El Command Center enlaza con ?noOwner=1 / ?noCity=1. Sin leerlos,
+// el tile te dejaba en la lista completa.
+const chipFromParams = (sp) => {
+  if (sp.get('noCity'))  return QUICK_CHIPS.find(c => c.id === 'nocity')
+  if (sp.get('noOwner')) return QUICK_CHIPS.find(c => c.id === 'noowner')
+  if (sp.get('overdue')) return QUICK_CHIPS.find(c => c.id === 'overdue')
+  return null
+}
 
 export default function BrandsPage({ onOpenCreate, currentUser }) {
   const navigate    = useNavigate()
@@ -45,7 +55,8 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
   const [cities,         setCities]         = useState([])
   const [cityMap,        setCityMap]        = useState({})
   const [brandCats,      setBrandCats]      = useState([])
-  const [chipId,         setChipId]         = useState('all')
+  const [searchParams] = useSearchParams()
+  const [chipId,         setChipId]         = useState(chipFromParams(searchParams)?.id ?? 'all')
   const [assignTarget,   setAssignTarget]   = useState(null)
   const [selected,       setSelected]       = useState(new Set())
   const [importOpen,     setImportOpen]     = useState(false)
@@ -74,7 +85,11 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
     finally { setLoading(false) }
   }, [search, filters])
 
-  useEffect(() => { load(0) }, [])
+  useEffect(() => {
+    const chip = chipFromParams(searchParams)
+    if (chip) { setFilters(chip.filters); load(0, '', chip.filters) }
+    else      { load(0) }
+  }, [])
 
   useEffect(() => {
     const h = (e) => { if (e.detail?.type === 'brand') load(0) }
@@ -136,7 +151,7 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
               border: chipId === chip.id ? '1px solid rgba(139,92,246,0.5)' : '1px solid var(--border-violet)',
             }}
           >
-            {chip.label}
+            {t(chip.labelKey)}
           </button>
         ))}
       </div>

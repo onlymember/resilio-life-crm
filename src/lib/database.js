@@ -1435,10 +1435,20 @@ const INF_NULLS_LAST_COLS = new Set(['engagement','last_contact_at','followers',
 // Paginada — Network. Siempre devuelve { rows, total, hasMore }.
 const safe = (s) => String(s).replace(/[,()"']/g, ' ').trim()
 
+// Limites del dia local del navegador, en ISO, para el filtro
+// "seguimiento hoy". Se calcula aca y no en la consulta porque el
+// corte del dia depende de quien mira, no del servidor.
+const startOfToday = () => {
+  const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString()
+}
+const startOfTomorrow = () => {
+  const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + 1); return d.toISOString()
+}
+
 export const dbGetInfluencers = async ({
   page = 0, pageSize = 30,
   search, cityId, countryId, ownerId, status, relationshipStatus, category,
-  noOwner = false,
+  noOwner = false, noCity = false, overdueOnly = false, overdueToday = false,
   orderBy = 'created_at', orderDir = 'desc',
 } = {}) => {
   const nullsFirst = !INF_NULLS_LAST_COLS.has(orderBy)
@@ -1451,6 +1461,10 @@ export const dbGetInfluencers = async ({
   if (countryId)          q = q.eq('country_id', countryId)
   if (ownerId)            q = q.eq('owner_scouter_id', ownerId)
   if (noOwner)            q = q.is('owner_scouter_id', null)
+  if (noCity)             q = q.is('city_id', null)
+  if (overdueOnly)        q = q.lt('next_action_at', new Date().toISOString())
+  if (overdueToday)       q = q.gte('next_action_at', startOfToday())
+                              .lt('next_action_at',  startOfTomorrow())
   if (relationshipStatus) q = q.eq('relationship_status', relationshipStatus)
   if (category)           q = q.eq('category', category)
   if (search)             q = q.or(`name.ilike.%${safe(search)}%,username.ilike.%${safe(search)}%`)
@@ -1535,7 +1549,7 @@ const BRAND_NULLS_LAST_COLS = new Set(['last_contact_at','next_action_at','poten
 export const dbGetBrands = async ({
   page = 0, pageSize = 30,
   search, cityId, countryId, ownerId, status, relationshipStatus, category, categoryId,
-  noOwner = false, overdueFollowup = false,
+  noOwner = false, noCity = false, overdueFollowup = false,
   orderBy = 'created_at', orderDir = 'desc',
 } = {}) => {
   const nullsFirst = !BRAND_NULLS_LAST_COLS.has(orderBy)
@@ -1548,6 +1562,7 @@ export const dbGetBrands = async ({
   if (countryId)          q = q.eq('country_id', countryId)
   if (ownerId)            q = q.eq('owner_scouter_id', ownerId)
   if (noOwner)            q = q.is('owner_scouter_id', null)
+  if (noCity)             q = q.is('city_id', null)
   if (relationshipStatus) q = q.eq('relationship_status', relationshipStatus)
   if (category)           q = q.eq('category', category)
   if (categoryId)         q = q.eq('category_id', categoryId)

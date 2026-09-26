@@ -265,8 +265,8 @@ export default function CommandPage({ currentUser }) {
                 {[
                   { val: unassigned.influencers,  label: t('command.unassigned.influencers'),  path: '/network/influencers?noOwner=1', warn: unassigned.influencers > 0 },
                   { val: unassigned.brands,        label: t('command.unassigned.brands'),        path: '/network/brands?noOwner=1',      warn: unassigned.brands > 0 },
-                  { val: unassigned.noCityInf,     label: t('command.unassigned.noCityInf'),    path: '/network/influencers',            warn: unassigned.noCityInf > 0 },
-                  { val: unassigned.noCityBrands,  label: t('command.unassigned.noCityBrands'), path: '/network/brands',                 warn: unassigned.noCityBrands > 0 },
+                  { val: unassigned.noCityInf,     label: t('command.unassigned.noCityInf'),    path: '/network/influencers?noCity=1',   warn: unassigned.noCityInf > 0 },
+                  { val: unassigned.noCityBrands,  label: t('command.unassigned.noCityBrands'), path: '/network/brands?noCity=1',        warn: unassigned.noCityBrands > 0 },
                   { val: unassigned.usersNoRole,   label: t('command.unassigned.usersNoRole'),  path: null,                              warn: unassigned.usersNoRole > 0 },
                 ].filter(({ val }) => val > 0).map(({ val, label, path, warn }) => (
                   <button

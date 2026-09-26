@@ -8,7 +8,7 @@ import BulkBar from '../components/BulkBar.jsx'
 import ImportSheet from '../components/ImportSheet.jsx'
 import { t } from '../../i18n/index.js'
 import { dbGetInfluencers, dbGetGeography, dbLogContact } from '../../lib/database.js'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { COMMAND_ROLES } from '../routes.js'
 
 const useIsDesktop = () => {
@@ -31,12 +31,23 @@ const ORDER_OPTIONS = [
 ]
 
 const QUICK_CHIPS = [
-  { id: 'all',     label: 'Todos',          filters: {} },
-  { id: 'active',  label: 'Activos',        filters: { status: 'active' } },
-  { id: 'today',   label: 'Seguimiento hoy',filters: { overdueToday: true } },
-  { id: 'overdue', label: 'Vencidos',       filters: { overdueOnly: true } },
-  { id: 'noowner', label: 'Sin dueño',      filters: { noOwner: true } },
+  { id: 'all',     labelKey: 'chips.all',      filters: {} },
+  { id: 'active',  labelKey: 'chips.active',   filters: { status: 'active' } },
+  { id: 'today',   labelKey: 'chips.today',    filters: { overdueToday: true } },
+  { id: 'overdue', labelKey: 'chips.overdue',  filters: { overdueOnly: true } },
+  { id: 'noowner', labelKey: 'chips.noOwner',  filters: { noOwner: true } },
+  { id: 'nocity',  labelKey: 'chips.noCity',   filters: { noCity: true } },
 ]
+
+// El Command Center enlaza con ?noOwner=1 / ?noCity=1 / ?overdue=1.
+// Sin esto la pagina ignoraba el parametro y mostraba la lista entera,
+// que es justo lo contrario de lo que el tile promete.
+const chipFromParams = (sp) => {
+  if (sp.get('noCity'))  return QUICK_CHIPS.find(c => c.id === 'nocity')
+  if (sp.get('noOwner')) return QUICK_CHIPS.find(c => c.id === 'noowner')
+  if (sp.get('overdue')) return QUICK_CHIPS.find(c => c.id === 'overdue')
+  return null
+}
 
 export default function InfluencersPage({ onOpenCreate, currentUser }) {
   const navigate    = useNavigate()
@@ -48,12 +59,14 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
   const [page,         setPage]         = useState(0)
   const [loading,      setLoading]      = useState(true)
   const [search,       setSearch]       = useState('')
-  const [filters,      setFilters]      = useState({})
+  const [filters,      setFilters]      = useState({})   // lo fija el efecto de arranque si vino un parametro
   const [filterOpen,   setFilterOpen]   = useState(false)
   const [cities,       setCities]       = useState([])
   const [cityMap,      setCityMap]      = useState({})
   const [orderBy,      setOrderBy]      = useState(ORDER_OPTIONS[0])
-  const [chipId,       setChipId]       = useState('all')
+  const [searchParams] = useSearchParams()
+  const initialChip = chipFromParams(searchParams)
+  const [chipId,       setChipId]       = useState(initialChip?.id ?? 'all')
   const [assignTarget, setAssignTarget] = useState(null)
   const [selected,     setSelected]     = useState(new Set())
   const [importOpen,   setImportOpen]   = useState(false)
@@ -85,7 +98,13 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
     finally { setLoading(false) }
   }, [search, filters, orderBy])
 
-  useEffect(() => { load(0) }, [])
+  // Arranque: si la URL trae un filtro, se carga con el ya aplicado.
+  // Una sola llamada, no lista completa y despues filtrada.
+  useEffect(() => {
+    const chip = chipFromParams(searchParams)
+    if (chip) { setFilters(chip.filters); load(0, '', chip.filters, orderBy) }
+    else      { load(0) }
+  }, [])
 
   useEffect(() => {
     const h = (e) => { if (e.detail?.type === 'influencer') load(0) }
@@ -155,7 +174,7 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
               border: chipId === chip.id ? '1px solid rgba(139,92,246,0.5)' : '1px solid var(--border-violet)',
             }}
           >
-            {chip.label}
+            {t(chip.labelKey)}
           </button>
         ))}
       </div>
