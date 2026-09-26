@@ -8,6 +8,7 @@ import { defaultDueLocal, datetimeLocalToIso } from '../utils/date.js'
 import { dbGetTasks, dbCompleteTask, dbSaveTask } from '../../lib/database.js'
 import { COMMAND_ROLES } from '../routes.js'
 import { getNetworkScouters } from '../../lib/metrics.js'
+import { personLabel, personName, personShort } from '../utils/people.js'
 
 const PAGE_SIZE = 100
 
@@ -189,7 +190,7 @@ export default function TasksPage({ currentUser }) {
             >
               <option value="">{t('task.assignee')}: {t('task.assignSelf')}</option>
               {scouters.map(s => (
-                <option key={s.userId} value={s.userId}>{s.nombre}{s.ciudad ? ` · ${s.ciudad}` : ''}</option>
+                <option key={s.userId} value={s.userId}>{personLabel(s)}</option>
               ))}
             </select>
           )}
@@ -249,7 +250,7 @@ export default function TasksPage({ currentUser }) {
                 border: filterAssignedTo === s.userId ? '1px solid rgba(34,211,238,0.3)' : '1px solid transparent',
               }}
             >
-              {s.nombre.split(' ')[0]}
+              {personShort(s)}
             </button>
           ))}
         </div>
@@ -278,7 +279,7 @@ export default function TasksPage({ currentUser }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {group.items.map(task => {
                   const assigneeName = (isCommand && task.assignedTo && task.assignedTo !== currentUser?.id)
-                    ? (scouters.find(s => s.userId === task.assignedTo)?.nombre || null)
+                    ? (() => { const sc = scouters.find(s => s.userId === task.assignedTo); return sc ? personName(sc) : null })()
                     : null
                   return <TaskRow key={task.id} task={task} onComplete={handleComplete} assigneeName={assigneeName}/>
                 })}

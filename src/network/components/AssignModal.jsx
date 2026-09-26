@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { X, Search, UserCheck } from 'lucide-react'
 import { t } from '../../i18n/index.js'
+import { personName } from '../utils/people.js'
 import { dbGetActiveScouters, dbAssignEntity } from '../../lib/database.js'
 
 const AVATAR_COLORS = ['#8B5CF6','#EC4899','#06B6D4','#10B981','#F59E0B','#EF4444','#6366F1']
@@ -41,7 +42,7 @@ export default function AssignModal({ isOpen, onClose, entity, entityType, onAss
   if (!isOpen) return null
 
   const filtered = scouters.filter(s =>
-    !search || s.nombre.toLowerCase().includes(search.toLowerCase())
+    !search || personName(s).toLowerCase().includes(search.toLowerCase())
   )
 
   const handleConfirm = async () => {
@@ -149,14 +150,14 @@ export default function AssignModal({ isOpen, onClose, entity, entityType, onAss
                 >
                   <div style={{
                     width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
-                    background: avatarColor(s.nombre), display: 'flex', alignItems: 'center',
+                    background: avatarColor(personName(s)), display: 'flex', alignItems: 'center',
                     justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'white',
                   }}>
-                    {initials(s.nombre)}
+                    {initials(personName(s))}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {s.nombre}
+                      {personName(s)}
                     </div>
                     {s.sobrenombre && (
                       <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{s.sobrenombre}</div>
@@ -186,7 +187,7 @@ export default function AssignModal({ isOpen, onClose, entity, entityType, onAss
               border: 'none', cursor: selected && !assigning ? 'pointer' : 'default',
             }}
           >
-            {assigning ? t('network.assigning') : selected ? `${t('network.assignTo')} ${selected.nombre}` : t('network.confirmAssign')}
+            {assigning ? t('network.assigning') : selected ? `${t('network.assignTo')} ${personName(selected)}` : t('network.confirmAssign')}
           </button>
         </div>
       </div>

@@ -5,6 +5,7 @@ import ScouterRow from '../components/ScouterRow.jsx'
 import ScouterModal from '../components/ScouterModal.jsx'
 import PeriodFilter from '../components/PeriodFilter.jsx'
 import { t } from '../../i18n/index.js'
+import { personName } from '../utils/people.js'
 import { getNetworkScouters, getScouterPerformance } from '../../lib/metrics.js'
 import { dbGetGeography } from '../../lib/database.js'
 
@@ -80,7 +81,7 @@ export default function ScoutersPage({ currentUser }) {
   }
 
   const SORT_KEY = {
-    nombre:       s => s.nombre,
+    nombre:       s => personName(s),
     ciudad:       s => s.ciudad,
     level:        s => s.level,
     influencers:  s => s.influencers,

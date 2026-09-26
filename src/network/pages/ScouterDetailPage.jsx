@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import PeriodFilter from '../components/PeriodFilter.jsx'
 import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import { t } from '../../i18n/index.js'
+import { personName } from '../utils/people.js'
 import { getNetworkScouters, getScouterPerformance } from '../../lib/metrics.js'
 import { dbGetInfluencers, dbGetBrands, dbGetOpportunities, dbGetCollaborations, dbGetTasks, dbGetActivitiesByActor } from '../../lib/database.js'
 
@@ -158,15 +159,15 @@ export default function ScouterDetailPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1, minWidth: 0, flexWrap: 'wrap' }}>
           <div style={{
             width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
-            background: avatarColor(scouter.nombre),
+            background: avatarColor(personName(scouter)),
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 16, fontWeight: 700, color: 'white',
           }}>
-            {initials(scouter.nombre)}
+            {initials(personName(scouter))}
           </div>
           <div style={{ minWidth: 0 }}>
             <h1 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
-              {scouter.nombre}
+              {personName(scouter)}
             </h1>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
               {scouter.email}{scouter.ciudad ? ` · ${scouter.ciudad}` : ''}{` · ${t('scouter.level')} ${scouter.level}`}

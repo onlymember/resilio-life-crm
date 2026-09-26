@@ -2,6 +2,7 @@ import React from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { t } from '../../i18n/index.js'
+import { personName } from '../utils/people.js'
 
 const AVATAR_COLORS = ['#8B5CF6','#EC4899','#06B6D4','#10B981','#F59E0B','#EF4444','#6366F1']
 const avatarColor = (name = '') => AVATAR_COLORS[(name.charCodeAt(0)||0) % AVATAR_COLORS.length]
@@ -66,18 +67,18 @@ export default function ScouterRow({ scouter, expanded, onToggle, performance, i
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
               width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-              background: avatarColor(scouter.nombre),
+              background: avatarColor(personName(scouter)),
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 12, fontWeight: 700, color: 'white',
             }}>
-              {initials(scouter.nombre)}
+              {initials(personName(scouter))}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div
                 onClick={e => { e.stopPropagation(); navigate(`/network/scouters/${scouter.userId}`) }}
                 style={{ fontSize: 13, fontWeight: 600, color: 'var(--primary-violet-light)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'rgba(139,92,246,0.3)' }}
               >
-                {scouter.nombre}
+                {personName(scouter)}
               </div>
               <div style={{ fontSize: 10, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{scouter.email}</div>
             </div>
@@ -116,18 +117,18 @@ export default function ScouterRow({ scouter, expanded, onToggle, performance, i
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
           <div style={{
             width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-            background: avatarColor(scouter.nombre), display: 'flex',
+            background: avatarColor(personName(scouter)), display: 'flex',
             alignItems: 'center', justifyContent: 'center',
             fontSize: 10, fontWeight: 700, color: 'white',
           }}>
-            {initials(scouter.nombre)}
+            {initials(personName(scouter))}
           </div>
           <div style={{ minWidth: 0 }}>
             <div
               onClick={e => { e.stopPropagation(); navigate(`/network/scouters/${scouter.userId}`) }}
               style={{ fontSize: 13, fontWeight: 600, color: 'var(--primary-violet-light)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'rgba(139,92,246,0.3)' }}
             >
-              {scouter.nombre}
+              {personName(scouter)}
             </div>
             <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{scouter.email}</div>
           </div>

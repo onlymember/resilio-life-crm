@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { X, Search, UserCheck } from 'lucide-react'
 import { t } from '../../i18n/index.js'
+import { personName } from '../utils/people.js'
 import { dbGetActiveScouters, dbAssignBulk } from '../../lib/database.js'
 
 const AVATAR_COLORS = ['#8B5CF6','#EC4899','#06B6D4','#10B981','#F59E0B','#EF4444','#6366F1']
@@ -73,7 +74,7 @@ export default function BulkBar({ selected, rows, entityType, onClear, onRefresh
   }
 
   const filteredScouters = scouters.filter(s =>
-    !scouterSearch || s.nombre.toLowerCase().includes(scouterSearch.toLowerCase())
+    !scouterSearch || personName(s).toLowerCase().includes(scouterSearch.toLowerCase())
   )
 
   const failed  = results.filter(r => !r.ok)
@@ -110,11 +111,11 @@ export default function BulkBar({ selected, rows, entityType, onClear, onRefresh
                   onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.08)' }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
                 >
-                  <div style={{ width:30, height:30, borderRadius:'50%', flexShrink:0, background:avatarColor(s.nombre), display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:700, color:'white' }}>
-                    {initials(s.nombre)}
+                  <div style={{ width:30, height:30, borderRadius:'50%', flexShrink:0, background:avatarColor(personName(s)), display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:700, color:'white' }}>
+                    {initials(personName(s))}
                   </div>
                   <div>
-                    <div style={{ fontSize:13, fontWeight:600, color:'var(--text-primary)' }}>{s.nombre}</div>
+                    <div style={{ fontSize:13, fontWeight:600, color:'var(--text-primary)' }}>{personName(s)}</div>
                     <div style={{ fontSize:10, color:'var(--text-secondary)' }}>{s.sobrenombre || s.email}</div>
                   </div>
                 </button>
@@ -132,7 +133,7 @@ export default function BulkBar({ selected, rows, entityType, onClear, onRefresh
       <>
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(8px)', zIndex:500 }}/>
         <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:501, background:'var(--bg-secondary)', borderRadius:'20px 20px 0 0', border:'1px solid var(--border-violet)', borderBottom:'none', padding:'20px 20px', display:'flex', flexDirection:'column', gap:14, animation:'slideUp 0.22s ease' }}>
-          <div style={{ fontSize:14, fontWeight:700, color:'#FBBF24' }}>⚠ {t('bulk.cityMismatch', { n: mismatchCount, scouter: pickedScouter?.nombre || '' })}</div>
+          <div style={{ fontSize:14, fontWeight:700, color:'#FBBF24' }}>⚠ {t('bulk.cityMismatch', { n: mismatchCount, scouter: pickedScouter ? personName(pickedScouter) : '' })}</div>
           <div style={{ display:'flex', gap:10 }}>
             <button onClick={() => setPhase('picking')} style={{ flex:1, padding:'11px', borderRadius:10, border:'1px solid var(--border-violet)', background:'transparent', color:'var(--text-secondary)', fontSize:13, cursor:'pointer' }}>
               {t('bulk.cancel')}

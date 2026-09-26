@@ -8,6 +8,7 @@ import ScouterModal from '../components/ScouterModal.jsx'
 import AssignModal from '../components/AssignModal.jsx'
 import PeriodFilter from '../components/PeriodFilter.jsx'
 import { t } from '../../i18n/index.js'
+import { personName } from '../utils/people.js'
 import {
   getNetworkStats, getNetworkAlerts,
   getNetworkScouters, getUnassignedSummary,
@@ -468,7 +469,7 @@ export default function CommandPage({ currentUser }) {
                   <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
                     {scouterSnaps.map(snap => {
                       const sc = allScouters.find(s => s.userId === snap.scopeId)
-                      return <SnapRow key={snap.id} snap={snap} name={sc?.nombre || snap.scopeId}/>
+                      return <SnapRow key={snap.id} snap={snap} name={sc ? personName(sc) : snap.scopeId}/>
                     })}
                   </div>
                 </div>
