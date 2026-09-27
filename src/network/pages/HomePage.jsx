@@ -109,15 +109,17 @@ export default function HomePage({ currentUser, onOpenCreate }) {
     )
   }
 
+  // StatTile ya muestra el numero grande arriba: la etiqueta no lo repite.
+  // Solo cuando hay vencidos la etiqueta aporta un dato nuevo — cuantos
+  // de ese total estan vencidos.
+  const overdueLabel = (n, oneKey, manyKey, plainKey) =>
+    n > 0 ? (n === 1 ? t(oneKey) : t(manyKey, { n })) : t(plainKey)
+
   const tasksLabel = stats
-    ? (stats.tasksOverdue > 0
-        ? t('home.tasksOverdue', { n: stats.tasksToday + stats.tasksOverdue })
-        : t('home.tasks', { n: stats.tasksToday }))
+    ? overdueLabel(stats.tasksOverdue, 'home.tasksOverdueOne', 'home.tasksOverdue', 'home.tasks')
     : '—'
   const followLabel = stats
-    ? (stats.followupsOverdue > 0
-        ? t('home.followupsOverdue', { n: stats.followupsToday + stats.followupsOverdue })
-        : t('home.followups', { n: stats.followupsToday }))
+    ? overdueLabel(stats.followupsOverdue, 'home.followupsOverdueOne', 'home.followupsOverdue', 'home.followups')
     : '—'
 
   // Network Pulse — solo cambios relevantes de las últimas 24hs, nunca ruido
@@ -178,7 +180,7 @@ export default function HomePage({ currentUser, onOpenCreate }) {
               <StatTile
                 value={stats.followupsToday + stats.followupsOverdue}
                 label={followLabel}
-                onClick={() => navigate('/network/influencers')}
+                onClick={() => navigate('/network/follow-ups')}
                 accent={stats.followupsOverdue > 0 ? '#FB923C' : undefined}
               />
               <StatTile

@@ -144,7 +144,7 @@ const GlobalStyles = () => (
        El desplegable de un <select> lo dibuja el sistema operativo,
        no la página: hereda el color de texto (casi blanco) pero NO
        el fondo, que queda blanco. Resultado: blanco sobre blanco.
-       Antes esto solo estaba cubierto por `.select-field option`, y
+       Antes esto solo estaba cubierto por .select-field option, y
        Network no usa esa clase — usa estilos inline. La regla va por
        elemento, no por clase, para que valga también en lo que se
        escriba de acá en adelante. */
