@@ -11,20 +11,26 @@ const initials = (name = '') => {
   return p.length >= 2 ? (p[0][0]+p[p.length-1][0]).toUpperCase() : (name||'').slice(0,2).toUpperCase() || '?'
 }
 
-// Fetch approved profiles + active roles + existing scouters, filter client-side.
+// Fetch approved profiles + existing scouters, filter client-side.
 // Simplificación documentada en DATA-LAYER.md: si hubiera miles de usuarios
-// se reemplaza por una RPC. Por ahora las tres tablas tienen decenas de filas.
+// se reemplaza por una RPC. Por ahora las dos tablas tienen decenas de filas.
+//
+// Antes esto tambien pedia user_roles y escondia a cualquiera que ya
+// tuviera un rol activo. El efecto era que la persona de Direccion no
+// podia darse de alta a si misma para llevar fichas, ni un city_lead
+// que ademas trabaje su propia cartera: quedaban en el hueco entre las
+// dos listas, sin aparecer en ninguna. Tener un rol y ser Scouter son
+// dos ejes distintos (ver docs/network/RBAC.md), asi que lo unico que
+// corresponde excluir de "nuevos" es a quien YA es Scouter.
 const loadCandidates = async () => {
-  const [{ data: profiles }, { data: roles }, { data: scouters }] = await Promise.all([
+  const [{ data: profiles }, { data: scouters }] = await Promise.all([
     supabase.from('profiles').select('id, nombre, sobrenombre, email').eq('estado', 'aprobado'),
-    supabase.from('user_roles').select('user_id').is('revoked_at', null),
     supabase.from('scouters').select('user_id, city_id, status, level'),
   ])
-  const activeRoleIds = new Set((roles || []).map(r => r.user_id))
-  const scouterMap   = Object.fromEntries((scouters || []).map(s => [s.user_id, s]))
+  const scouterMap = Object.fromEntries((scouters || []).map(s => [s.user_id, s]))
 
-  const newCandidates     = (profiles || []).filter(p => !activeRoleIds.has(p.id) && !scouterMap[p.id])
-  const existingScouters  = (profiles || []).filter(p => scouterMap[p.id])
+  const newCandidates    = (profiles || []).filter(p => !scouterMap[p.id])
+  const existingScouters = (profiles || []).filter(p => scouterMap[p.id])
 
   return { newCandidates, existingScouters, scouterMap }
 }

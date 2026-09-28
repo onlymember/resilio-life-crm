@@ -29,14 +29,16 @@ const QUICK_CHIPS = [
   { id: 'noowner', labelKey: 'chips.noOwner',  filters: { noOwner: true } },
   { id: 'nocity',  labelKey: 'chips.noCity',   filters: { noCity: true } },
   { id: 'overdue', labelKey: 'chips.overdue',  filters: { overdueFollowup: true } },
+  { id: 'nonext',  labelKey: 'chips.noNextAction', filters: { noNextAction: true } },
 ]
 
 // El Command Center enlaza con ?noOwner=1 / ?noCity=1. Sin leerlos,
 // el tile te dejaba en la lista completa.
 const chipFromParams = (sp) => {
-  if (sp.get('noCity'))  return QUICK_CHIPS.find(c => c.id === 'nocity')
-  if (sp.get('noOwner')) return QUICK_CHIPS.find(c => c.id === 'noowner')
-  if (sp.get('overdue')) return QUICK_CHIPS.find(c => c.id === 'overdue')
+  if (sp.get('noCity'))       return QUICK_CHIPS.find(c => c.id === 'nocity')
+  if (sp.get('noOwner'))      return QUICK_CHIPS.find(c => c.id === 'noowner')
+  if (sp.get('overdue'))      return QUICK_CHIPS.find(c => c.id === 'overdue')
+  if (sp.get('noNextAction')) return QUICK_CHIPS.find(c => c.id === 'nonext')
   return null
 }
 
@@ -59,12 +61,25 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
   const [chipId,         setChipId]         = useState(chipFromParams(searchParams)?.id ?? 'all')
   const [assignTarget,   setAssignTarget]   = useState(null)
   const [selected,       setSelected]       = useState(new Set())
+  const [selectingAll,   setSelectingAll]   = useState(false)
   const [importOpen,     setImportOpen]     = useState(false)
 
   const toggleSelect = (id) => setSelected(prev => {
     const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next
   })
   const clearSelect = () => setSelected(new Set())
+
+  // Pide solo los ids que matchean el filtro actual. Es una consulta
+  // aparte a proposito: la lista visible esta paginada de a 30 y lo que
+  // se quiere repartir es el total, no la pagina.
+  const handleSelectAll = async () => {
+    setSelectingAll(true)
+    try {
+      const res = await dbGetBrands({ search: search || undefined, ...filters, idsOnly: true })
+      setSelected(new Set(res.ids))
+    } catch (e) { console.error('selectAll:', e.message) }
+    finally { setSelectingAll(false) }
+  }
 
   useEffect(() => {
     Promise.all([dbGetGeography(), dbGetBrandCategories()])
@@ -155,6 +170,19 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
           </button>
         ))}
       </div>
+
+      {/* Seleccionar todo lo que matchea el filtro, no solo lo cargado.
+          Sin esto, repartir cientos de fichas eran muchos "cargar mas"
+          y un clic por ficha; con esto es uno. */}
+      {isDesktop && canReassign && total > rows.length && (
+        <button
+          onClick={handleSelectAll}
+          disabled={selectingAll}
+          style={{ alignSelf:'flex-start', fontSize:11, fontWeight:600, color:'var(--primary-violet-light)', background:'rgba(139,92,246,0.08)', border:'1px solid var(--border-violet)', borderRadius:8, padding:'5px 12px', cursor: selectingAll ? 'default' : 'pointer' }}
+        >
+          {selectingAll ? t('loading.generic') : t('bulk.selectAll', { n: total })}
+        </button>
+      )}
 
       {loading && rows.length === 0 ? (
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>

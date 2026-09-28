@@ -5,6 +5,7 @@ import EmptyState from '../components/EmptyState.jsx'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { defaultDueLocal, datetimeLocalToIso, isoToDatetimeLocal } from '../utils/date.js'
+import { useSearchParams } from 'react-router-dom'
 import { dbGetTasks, dbCompleteTask, dbSaveTask, dbCreateTasks, dbDeleteTask, dbDeleteTaskBatch } from '../../lib/database.js'
 import { COMMAND_ROLES } from '../routes.js'
 import { getNetworkScouters } from '../../lib/metrics.js'
@@ -44,6 +45,7 @@ const OPEN_STATUSES = ['todo', 'in_progress']
 const TABS = [
   { id: 'mine',     labelKey: 'task.tabs.mine' },
   { id: 'assigned', labelKey: 'task.tabs.assigned' },
+  { id: 'overdue',  labelKey: 'task.tabs.overdue' },
   { id: 'done',     labelKey: 'task.tabs.done' },
 ]
 
@@ -53,9 +55,13 @@ export default function TasksPage({ currentUser }) {
   const [rows,    setRows]    = useState([])
   const [total,   setTotal]   = useState(0)
   const [loading, setLoading] = useState(true)
-  const [tab,             setTab]             = useState('mine')
+  // El Command Center enlaza con ?overdue=1 y la ficha de una Scouter
+  // con ?assignedTo=<id>. Sin leer esos parametros el tile prometia una
+  // lista filtrada y dejaba en la lista entera, que es lo contrario.
+  const [searchParams] = useSearchParams()
+  const [tab,             setTab]             = useState(searchParams.get('overdue') ? 'overdue' : 'mine')
   const [filterPriority,  setFilterPriority]  = useState('')
-  const [filterAssignedTo, setFilterAssignedTo] = useState('')
+  const [filterAssignedTo, setFilterAssignedTo] = useState(searchParams.get('assignedTo') || '')
   const [scouters, setScouters] = useState([])
 
   // Create form
@@ -90,6 +96,14 @@ export default function TasksPage({ currentUser }) {
         query.createdBy  = me
         query.statusIn   = OPEN_STATUSES
         if (filterAssignedTo) query.assignedTo = filterAssignedTo
+      } else if (tab === 'overdue') {
+        // Vencidas: para Direccion son las de toda la red, porque eso es
+        // lo que cuenta el tile del Command Center. Para una Scouter,
+        // RLS ya acota, pero se filtra igual para no depender de eso.
+        query.statusIn    = OPEN_STATUSES
+        query.overdueOnly = true
+        if (filterAssignedTo) query.assignedTo = filterAssignedTo
+        else if (!isCommand)  query.assignedTo = me
       } else {
         query.statusIn = ['completed']
         query.orderBy  = 'completed_at'
@@ -385,8 +399,8 @@ export default function TasksPage({ currentUser }) {
       ) : rows.length === 0 ? (
         <EmptyState
           icon={CheckSquare}
-          title={t(tab === 'assigned' ? 'task.emptyAssigned' : tab === 'done' ? 'task.emptyDone' : 'task.allDone')}
-          subtitle={t(tab === 'assigned' ? 'task.emptyAssignedSubtitle' : tab === 'done' ? 'task.emptyDoneSubtitle' : 'task.allDoneSubtitle')}
+          title={t(tab === 'assigned' ? 'task.emptyAssigned' : tab === 'overdue' ? 'task.emptyOverdue' : tab === 'done' ? 'task.emptyDone' : 'task.allDone')}
+          subtitle={t(tab === 'assigned' ? 'task.emptyAssignedSubtitle' : tab === 'overdue' ? 'task.emptyOverdueSubtitle' : tab === 'done' ? 'task.emptyDoneSubtitle' : 'task.allDoneSubtitle')}
         />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

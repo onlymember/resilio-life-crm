@@ -5,11 +5,19 @@ código y las migraciones del repo, y marca de forma explícita lo que
 **no** pudo verificarse ahí.
 
 > **Origen.** Las funciones de permiso se crearon a mano en el dashboard
-> de Supabase y no están en ningún archivo de migración. Las que este
-> documento cita fueron volcadas de la base el 2026-09-27 y son lectura
-> real de su código, no inferencia. Para volver a volcarlas:
-> `supabase/dump_rbac.sql`. La tabla `user_roles` y el enum de roles
-> siguen sin archivo de creación.
+> de Supabase y durante meses no estuvieron en ningún archivo de
+> migración. Las que este documento cita son lectura real de su código,
+> no inferencia. Desde el 2026-09-28 están volcadas al repo:
+> `supabase/039_rbac_recuperado.sql` tiene las trece funciones,
+> `supabase/000_baseline_user_roles.sql` la tabla `user_roles` y los
+> enums, y `supabase/025_policies_recuperado.sql` las policies de
+> `missions`. El generador de esos volcados es `supabase/dump_deriva.sql`.
+>
+> Dos cosas del baseline **no** son lectura literal y están marcadas en
+> ese archivo: el enum `scope_type` y la primary key de `user_roles`.
+> Y aunque las funciones ya tengan archivo, el repo sigue sin poder
+> recrear la base de cero: el orden de dependencias no da. Eso lo
+> resuelve `supabase db dump`, no estos archivos.
 
 ---
 

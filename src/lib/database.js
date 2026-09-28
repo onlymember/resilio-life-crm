@@ -978,6 +978,7 @@ export const dbGetActivitiesByActor = async (actorId, limit = 50) => {
 export const dbGetTasks = async ({
   page = 0, pageSize = 30,
   assignedTo, createdBy, status, statusIn, entityType, entityId,
+  overdueOnly = false, dueToday = false, templateId,
   orderBy = 'due_date', orderDir = 'asc',
 } = {}) => {
   let q = supabase.from('v_tasks_estado')
@@ -989,6 +990,13 @@ export const dbGetTasks = async ({
   if (status)                  q = q.eq('status', status)
   if (statusIn?.length)        q = q.in('status', statusIn)
   if (entityType && entityId)  q = q.eq('entity_type', entityType).eq('entity_id', String(entityId))
+  if (templateId)              q = q.eq('template_id', templateId)
+  // estado_efectivo lo deriva la vista de due_date. Filtrar por esa
+  // columna en vez de recalcular "vencida" aca evita que las dos
+  // definiciones se separen.
+  if (overdueOnly)             q = q.eq('estado_efectivo', 'overdue')
+  if (dueToday)                q = q.gte('due_date', startOfToday())
+                                    .lt('due_date',  startOfTomorrow())
   const { data, count, error } = await q
   if (error) throw friendly(error)
   const rows = (data || []).map(rowToTask)
@@ -1088,6 +1096,83 @@ export const dbCompleteTask = async (id) => {
     .eq('id', id).select('*').single()
   if (error) throw friendly(error)
   return rowToTask(data)
+}
+
+// ═══════════════════════════════════════════════════════════
+// PLANTILLAS DE TAREAS · el motor de la operación diaria
+//
+// Una plantilla no es una tarea: es la definición de un hábito. El
+// generador la materializa en una tarea por Scouter y por período, y
+// la guarda de duplicados (template_id + assigned_to + due_date) es lo
+// que permite dispararlo muchas veces por día sin repetir nada.
+// ═══════════════════════════════════════════════════════════
+
+const rowToTemplate = (r) => ({
+  id:          r.id,
+  title:       r.title,
+  description: r.description,
+  type:        r.type,
+  priority:    r.priority,
+  recurrence:  r.recurrence,
+  targetType:  r.target_type,
+  targetId:    r.target_id,
+  dueHour:     r.due_hour ?? 18,
+  active:      r.active,
+  createdBy:   r.created_by,
+  createdAt:   r.created_at,
+})
+
+export const dbGetTaskTemplates = async ({ activeOnly = false } = {}) => {
+  let q = supabase.from('task_templates').select('*').order('created_at', { ascending: true })
+  if (activeOnly) q = q.eq('active', true)
+  const { data, error } = await q
+  if (error) throw friendly(error)
+  return (data || []).map(rowToTemplate)
+}
+
+export const dbSaveTaskTemplate = async (tpl) => {
+  const uid = await myId()
+  if (!uid) throw new Error('Sesión expirada. Volvé a entrar.')
+  const row = {
+    title:       tpl.title?.trim() || 'Plantilla sin título',
+    description: tpl.description?.trim() || null,
+    type:        tpl.type       || 'general',
+    priority:    tpl.priority   || 'normal',
+    recurrence:  tpl.recurrence || 'daily',
+    target_type: tpl.targetType || 'network',
+    target_id:   tpl.targetType && tpl.targetType !== 'network' ? (tpl.targetId || null) : null,
+    due_hour:    Number.isInteger(tpl.dueHour) ? tpl.dueHour : 18,
+    active:      tpl.active !== false,
+  }
+  if (isUuid(tpl.id)) {
+    const { data, error } = await supabase.from('task_templates')
+      .update(row).eq('id', tpl.id).select('*').single()
+    if (error) throw friendly(error)
+    return rowToTemplate(data)
+  }
+  const { data, error } = await supabase.from('task_templates')
+    .insert([{ ...row, created_by: uid }]).select('*').single()
+  if (error) throw friendly(error)
+  return rowToTemplate(data)
+}
+
+// RLS niega el DELETE sin error: PostgREST devuelve 0 filas y ningún
+// mensaje. Sin el .select() de control, borrar sin permiso se vería
+// exactamente igual que borrar con permiso.
+export const dbDeleteTaskTemplate = async (id) => {
+  const { data, error } = await supabase.from('task_templates').delete().eq('id', id).select('id')
+  if (error) throw friendly(error)
+  if (!data?.length) throw new Error('No tenés permiso para borrar esta plantilla.')
+}
+
+// El disparador del motor. pg_cron no está disponible en esta
+// instancia, así que quien abre el sistema es quien lo hace correr.
+// La función del lado de la base tiene el candado de 6 horas: llamarla
+// de más no genera de más.
+export const dbRunDailyMaintenance = async () => {
+  const { data, error } = await supabase.rpc('run_daily_maintenance')
+  if (error) throw friendly(error)
+  return data || { ran: false }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1482,6 +1567,12 @@ const locationToRow = async (l) => {
 // ═══════════════════════════════════════════════════════════
 
 // Columnas que admiten NULLS LAST en influencers
+// Tope duro para "seleccionar todo". No es una limitacion de la base:
+// es que repartir mas de dos mil fichas de un saque, con el escalonado
+// de la 041, le llenaria a una persona mas de tres meses de agenda.
+// Si alguna vez hace falta mas, conviene repartir por tandas igual.
+const MAX_BULK_IDS = 2000
+
 const INF_NULLS_LAST_COLS = new Set(['engagement','last_contact_at','followers','next_action_at'])
 
 // Paginada — Network. Siempre devuelve { rows, total, hasMore }.
@@ -1501,13 +1592,17 @@ export const dbGetInfluencers = async ({
   page = 0, pageSize = 30,
   search, cityId, countryId, ownerId, status, relationshipStatus, category,
   noOwner = false, noCity = false, overdueOnly = false, overdueToday = false,
+  noNextAction = false, idsOnly = false,
   orderBy = 'created_at', orderDir = 'desc',
 } = {}) => {
   const nullsFirst = !INF_NULLS_LAST_COLS.has(orderBy)
   let q = supabase.from('influencers')
-    .select('*', { count: 'exact' })
+    // idsOnly: para "seleccionar todo" hace falta la lista completa de
+    // ids que matchean el filtro, no la pagina visible. Pedir solo la
+    // columna id la hace barata aunque sean miles.
+    .select(idsOnly ? 'id' : '*', { count: 'exact' })
     .order(orderBy, { ascending: orderDir === 'asc', nullsFirst })
-    .range(page * pageSize, (page + 1) * pageSize - 1)
+  q = idsOnly ? q.limit(MAX_BULK_IDS) : q.range(page * pageSize, (page + 1) * pageSize - 1)
   if (status)             q = q.eq('status', status)
   if (cityId)             q = q.eq('city_id', cityId)
   if (countryId)          q = q.eq('country_id', countryId)
@@ -1517,11 +1612,15 @@ export const dbGetInfluencers = async ({
   if (overdueOnly)        q = q.lt('next_action_at', new Date().toISOString())
   if (overdueToday)       q = q.gte('next_action_at', startOfToday())
                               .lt('next_action_at',  startOfTomorrow())
+  // Sin proxima accion = invisible para la agenda: no aparece en el Home
+  // de nadie. Sin este filtro no habia forma de encontrarlas.
+  if (noNextAction)       q = q.is('next_action_at', null)
   if (relationshipStatus) q = q.eq('relationship_status', relationshipStatus)
   if (category)           q = q.eq('category', category)
   if (search)             q = q.or(`name.ilike.%${safe(search)}%,username.ilike.%${safe(search)}%`)
   const { data, count, error } = await q
   if (error) throw friendly(error)
+  if (idsOnly) return { ids: (data || []).map(r => r.id), total: count ?? 0 }
   const rows = (data || []).map(rowToInfluencer)
   return { rows, total: count ?? 0, hasMore: (count ?? 0) > (page + 1) * pageSize }
 }
@@ -1601,14 +1700,15 @@ const BRAND_NULLS_LAST_COLS = new Set(['last_contact_at','next_action_at','poten
 export const dbGetBrands = async ({
   page = 0, pageSize = 30,
   search, cityId, countryId, ownerId, status, relationshipStatus, category, categoryId,
-  noOwner = false, noCity = false, overdueFollowup = false,
+  noOwner = false, noCity = false, overdueFollowup = false, noNextAction = false,
+  idsOnly = false,
   orderBy = 'created_at', orderDir = 'desc',
 } = {}) => {
   const nullsFirst = !BRAND_NULLS_LAST_COLS.has(orderBy)
   let q = supabase.from('brands')
-    .select('*', { count: 'exact' })
+    .select(idsOnly ? 'id' : '*', { count: 'exact' })
     .order(orderBy, { ascending: orderDir === 'asc', nullsFirst })
-    .range(page * pageSize, (page + 1) * pageSize - 1)
+  q = idsOnly ? q.limit(MAX_BULK_IDS) : q.range(page * pageSize, (page + 1) * pageSize - 1)
   if (status)             q = q.eq('status', status)
   if (cityId)             q = q.eq('city_id', cityId)
   if (countryId)          q = q.eq('country_id', countryId)
@@ -1619,9 +1719,11 @@ export const dbGetBrands = async ({
   if (category)           q = q.eq('category', category)
   if (categoryId)         q = q.eq('category_id', categoryId)
   if (overdueFollowup)    q = q.lt('next_action_at', new Date().toISOString())
+  if (noNextAction)       q = q.is('next_action_at', null)
   if (search)             q = q.or(`name.ilike.%${safe(search)}%`)
   const { data, count, error } = await q
   if (error) throw friendly(error)
+  if (idsOnly) return { ids: (data || []).map(r => r.id), total: count ?? 0 }
   const rows = (data || []).map(rowToBrand)
   return { rows, total: count ?? 0, hasMore: (count ?? 0) > (page + 1) * pageSize }
 }

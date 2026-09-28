@@ -1,9 +1,9 @@
 import {
   Home, Users, Building2, Briefcase, CheckCircle,
   CheckSquare, Calendar, ArrowRight, FileText,
-  Target, Map, Award, BarChart3, BookOpen, Users2,
+  Target, Map, Award, BarChart3, BookOpen, Users2, Repeat,
 } from 'lucide-react'
-import { COMMAND_ROLES } from './routes.js'
+import { COMMAND_ROLES, DIRECTION_ROLES } from './routes.js'
 
 // Estructura del menú. soon:true → muestra badge "Pronto" y redirige a ComingSoon.
 // roles → si está definido, la sección/ítem solo aparece si el rol está en la lista.
@@ -51,6 +51,7 @@ export const NAV_SECTIONS = [
     items: [
       { path: '/network/command',  labelKey: 'nav.command',  icon: BarChart3, soon: false, roles: COMMAND_ROLES },
       { path: '/network/scouters', labelKey: 'nav.scouters', icon: Users2,    soon: false, roles: COMMAND_ROLES },
+      { path: '/network/templates', labelKey: 'nav.templates', icon: Repeat,   soon: false, roles: DIRECTION_ROLES },
     ],
   },
 ]

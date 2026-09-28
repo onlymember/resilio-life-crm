@@ -1,4 +1,39 @@
 {
+  "templates": {
+    "save":       "Guardar",
+    "cancel":     "Cancelar",
+    "new":        "Nueva plantilla",
+    "runNow":     "Generar ahora",
+    "running":    "Generando…",
+    "ranOk":      "Listo: {n} tareas generadas.",
+    "ranSkipped": "Ya se había generado hoy. No se duplicó nada.",
+    "pause":      "Pausar",
+    "resume":     "Reactivar",
+    "empty":      "Sin plantillas todavía",
+    "emptySubtitle": "Una plantilla es un hábito: el sistema la convierte en una tarea por Scouter, sola, todos los días.",
+    "seed":       "Cargar las 6 sugeridas",
+    "confirmDelete": "¿Borrar la plantilla «{title}»? Las tareas ya generadas quedan.",
+    "explainer":  "Cada plantilla activa genera una tarea por Scouter y por período. El sistema no duplica: si ya la generó hoy, no la vuelve a crear. Editar una plantilla cambia las tareas futuras, no las que ya están cargadas.",
+    "tzNote":     "La hora es local a la ciudad de cada Scouter: las 18 de Bogotá para la de Bogotá, las 18 de Madrid para la de Madrid.",
+    "dueAt":      "Vence {h}:00",
+    "pickCity":   "Elegí una ciudad",
+    "pickUser":   "Elegí una Scouter",
+    "field": {
+      "title":       "Qué hay que hacer",
+      "description": "Detalle (opcional)"
+    },
+    "recurrence": {
+      "daily":     "Todos los días",
+      "weekly":    "Cada semana",
+      "monthly":   "Cada mes",
+      "quarterly": "Cada trimestre"
+    },
+    "target": {
+      "network": "Toda la red",
+      "city":    "Una ciudad",
+      "user":    "Una Scouter"
+    }
+  },
   "brand": "RESILIO NETWORK",
   "soon": "Pronto",
   "nav": {
@@ -13,6 +48,7 @@
     "notes": "Notas",
     "command": "Command Center",
     "scouters": "Scouters",
+    "templates": "Plantillas",
     "missions": "Misiones",
     "roadmap": "Hoja de Ruta",
     "rewards": "Premios",
@@ -169,7 +205,8 @@
     "today": "Seguimiento hoy",
     "overdue": "Vencidos",
     "noOwner": "Sin dueño",
-    "noCity": "Sin ciudad"
+    "noCity": "Sin ciudad",
+    "noNextAction": "Sin próxima acción"
   },
   "filter": {
     "title": "Filtros",
@@ -292,11 +329,13 @@
     "confirmDelete": "¿Borrar esta tarea?",
     "confirmDeleteBatch": "Esta tarea está asignada a {n} personas. ¿Borrarla para todas?",
     "willCreateN": "Se van a crear {n} tareas, una por persona.",
-    "tabs": { "mine": "Mías", "assigned": "Asignadas por mí", "done": "Completadas" },
+    "tabs": { "mine": "Mías", "assigned": "Asignadas por mí", "overdue": "Vencidas", "done": "Completadas" },
     "emptyAssigned": "No asignaste nada todavía",
     "emptyAssignedSubtitle": "Las tareas que crees para otra persona aparecen acá hasta que las completa.",
     "emptyDone": "Sin tareas completadas",
     "emptyDoneSubtitle": "Acá queda el historial de lo que se fue cerrando.",
+    "emptyOverdue": "Nada vencido",
+    "emptyOverdueSubtitle": "No hay tareas abiertas con la fecha pasada.",
     "allDoneSubtitle": "No tenés tareas pendientes.",
     "pending": "{n} pendientes",
     "create": "Nueva tarea",
@@ -417,7 +456,8 @@
     "brands":         { "title": "Marcas",         "subtitle": "Clientes y prospectos" },
     "opportunities":  { "title": "Oportunidades", "subtitle": "Pipeline activo" },
     "collaborations": { "title": "Colaboraciones","subtitle": "Activaciones" },
-    "tasks":          { "title": "Tareas",         "subtitle": "Tus pendientes" }
+    "tasks":          { "title": "Tareas",         "subtitle": "Tus pendientes" },
+    "templates":      { "title": "Plantillas",    "subtitle": "Los hábitos que el sistema genera solo" }
   },
   "layout": {
     "backToApp": "Salir de Network",
@@ -498,7 +538,9 @@
       "brands":       "marcas sin dueño",
       "noCityInf":    "influencers sin ciudad",
       "noCityBrands": "marcas sin ciudad",
-      "usersNoRole":  "usuarios sin rol"
+      "usersNoRole":  "usuarios sin rol",
+      "noNextInf":    "influencers sin próxima acción",
+      "noNextBrands": "marcas sin próxima acción"
     },
     "goals": {
       "behind":  "Atrasado",
@@ -521,6 +563,7 @@
     }
   },
   "bulk": {
+    "selectAll": "Seleccionar los {n}",
     "selected":    "{n} seleccionados",
     "assign":      "Asignar en lote",
     "clear":       "Limpiar selección",

@@ -7,6 +7,12 @@ export const COMMAND_ROLES = [
   'city_lead',
 ]
 
+// Direccion estricta. Coincide con app_is_direction() de la base: los
+// tres roles de territorio ven el Command Center pero NO pueden escribir
+// plantillas, asi que mostrarles esa pantalla seria ofrecerles algo que
+// RLS les va a negar.
+export const DIRECTION_ROLES = ['super_admin', 'network_direction']
+
 export const canSeeCommand = (user) =>
   user && COMMAND_ROLES.includes(user.rol)
 
@@ -30,6 +36,7 @@ export const ROUTES = [
   { path: '/network/tasks',                 pageKey: 'tasks',              soon: false, roles: null },
   { path: '/network/command',               pageKey: 'command',            soon: false, roles: COMMAND_ROLES },
   { path: '/network/scouters',              pageKey: 'scouters',           soon: false, roles: COMMAND_ROLES },
+  { path: '/network/templates',             pageKey: 'templates',          soon: false, roles: DIRECTION_ROLES },
   { path: '/network/scouters/:id',          pageKey: 'scouter-detail',     soon: false, roles: COMMAND_ROLES },
   { path: '/network/calendar',              pageKey: 'calendar',           soon: false, roles: null },
   { path: '/network/follow-ups',            pageKey: 'follow-ups',         soon: false, roles: null },

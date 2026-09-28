@@ -34,3 +34,10 @@ lerna-debug.log*
 
 # OS
 Thumbs.db
+
+# Supabase CLI
+# .temp guarda el project-ref y credenciales de la sesion del CLI.
+# El dump del esquema (supabase/*.sql) SI va al repo: es el punto.
+supabase/.temp/
+supabase/.branches/
+.supabase/

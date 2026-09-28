@@ -14,7 +14,10 @@ import {
   getNetworkScouters, getUnassignedSummary,
   getScouterPerformance,
 } from '../../lib/metrics.js'
-import { dbGetGoals, dbGetGeography, dbGetMonthlySnapshots, dbCloseMonthlySnapshot } from '../../lib/database.js'
+import {
+  dbGetGoals, dbGetGeography, dbGetMonthlySnapshots, dbCloseMonthlySnapshot,
+  dbGetInfluencers, dbGetBrands, dbRunDailyMaintenance,
+} from '../../lib/database.js'
 
 const SectionTitle = ({ children, action }) => (
   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
@@ -84,6 +87,10 @@ export default function CommandPage({ currentUser }) {
   const [scouterModal, setScouterModal] = useState(false)
   const [assignAlert,  setAssignAlert]  = useState(null)      // alert entity for AssignModal
   const [period, setPeriod] = useState(null)
+  // Una ficha sin proxima accion no aparece en el Home de nadie: la
+  // agenda se arma por next_action_at. Son las fichas dormidas, y sin
+  // este contador no hay forma de verlas desde ningun lado.
+  const [dormant, setDormant] = useState({ influencers: 0, brands: 0 })
 
   const PERIODS = getPeriods()
   const [snapPeriod,    setSnapPeriod]    = useState(PERIODS[0].value)
@@ -96,6 +103,21 @@ export default function CommandPage({ currentUser }) {
   useEffect(() => {
     dbGetGeography().then(setGeo).catch(() => {})
     getNetworkScouters({}).then(setAllScouters).catch(() => {})
+
+    // pageSize 1 porque solo interesa el total: PostgREST devuelve el
+    // count exacto sin traer las filas.
+    Promise.all([
+      dbGetInfluencers({ page: 0, pageSize: 1, noNextAction: true }),
+      dbGetBrands({      page: 0, pageSize: 1, noNextAction: true }),
+    ])
+      .then(([i, b]) => setDormant({ influencers: i.total, brands: b.total }))
+      .catch(() => {})
+
+    // pg_cron no esta disponible en esta instancia, asi que el motor de
+    // tareas recurrentes lo dispara quien abre el Command Center. La
+    // funcion tiene un candado de 6 horas del lado de la base: llamarla
+    // de mas no genera de mas, y si falla no rompe la pantalla.
+    dbRunDailyMaintenance().catch(() => {})
   }, [])
 
   const load = useCallback(async () => {
@@ -247,7 +269,7 @@ export default function CommandPage({ currentUser }) {
                 { key:'brands',          label: t('command.net.brands'),          path: '/network/brands' },
                 { key:'opportunities',   label: t('command.net.opportunities'),   path: '/network/opportunities' },
                 { key:'collaborations',  label: t('command.net.collaborations'),  path: '/network/collaborations' },
-                { key:'tasks_overdue',   label: t('command.net.tasksOverdue'),    path: '/network/tasks', accent: '#F87171' },
+                { key:'tasks_overdue',   label: t('command.net.tasksOverdue'),    path: '/network/tasks?overdue=1', accent: '#F87171' },
               ].map(({ key, label, path, accent }) => (
                 <StatTile
                   key={key}
@@ -268,6 +290,8 @@ export default function CommandPage({ currentUser }) {
                   { val: unassigned.noCityInf,     label: t('command.unassigned.noCityInf'),    path: '/network/influencers?noCity=1',   warn: unassigned.noCityInf > 0 },
                   { val: unassigned.noCityBrands,  label: t('command.unassigned.noCityBrands'), path: '/network/brands?noCity=1',        warn: unassigned.noCityBrands > 0 },
                   { val: unassigned.usersNoRole,   label: t('command.unassigned.usersNoRole'),  path: null,                              warn: unassigned.usersNoRole > 0 },
+                  { val: dormant.influencers,      label: t('command.unassigned.noNextInf'),    path: '/network/influencers?noNextAction=1', warn: dormant.influencers > 0 },
+                  { val: dormant.brands,           label: t('command.unassigned.noNextBrands'), path: '/network/brands?noNextAction=1',      warn: dormant.brands > 0 },
                 ].filter(({ val }) => val > 0).map(({ val, label, path, warn }) => (
                   <button
                     key={label}

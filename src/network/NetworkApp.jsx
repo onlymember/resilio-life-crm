@@ -16,6 +16,7 @@ import FollowUpsPage from './pages/FollowUpsPage.jsx'
 import TasksPage from './pages/TasksPage.jsx'
 import CommandPage from './pages/CommandPage.jsx'
 import ScoutersPage from './pages/ScoutersPage.jsx'
+import TaskTemplatesPage from './pages/TaskTemplatesPage.jsx'
 import ScouterDetailPage from './pages/ScouterDetailPage.jsx'
 import ComingSoonPage from './pages/ComingSoonPage.jsx'
 import CalendarPage from './pages/CalendarPage.jsx'
@@ -25,7 +26,7 @@ import RewardsPage from './pages/RewardsPage.jsx'
 import CreateSheet from './components/CreateSheet.jsx'
 import EmptyState from './components/EmptyState.jsx'
 import { Shield } from 'lucide-react'
-import { getDefaultRoute, COMMAND_ROLES } from './routes.js'
+import { getDefaultRoute, COMMAND_ROLES, DIRECTION_ROLES } from './routes.js'
 import { t } from '../i18n/index.js'
 
 const useIsMobile = () => {
@@ -155,6 +156,11 @@ export default function NetworkApp({ currentUser }) {
           <Route path="scouters/:id" element={
             <RoleGuard user={currentUser} allowedRoles={COMMAND_ROLES}>
               <ScouterDetailPage currentUser={currentUser}/>
+            </RoleGuard>
+          }/>
+          <Route path="templates"   element={
+            <RoleGuard user={currentUser} allowedRoles={DIRECTION_ROLES}>
+              <TaskTemplatesPage/>
             </RoleGuard>
           }/>
           <Route path="calendar"    element={<CalendarPage currentUser={currentUser}/>}/>
