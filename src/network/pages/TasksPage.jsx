@@ -4,8 +4,8 @@ import TaskRow from '../components/TaskRow.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
-import { defaultDueLocal, datetimeLocalToIso } from '../utils/date.js'
-import { dbGetTasks, dbCompleteTask, dbSaveTask } from '../../lib/database.js'
+import { defaultDueLocal, datetimeLocalToIso, isoToDatetimeLocal } from '../utils/date.js'
+import { dbGetTasks, dbCompleteTask, dbSaveTask, dbCreateTasks, dbDeleteTask, dbDeleteTaskBatch } from '../../lib/database.js'
 import { COMMAND_ROLES } from '../routes.js'
 import { getNetworkScouters } from '../../lib/metrics.js'
 import { personLabel, personName, personShort } from '../utils/people.js'
@@ -37,12 +37,23 @@ function groupTasks(rows) {
 
 const PRIORITY_OPTS = ['urgent', 'high', 'normal', 'low']
 
+// Abiertas = todo lo que no esta cerrado. Antes la pantalla pedia
+// status='todo' y nada mas, asi que una tarea empezada desaparecia.
+const OPEN_STATUSES = ['todo', 'in_progress']
+
+const TABS = [
+  { id: 'mine',     labelKey: 'task.tabs.mine' },
+  { id: 'assigned', labelKey: 'task.tabs.assigned' },
+  { id: 'done',     labelKey: 'task.tabs.done' },
+]
+
 export default function TasksPage({ currentUser }) {
   const tz = useTz()
   const isCommand = COMMAND_ROLES.includes(currentUser?.rol)
   const [rows,    setRows]    = useState([])
   const [total,   setTotal]   = useState(0)
   const [loading, setLoading] = useState(true)
+  const [tab,             setTab]             = useState('mine')
   const [filterPriority,  setFilterPriority]  = useState('')
   const [filterAssignedTo, setFilterAssignedTo] = useState('')
   const [scouters, setScouters] = useState([])
@@ -52,7 +63,8 @@ export default function TasksPage({ currentUser }) {
   const [newTitle,      setNewTitle]      = useState('')
   const [newDue,        setNewDue]        = useState('')
   const [newPrio,       setNewPrio]       = useState('normal')
-  const [newAssignedTo, setNewAssignedTo] = useState('')
+  const [newAssignees,  setNewAssignees]  = useState([])   // ids; vacio = yo
+  const [editing,       setEditing]       = useState(null) // la tarea que se edita
   const [saving,        setSaving]        = useState(false)
   const [saveError,     setSaveError]     = useState(null)
 
@@ -64,15 +76,30 @@ export default function TasksPage({ currentUser }) {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const assignedFilter = isCommand
-        ? (filterAssignedTo || undefined)
-        : (currentUser?.id || undefined)
-      const res = await dbGetTasks({
-        page: 0, pageSize: PAGE_SIZE,
-        status: 'todo',
-        assignedTo: assignedFilter,
-        ...(filterPriority ? { orderBy: 'priority' } : {}),
-      })
+      // Antes esto filtraba por assigned_to = yo para todo el que no fuera
+      // Direccion, asi que una tarea delegada desaparecia para quien la
+      // habia creado. RLS ya decide que se puede ver; la solapa solo
+      // elige que pedir de eso.
+      const me    = currentUser?.id || undefined
+      const query = { page: 0, pageSize: PAGE_SIZE }
+
+      if (tab === 'mine') {
+        query.assignedTo = filterAssignedTo || me
+        query.statusIn   = OPEN_STATUSES
+      } else if (tab === 'assigned') {
+        query.createdBy  = me
+        query.statusIn   = OPEN_STATUSES
+        if (filterAssignedTo) query.assignedTo = filterAssignedTo
+      } else {
+        query.statusIn = ['completed']
+        query.orderBy  = 'completed_at'
+        query.orderDir = 'desc'
+        if (filterAssignedTo) query.assignedTo = filterAssignedTo
+        else if (!isCommand)  query.assignedTo = me
+      }
+      if (filterPriority && tab !== 'done') query.orderBy = 'priority'
+
+      const res = await dbGetTasks(query)
       const filtered = filterPriority
         ? res.rows.filter(r => r.priority === filterPriority)
         : res.rows
@@ -80,7 +107,7 @@ export default function TasksPage({ currentUser }) {
       setTotal(res.total)
     } catch(e) { console.error('TasksPage:', e.message) }
     finally { setLoading(false) }
-  }, [filterPriority, filterAssignedTo, isCommand, currentUser?.id])
+  }, [tab, filterPriority, filterAssignedTo, isCommand, currentUser?.id])
 
   useEffect(() => { load() }, [load])
 
@@ -96,18 +123,23 @@ export default function TasksPage({ currentUser }) {
     setSaving(true)
     setSaveError(null)
     try {
-      const savedAssignee = (isCommand && newAssignedTo) ? newAssignedTo : (currentUser?.id || null)
-      const saved = await dbSaveTask({
+      const payload = {
         title:    newTitle.trim(),
         dueDate:  newDue ? datetimeLocalToIso(newDue, tz) : null,
         priority: newPrio,
-        status:   'todo',
-        assignedTo: savedAssignee,
-      }, currentUser?.id)
-      setRows(prev => [saved, ...prev])
-      setTotal(prev => prev + 1)
-      setNewTitle(''); setNewDue(defaultDueLocal(tz)); setNewPrio('normal'); setNewAssignedTo('')
-      setCreating(false)
+      }
+
+      if (editing) {
+        // Editar toca una fila sola. El responsable no se cambia acá:
+        // reasignar es otra operación y mezclarlas esconde el cambio.
+        await dbSaveTask({ ...editing, ...payload }, currentUser?.id)
+      } else {
+        const ids = newAssignees.length ? newAssignees : [currentUser?.id]
+        await dbCreateTasks(payload, ids)
+      }
+
+      resetForm()
+      await load()
     } catch(e) {
       setSaveError(e.message)
     } finally {
@@ -115,7 +147,50 @@ export default function TasksPage({ currentUser }) {
     }
   }
 
-  const groups = groupTasks(rows)
+  const resetForm = () => {
+    setNewTitle(''); setNewDue(defaultDueLocal(tz)); setNewPrio('normal')
+    setNewAssignees([]); setEditing(null); setCreating(false); setSaveError(null)
+  }
+
+  const handleEdit = (task) => {
+    setEditing(task)
+    setNewTitle(task.title || '')
+    setNewDue(task.dueDate ? isoToDatetimeLocal(task.dueDate, tz) : '')
+    setNewPrio(task.priority || 'normal')
+    setCreating(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleDelete = async (task) => {
+    const many = task.batchId
+      ? rows.filter(r => r.batchId === task.batchId).length
+      : 1
+    const msg = many > 1 ? t('task.confirmDeleteBatch', { n: many }) : t('task.confirmDelete')
+    if (!window.confirm(msg)) return
+    try {
+      if (task.batchId && many > 1) await dbDeleteTaskBatch(task.batchId)
+      else                          await dbDeleteTask(task.id)
+      await load()
+    } catch (e) { setSaveError(e.message) }
+  }
+
+  // Borrar y editar los permite la policy a quien creó la tarea y a
+  // Dirección. Se pregunta acá para no mostrar un botón que va a fallar.
+  const canManage = (task) => isCommand || task.createdBy === currentUser?.id
+
+  const groups = tab === 'done'
+    ? [{ key: 'done', label: t('task.groups.done'), items: rows, accent: '#34D399' }]
+    : groupTasks(rows)
+
+  // En Asignadas por mi el nombre del responsable es el dato principal,
+  // no un adorno para Direccion: se muestra siempre.
+  const assigneeNameOf = (task) => {
+    if (!task.assignedTo) return null
+    if (tab !== 'assigned' && (!isCommand || task.assignedTo === currentUser?.id)) return null
+    if (task.assignedTo === currentUser?.id) return t('task.assignSelf')
+    const sc = scouters.find(x => x.userId === task.assignedTo)
+    return sc ? personName(sc) : null
+  }
 
   return (
     <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 680 }}>
@@ -129,7 +204,7 @@ export default function TasksPage({ currentUser }) {
           </p>
         </div>
         <button
-          onClick={() => setCreating(p => !p)}
+          onClick={() => (creating ? resetForm() : setCreating(true))}
           style={{
             display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px',
             borderRadius: 10, fontSize: 12, fontWeight: 600,
@@ -141,7 +216,29 @@ export default function TasksPage({ currentUser }) {
         </button>
       </div>
 
-      {/* Inline create form */}
+      {/* Solapas */}
+      <div style={{ display: 'flex', gap: 6, borderBottom: '1px solid var(--border-violet)', paddingBottom: 2 }}>
+        {TABS.map(x => {
+          const active = tab === x.id
+          return (
+            <button
+              key={x.id}
+              onClick={() => setTab(x.id)}
+              style={{
+                padding: '8px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                background: 'none', border: 'none',
+                color: active ? 'var(--primary-violet-light)' : 'var(--text-secondary)',
+                borderBottom: active ? '2px solid var(--primary-violet)' : '2px solid transparent',
+                marginBottom: -3,
+              }}
+            >
+              {t(x.labelKey)}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Formulario: crear o editar */}
       {creating && (
         <form onSubmit={handleCreate} style={{ padding: '14px', background: 'var(--glass-bg)', border: '1px solid var(--border-violet)', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <input
@@ -178,21 +275,43 @@ export default function TasksPage({ currentUser }) {
               {PRIORITY_OPTS.map(p => <option key={p} value={p}>{t(`task.priorities.${p}`)}</option>)}
             </select>
           </div>
-          {isCommand && scouters.length > 0 && (
-            <select
-              value={newAssignedTo}
-              onChange={e => setNewAssignedTo(e.target.value)}
-              style={{
-                width: '100%', padding: '7px 10px', borderRadius: 8, fontSize: 16,
-                background: 'rgba(139,92,246,0.08)', border: '1px solid var(--border-violet)',
-                color: 'var(--text-primary)',
-              }}
-            >
-              <option value="">{t('task.assignee')}: {t('task.assignSelf')}</option>
-              {scouters.map(s => (
-                <option key={s.userId} value={s.userId}>{personLabel(s)}</option>
-              ))}
-            </select>
+          {/* Responsables. Se eligen varios: el sistema crea una tarea por
+              persona, porque cada una la completa por su lado. Al editar
+              no se muestra — reasignar es otra operación. */}
+          {isCommand && scouters.length > 0 && !editing && (
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>
+                {t('task.assignee')}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {[{ userId: currentUser?.id, nombre: t('task.assignSelf') }, ...scouters]
+                  .filter(x => x.userId)
+                  .map(sc => {
+                    const on = newAssignees.includes(sc.userId)
+                    return (
+                      <button
+                        key={sc.userId}
+                        type="button"
+                        onClick={() => setNewAssignees(prev =>
+                          prev.includes(sc.userId) ? prev.filter(x => x !== sc.userId) : [...prev, sc.userId])}
+                        style={{
+                          padding: '5px 11px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                          background: on ? 'rgba(139,92,246,0.22)' : 'rgba(139,92,246,0.06)',
+                          color: on ? 'var(--primary-violet-light)' : 'var(--text-secondary)',
+                          border: `1px solid ${on ? 'rgba(139,92,246,0.45)' : 'transparent'}`,
+                        }}
+                      >
+                        {sc.nombre === t('task.assignSelf') ? sc.nombre : personLabel(sc)}
+                      </button>
+                    )
+                  })}
+              </div>
+              {newAssignees.length > 1 && (
+                <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 6 }}>
+                  {t('task.willCreateN', { n: newAssignees.length })}
+                </div>
+              )}
+            </div>
           )}
           {saveError && <div style={{ fontSize: 11, color: '#F87171' }}>{saveError}</div>}
           <button
@@ -204,7 +323,7 @@ export default function TasksPage({ currentUser }) {
               color: 'white', border: 'none', cursor: saving ? 'default' : 'pointer',
             }}
           >
-            {saving ? t('task.saving') : t('form.save')}
+            {saving ? t('task.saving') : editing ? t('form.save') : t('task.create')}
           </button>
         </form>
       )}
@@ -266,8 +385,8 @@ export default function TasksPage({ currentUser }) {
       ) : rows.length === 0 ? (
         <EmptyState
           icon={CheckSquare}
-          title={t('task.allDone')}
-          subtitle={t('task.allDoneSubtitle')}
+          title={t(tab === 'assigned' ? 'task.emptyAssigned' : tab === 'done' ? 'task.emptyDone' : 'task.allDone')}
+          subtitle={t(tab === 'assigned' ? 'task.emptyAssignedSubtitle' : tab === 'done' ? 'task.emptyDoneSubtitle' : 'task.allDoneSubtitle')}
         />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -277,12 +396,16 @@ export default function TasksPage({ currentUser }) {
                 {group.label} · {group.items.length}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {group.items.map(task => {
-                  const assigneeName = (isCommand && task.assignedTo && task.assignedTo !== currentUser?.id)
-                    ? (() => { const sc = scouters.find(s => s.userId === task.assignedTo); return sc ? personName(sc) : null })()
-                    : null
-                  return <TaskRow key={task.id} task={task} onComplete={handleComplete} assigneeName={assigneeName}/>
-                })}
+                {group.items.map(task => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    onComplete={tab === 'done' ? undefined : handleComplete}
+                    assigneeName={assigneeNameOf(task)}
+                    onEdit={canManage(task) && tab !== 'done' ? handleEdit : undefined}
+                    onDelete={canManage(task) ? handleDelete : undefined}
+                  />
+                ))}
               </div>
             </div>
           ))}

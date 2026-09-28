@@ -124,7 +124,7 @@ function MobileHeader({ currentUser, onOpenDrawer }) {
     <header style={{ height: 52, background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-violet)', display: 'flex', alignItems: 'center', padding: '0 12px', position: 'sticky', top: 0, zIndex: 100 }}>
       <button
         onClick={onOpenDrawer}
-        aria-label="Menú"
+        aria-label={t('layout.menu')}
         style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', flexShrink: 0, borderRadius: 8 }}
       >
         <Menu size={20}/>

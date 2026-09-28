@@ -242,7 +242,7 @@ export default function ImportSheet({ kind, onClose, onDone }) {
   const handleParse = () => {
     setParseError(null)
     const parsed = parseRawText(rawText)
-    if (!parsed) { setParseError('No se encontraron datos válidos. Verificá el formato.'); return }
+    if (!parsed) { setParseError(t('import.parseError')); return }
     const { headers, rows: rawRows } = parsed
     const unknown = headers.filter(h => h.trim() && !headerMap[normHeader(h)])
     setUnknownCols(unknown)
@@ -356,7 +356,7 @@ export default function ImportSheet({ kind, onClose, onDone }) {
               </div>
 
               <label style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'10px 16px', borderRadius:10, border:'1px dashed rgba(139,92,246,0.4)', cursor:'pointer', color:'var(--text-secondary)', fontSize:12, background:'rgba(139,92,246,0.03)' }}>
-                <Upload size={13}/>Subir CSV
+                <Upload size={13}/>{t('import.uploadCsv')}
                 <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={handleFile} style={{ display:'none' }}/>
               </label>
 
@@ -489,7 +489,7 @@ export default function ImportSheet({ kind, onClose, onDone }) {
                               <div key={i} style={{ fontSize:10, color:'#F87171' }}>✗ {e}</div>
                             ))}
                             {!isInvalid && row.isDuplicate && (
-                              <div style={{ fontSize:10, color:'#FBBF24' }}>⚠ Posible duplicado</div>
+                              <div style={{ fontSize:10, color:'#FBBF24' }}>⚠ {t('import.duplicateRow')}</div>
                             )}
                             {row.warnings.map((w,i) => (
                               <div key={i} style={{ fontSize:10, color:'#FBBF24' }}>⚠ {w}</div>
@@ -507,7 +507,7 @@ export default function ImportSheet({ kind, onClose, onDone }) {
 
               <div style={{ display:'flex', gap:8 }}>
                 <button onClick={() => setStep('input')} style={{ flex:1, padding:'10px 0', borderRadius:10, background:'rgba(139,92,246,0.08)', border:'1px solid var(--border-violet)', color:'var(--text-secondary)', cursor:'pointer', fontSize:13, fontWeight:600 }}>
-                  ← Volver
+                  ← {t('import.back')}
                 </button>
                 <button
                   onClick={handleImport}

@@ -432,6 +432,7 @@ const rowToTask = (r) => ({
   type:            r.type,
   priority:        r.priority,
   status:          r.status,
+  batchId:         r.batch_id ?? null,
   estadoEfectivo:  r.estado_efectivo || r.status,
   isOverdue:       r.is_overdue ?? (r.estado_efectivo === 'overdue'),
   dueDate:         r.due_date,
@@ -970,9 +971,13 @@ export const dbGetActivitiesByActor = async (actorId, limit = 50) => {
 // ═══════════════════════════════════════════════════════════
 
 // Paginada — Network. Siempre devuelve { rows, total, hasMore }.
+// `createdBy` y `statusIn` existen para el seguimiento de trabajo delegado.
+// La policy task_select ya permite ver lo propio, lo que uno creo y todo si
+// sos Direccion: lo unico que faltaba era poder pedirlo. Filtrar de menos
+// aca es seguro — RLS acota igual.
 export const dbGetTasks = async ({
   page = 0, pageSize = 30,
-  assignedTo, status, entityType, entityId,
+  assignedTo, createdBy, status, statusIn, entityType, entityId,
   orderBy = 'due_date', orderDir = 'asc',
 } = {}) => {
   let q = supabase.from('v_tasks_estado')
@@ -980,7 +985,9 @@ export const dbGetTasks = async ({
     .order(orderBy, { ascending: orderDir === 'asc', nullsFirst: false })
     .range(page * pageSize, (page + 1) * pageSize - 1)
   if (assignedTo)              q = q.eq('assigned_to', assignedTo)
+  if (createdBy)               q = q.eq('created_by', createdBy)
   if (status)                  q = q.eq('status', status)
+  if (statusIn?.length)        q = q.in('status', statusIn)
   if (entityType && entityId)  q = q.eq('entity_type', entityType).eq('entity_id', String(entityId))
   const { data, count, error } = await q
   if (error) throw friendly(error)
@@ -1028,6 +1035,51 @@ export const dbSaveTask = async (task, userId) => {
     .insert([{ ...row, created_by: uid }]).select('*').single()
   if (error) throw friendly(error)
   return rowToTask(data)
+}
+
+// Asignar a varias personas crea una fila por persona con un batch_id
+// compartido. El estado de una tarea es por persona, asi que una sola
+// fila con muchos responsables no alcanzaria: cada una la completa por
+// su lado. La pantalla usa el batch_id para mostrarlas como una linea
+// con su progreso.
+export const dbCreateTasks = async (task, assigneeIds = []) => {
+  const uid = await myId()
+  if (!uid) throw new Error('Sesión expirada. Volvé a entrar.')
+  const ids = [...new Set((assigneeIds || []).filter(Boolean))]
+  if (!ids.length) throw new Error('Elegí al menos un responsable.')
+
+  const base = {
+    title:       task.title       || 'Tarea sin título',
+    description: task.description || null,
+    entity_type: task.entityType  || null,
+    entity_id:   task.entityId    ? String(task.entityId) : null,
+    type:        task.type        || 'general',
+    priority:    task.priority    || 'normal',
+    status:      'todo',
+    due_date:    task.dueDate     || null,
+    created_by:  uid,
+  }
+  const batch = ids.length > 1 ? crypto.randomUUID() : null
+  const rows  = ids.map(id => ({ ...base, assigned_to: id, batch_id: batch }))
+
+  const { data, error } = await supabase.from('tasks').insert(rows).select('*')
+  if (error) throw friendly(error)
+  return (data || []).map(rowToTask)
+}
+
+export const dbDeleteTask = async (id) => {
+  const { data, error } = await supabase.from('tasks').delete().eq('id', id).select('id')
+  if (error) throw friendly(error)
+  if (!data?.length) throw new Error('No tenés permiso para borrar esta tarea.')
+}
+
+// Borra las filas de un lote entero. Se usa cuando se elimina una
+// tarea que fue asignada a varias personas.
+export const dbDeleteTaskBatch = async (batchId) => {
+  const { data, error } = await supabase.from('tasks').delete().eq('batch_id', batchId).select('id')
+  if (error) throw friendly(error)
+  if (!data?.length) throw new Error('No tenés permiso para borrar estas tareas.')
+  return data.length
 }
 
 export const dbCompleteTask = async (id) => {

@@ -103,5 +103,57 @@ BEGIN
 END
 $function$;
 
--- PENDIENTE: volcar assign_entities_bulk y unassigned_summary
--- (no devueltas por pg_get_functiondef — verificar nombre exacto en la base)
+
+-- Asignacion en lote. SECURITY INVOKER a proposito: delega cada fila en
+-- assign_entity(), que valida el permiso del actor. El BEGIN/EXCEPTION por
+-- iteracion hace que una fila rechazada no aborte el lote entero: vuelve
+-- en la columna `error` y las demas siguen.
+CREATE OR REPLACE FUNCTION public.assign_entities_bulk(
+  p_entity_type text,
+  p_entity_ids  uuid[],
+  p_to_owner    uuid,
+  p_reason      text DEFAULT NULL::text
+)
+RETURNS TABLE(entity_id uuid, ok boolean, error text)
+LANGUAGE plpgsql
+AS $assign_entities_bulk$
+DECLARE v_id UUID;
+BEGIN
+  FOREACH v_id IN ARRAY p_entity_ids LOOP
+    BEGIN
+      PERFORM assign_entity(p_entity_type, v_id, p_to_owner, p_reason);
+      entity_id := v_id; ok := true;  error := NULL;
+    EXCEPTION WHEN OTHERS THEN
+      entity_id := v_id; ok := false; error := SQLERRM;
+    END;
+    RETURN NEXT;
+  END LOOP;
+END $assign_entities_bulk$;
+
+
+-- Contadores de la fila "sin asignar" del Command Center.
+-- SECURITY INVOKER: los numeros quedan acotados a lo que el que mira
+-- puede ver, igual que los listados a los que enlazan.
+CREATE OR REPLACE FUNCTION public.unassigned_summary()
+RETURNS jsonb
+LANGUAGE sql
+STABLE
+AS $unassigned_summary$
+  SELECT jsonb_build_object(
+    'influencers',   (SELECT count(*) FROM influencers   WHERE owner_scouter_id IS NULL),
+    'brands',        (SELECT count(*) FROM brands        WHERE owner_scouter_id IS NULL),
+    'opportunities', (SELECT count(*) FROM opportunities WHERE owner_scouter_id IS NULL),
+    'no_city_inf',   (SELECT count(*) FROM influencers   WHERE city_id IS NULL),
+    'no_city_brands',(SELECT count(*) FROM brands        WHERE city_id IS NULL),
+    'users_no_role', (SELECT count(*) FROM profiles p
+                       WHERE p.estado = 'aprobado'
+                         AND NOT EXISTS (SELECT 1 FROM user_roles r
+                                          WHERE r.user_id = p.id AND r.revoked_at IS NULL))
+  );
+$unassigned_summary$;
+
+
+-- ── Nota sobre network_scouters ─────────────────────────────
+-- La definicion de arriba es la original. La migracion 030 la reemplaza
+-- para que el nombre no vuelva vacio cuando sobrenombre es string vacio.
+-- Correr siempre 030 despues de este archivo.

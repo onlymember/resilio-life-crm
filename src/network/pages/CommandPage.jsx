@@ -201,9 +201,9 @@ export default function CommandPage({ currentUser }) {
 
       {/* Filters */}
       <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-        <GeoSelect label="Región"  paramKey="region"  options={geo.regions}/>
-        <GeoSelect label="País"    paramKey="country" options={geo.countries}/>
-        <GeoSelect label="Ciudad"  paramKey="city"    options={geo.cities}/>
+        <GeoSelect label={t('geo.region')}  paramKey="region"  options={geo.regions}/>
+        <GeoSelect label={t('geo.country')} paramKey="country" options={geo.countries}/>
+        <GeoSelect label={t('geo.city')}    paramKey="city"    options={geo.cities}/>
         <PeriodFilter value={period} onChange={handlePeriod}/>
       </div>
 

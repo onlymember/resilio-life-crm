@@ -1,11 +1,12 @@
 import React, { useRef, useState } from 'react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { fmtDateTime, fmtDateTimeOverdue } from '../utils/date.js'
 
 const PRIORITY_COLOR = { urgent: '#F87171', high: '#FB923C', normal: '#60A5FA', low: '#9CA3AF' }
 
-export default function TaskRow({ task, onComplete, assigneeName }) {
+export default function TaskRow({ task, onComplete, assigneeName, onEdit, onDelete }) {
   const tz = useTz()
   const [done,    setDone]    = useState(false)
   const [loading, setLoading] = useState(false)
@@ -92,6 +93,37 @@ export default function TaskRow({ task, onComplete, assigneeName }) {
       }}>
         {t(`task.priorities.${task.priority}`) || task.priority}
       </span>
+
+      {/* Editar y borrar: solo aparecen si quien mira puede hacerlo.
+          Un boton que no puede hacer nada es peor que ningun boton. */}
+      {(onEdit || onDelete) && (
+        <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+          {onEdit && (
+            <button
+              onClick={() => onEdit(task)}
+              aria-label={t('task.edit')}
+              title={t('task.edit')}
+              style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', borderRadius: 8 }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--primary-violet-light)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+            >
+              <Pencil size={14}/>
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={() => onDelete(task)}
+              aria-label={t('task.delete')}
+              title={t('task.delete')}
+              style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', borderRadius: 8 }}
+              onMouseEnter={e => e.currentTarget.style.color = '#F87171'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+            >
+              <Trash2 size={14}/>
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

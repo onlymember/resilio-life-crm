@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react'
 
 // Persists across renders — prevents re-showing splash on internal navigation
 let sessionBooted = false
@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 
 import LoginScreen from './components/Auth/LoginScreen.jsx'
-import AdminPanel  from './components/Admin/AdminPanel.jsx'
+const AdminPanel = lazy(() => import('./components/Admin/AdminPanel.jsx'))
 import { supabase } from './lib/supabase.js'
 import {
   signOut, isAdmin,
@@ -49,30 +49,30 @@ import {
 } from './data/demo.js'
 
 import VideoPortal from './components/VideoPortal/VideoPortal.jsx'
-import NetworkApp   from './network/NetworkApp.jsx'
+const NetworkApp = lazy(() => import('./network/NetworkApp.jsx'))
 import { COMMAND_ROLES } from './network/routes.js'
 
-import DashboardView         from './views/DashboardView.jsx'
-import InfluencersView       from './views/InfluencersView.jsx'
-import BenefitsView          from './views/BenefitsView.jsx'
-import CodesView             from './views/CodesView.jsx'
-import TrackingView          from './views/TrackingView.jsx'
-import MembershipsView       from './views/MembershipsView.jsx'
-import UsersView             from './views/UsersView.jsx'
-import AnalyticsView         from './views/AnalyticsView.jsx'
-import ReportsView           from './views/ReportsView.jsx'
-import CreativeAgencyView    from './views/CreativeAgencyView.jsx'
-import InfluencerAgencyView  from './views/InfluencerAgencyView.jsx'
-import EventsView            from './views/EventsView.jsx'
-import OnlyMembersView       from './views/OnlyMembersView.jsx'
-import RRPPView              from './views/RRPPView.jsx'
-import TicketsView           from './views/TicketsView.jsx'
-import ElevareView           from './views/ElevareView.jsx'
-import TeamView              from './views/TeamView.jsx'
-import AdvancedView          from './views/AdvancedView.jsx'
-import MissionsView          from './views/MissionsView.jsx'
-import CaptacionView         from './views/CaptacionView.jsx'
-import HubView               from './views/HubView.jsx'
+const DashboardView = lazy(() => import('./views/DashboardView.jsx'))
+const InfluencersView = lazy(() => import('./views/InfluencersView.jsx'))
+const BenefitsView = lazy(() => import('./views/BenefitsView.jsx'))
+const CodesView = lazy(() => import('./views/CodesView.jsx'))
+const TrackingView = lazy(() => import('./views/TrackingView.jsx'))
+const MembershipsView = lazy(() => import('./views/MembershipsView.jsx'))
+const UsersView = lazy(() => import('./views/UsersView.jsx'))
+const AnalyticsView = lazy(() => import('./views/AnalyticsView.jsx'))
+const ReportsView = lazy(() => import('./views/ReportsView.jsx'))
+const CreativeAgencyView = lazy(() => import('./views/CreativeAgencyView.jsx'))
+const InfluencerAgencyView = lazy(() => import('./views/InfluencerAgencyView.jsx'))
+const EventsView = lazy(() => import('./views/EventsView.jsx'))
+const OnlyMembersView = lazy(() => import('./views/OnlyMembersView.jsx'))
+const RRPPView = lazy(() => import('./views/RRPPView.jsx'))
+const TicketsView = lazy(() => import('./views/TicketsView.jsx'))
+const ElevareView = lazy(() => import('./views/ElevareView.jsx'))
+const TeamView = lazy(() => import('./views/TeamView.jsx'))
+const AdvancedView = lazy(() => import('./views/AdvancedView.jsx'))
+const MissionsView = lazy(() => import('./views/MissionsView.jsx'))
+const CaptacionView = lazy(() => import('./views/CaptacionView.jsx'))
+const HubView = lazy(() => import('./views/HubView.jsx'))
 
 const ResilioIcon = ({ size = 17 }) => (
   <img
@@ -1674,7 +1674,7 @@ export default function App() {
     return (
       <>
         <GlobalStyles/>
-        <NetworkApp currentUser={currentUser}/>
+        <Suspense fallback={<SplashLoading/>}><NetworkApp currentUser={currentUser}/></Suspense>
       </>
     )
   }
@@ -1717,7 +1717,7 @@ export default function App() {
               <button onClick={()=>setDataError(null)} style={{ marginLeft:'auto',color:'#F87171',background:'none',border:'none',cursor:'pointer',fontSize:18,lineHeight:1 }}>×</button>
             </div>
           )}
-          <main style={{flex:1,overflowY:'auto'}}>{renderView()}</main>
+          <main style={{flex:1,overflowY:'auto'}}><Suspense fallback={<SplashLoading/>}>{renderView()}</Suspense></main>
         </div>
 
         {isMobile && <MobileNav
@@ -1767,10 +1767,12 @@ export default function App() {
 
       {/* Admin Panel overlay */}
       {showAdmin && (
-        <AdminPanel
-          currentUser={currentUser}
-          onClose={() => { setShowAdmin(false); setAdminNotifs(getAdminNotifs()) }}
-        />
+        <Suspense fallback={<SplashLoading/>}>
+          <AdminPanel
+            currentUser={currentUser}
+            onClose={() => { setShowAdmin(false); setAdminNotifs(getAdminNotifs()) }}
+          />
+        </Suspense>
       )}
     </>
   )

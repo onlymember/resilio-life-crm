@@ -283,6 +283,16 @@
   },
   "task": {
     "allDone": "¡Todo al día!",
+    "edit": "Editar",
+    "delete": "Borrar",
+    "confirmDelete": "¿Borrar esta tarea?",
+    "confirmDeleteBatch": "Esta tarea está asignada a {n} personas. ¿Borrarla para todas?",
+    "willCreateN": "Se van a crear {n} tareas, una por persona.",
+    "tabs": { "mine": "Mías", "assigned": "Asignadas por mí", "done": "Completadas" },
+    "emptyAssigned": "No asignaste nada todavía",
+    "emptyAssignedSubtitle": "Las tareas que crees para otra persona aparecen acá hasta que las completa.",
+    "emptyDone": "Sin tareas completadas",
+    "emptyDoneSubtitle": "Acá queda el historial de lo que se fue cerrando.",
     "allDoneSubtitle": "No tenés tareas pendientes.",
     "pending": "{n} pendientes",
     "create": "Nueva tarea",
@@ -291,7 +301,7 @@
       "overdue": "Vencidas",
       "today": "Hoy",
       "week": "Esta semana",
-      "later": "Después"
+      "later": "Después", "done": "Completadas"
     },
     "priorities": {
       "urgent": "Urgente",
@@ -407,6 +417,7 @@
   },
   "layout": {
     "backToApp": "Salir de Network",
+    "menu": "Menú",
     "signOut": "Cerrar sesión",
     "toggleRail": "Contexto"
   },
@@ -829,6 +840,10 @@
     },
     "paste":         "Pegá acá las celdas copiadas de tu planilla (CSV o TSV)",
     "orUpload":      "o subí un archivo CSV",
+    "uploadCsv":     "Subir CSV",
+    "parseError":    "No se encontraron datos válidos. Verificá el formato.",
+    "duplicateRow":  "Posible duplicado",
+    "back":          "Volver",
     "preview":       "Vista previa →",
     "willImport":    "{n} listas para importar",
     "duplicates":    "{n} posibles duplicadas",
@@ -858,6 +873,7 @@
     "currency":         "Moneda",
     "timezone":         "Zona horaria",
     "country":          "País",
+    "city":             "Ciudad",
     "active":           "Activa",
     "inactive":         "Inactiva",
     "create":           "Crear",
