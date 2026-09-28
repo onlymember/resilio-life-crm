@@ -34,6 +34,17 @@
       "user":    "One Scouter"
     }
   },
+  "followUp": {
+      "question": "What happened?",
+      "answered": "They answered",
+      "answeredHint": "Comes back in 5 days",
+      "noAnswer": "No answer",
+      "noAnswerHint": "Comes back in 3 days",
+      "notInterested": "Not interested",
+      "notInterestedHint": "Marked inactive and leaves the agenda",
+      "doneNoFollow": "Done, no follow-up",
+      "doneNoFollowHint": "Closes without changing the relationship"
+  },
   "brand": "RESILIO NETWORK",
   "soon": "Soon",
   "nav": {
@@ -247,6 +258,9 @@
     "toggle": "Ocultar"
   },
   "activityTypes": {
+    "answered": "Answered",
+    "no_answer": "No answer",
+    "not_interested": "Not interested",
     "dm": "DM",
     "whatsapp": "WhatsApp",
     "call": "Llamada",
@@ -279,6 +293,7 @@
     }
   },
   "home": {
+    "rescheduleOverdue": "Reschedule {n} overdue",
     "greeting": {
       "morning": "Buenos días",
       "afternoon": "Buenas tardes",

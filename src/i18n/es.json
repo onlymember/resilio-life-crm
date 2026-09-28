@@ -34,6 +34,17 @@
       "user":    "Una Scouter"
     }
   },
+  "followUp": {
+      "question": "¿Qué pasó?",
+      "answered": "Respondió",
+      "answeredHint": "Vuelve a aparecer en 5 días",
+      "noAnswer": "No respondió",
+      "noAnswerHint": "Vuelve a aparecer en 3 días",
+      "notInterested": "No le interesa",
+      "notInterestedHint": "Se marca inactiva y sale de la agenda",
+      "doneNoFollow": "Listo, sin seguimiento",
+      "doneNoFollowHint": "Se cierra sin cambiar el estado de la relación"
+  },
   "brand": "RESILIO NETWORK",
   "soon": "Pronto",
   "nav": {
@@ -243,6 +254,9 @@
     "toggle": "Ocultar"
   },
   "activityTypes": {
+    "answered": "Respondió",
+    "no_answer": "Sin respuesta",
+    "not_interested": "No le interesa",
     "dm": "DM",
     "whatsapp": "WhatsApp",
     "call": "Llamada",
@@ -275,6 +289,7 @@
     }
   },
   "home": {
+    "rescheduleOverdue": "Reacomodar {n} vencidas",
     "greeting": {
       "morning": "Buenos días",
       "afternoon": "Buenas tardes",

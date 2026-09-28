@@ -1176,6 +1176,47 @@ export const dbRunDailyMaintenance = async () => {
 }
 
 // ═══════════════════════════════════════════════════════════
+// CADENCIA · que ninguna ficha se caiga del circuito
+//
+// Completar un seguimiento sin agendar el siguiente deja la ficha sin
+// next_action_at, o sea fuera de la agenda de todos, para siempre. Eso
+// era el estado de 272 fichas. advance_follow_up() cierra y reagenda en
+// un solo acto, con la cadencia de supabase/042_cadencia.sql.
+// ═══════════════════════════════════════════════════════════
+
+export const dbAdvanceFollowUp = async (entityType, entityId, { days = null, outcome = null, note = null } = {}) => {
+  const { data, error } = await supabase.rpc('advance_follow_up', {
+    p_entity_type: entityType,
+    p_entity_id:   entityId,
+    p_days:        days,
+    p_outcome:     outcome,
+    p_note:        note,
+  })
+  if (error) throw friendly(error)
+  return data || {}
+}
+
+// Reacomoda TODO lo vencido de una persona, lo mas viejo primero y con
+// el mismo escalonado del reparto. Sin owner, el de uno mismo.
+export const dbRescheduleOverdue = async (ownerId = null, cap = 20) => {
+  const { data, error } = await supabase.rpc('reschedule_overdue', {
+    p_owner: ownerId, p_cap: cap,
+  })
+  if (error) throw friendly(error)
+  return data ?? 0
+}
+
+// Cancela las tareas de plantilla que ya no tienen sentido. Cancelled,
+// no completed: la metrica de cumplimiento no se infla.
+export const dbCancelStaleTasks = async (days = 3, ownerId = null) => {
+  const { data, error } = await supabase.rpc('cancel_stale_tasks', {
+    p_days: days, p_owner: ownerId,
+  })
+  if (error) throw friendly(error)
+  return data ?? 0
+}
+
+// ═══════════════════════════════════════════════════════════
 // GOALS / MISSIONS
 // ═══════════════════════════════════════════════════════════
 

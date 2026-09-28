@@ -6,10 +6,11 @@ import StatTile from '../components/StatTile.jsx'
 import MissionProgress from '../components/MissionProgress.jsx'
 import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import EmptyState from '../components/EmptyState.jsx'
+import FollowUpSheet from '../components/FollowUpSheet.jsx'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { getMyAgenda, getMyNetworkStats, getMyMissions, getNetworkPulse, getMyRecentActivity } from '../../lib/metrics.js'
-import { dbCompleteNextAction, dbSetNextAction, dbCompleteTask, dbGetTaskById } from '../../lib/database.js'
+import { dbSetNextAction, dbCompleteTask, dbGetTaskById, dbRescheduleOverdue } from '../../lib/database.js'
 
 const AGENDA_PREVIEW = 5
 
@@ -27,6 +28,8 @@ export default function HomePage({ currentUser, onOpenCreate }) {
   const tz = useTz()
 
   const [agenda,   setAgenda]   = useState([])
+  const [followUp, setFollowUp] = useState(null)   // item cuyo seguimiento se está cerrando
+  const [rearranging, setRearranging] = useState(false)
   const [stats,    setStats]    = useState(null)
   const [missions, setMissions] = useState([])
   const [pulse,    setPulse]    = useState(null)
@@ -58,12 +61,16 @@ export default function HomePage({ currentUser, onOpenCreate }) {
 
   useEffect(() => { load() }, [load])
 
+  // Una tarea se completa y se acabo. Un seguimiento NO: antes habia
+  // que decir cuando se vuelve, o la ficha quedaba invisible. Por eso
+  // aca se abre el panel en vez de completar de una.
   const handleComplete = useCallback(async (item) => {
-    if (item.kind === 'task') {
-      await dbCompleteTask(item.entityId)
-    } else {
-      await dbCompleteNextAction(item.entityType, item.entityId)
-    }
+    if (item.kind !== 'task') { setFollowUp(item); return }
+    await dbCompleteTask(item.entityId)
+    dropFromAgenda(item)
+  }, [])
+
+  const dropFromAgenda = useCallback((item) => {
     setAgenda(prev => prev.filter(a => !(a.entityId === item.entityId && a.entityType === item.entityType)))
     setStats(prev => prev ? {
       ...prev,
@@ -105,6 +112,22 @@ export default function HomePage({ currentUser, onOpenCreate }) {
         : a
     ))
   }, [])
+
+  // Solo seguimientos: una tarea vencida no se reagenda, se cancela
+  // (ver cancel_stale_tasks en la 042).
+  const overdueCount = agenda.filter(a => a.kind === 'next_action' && a.isOverdue).length
+
+  const handleRescheduleOverdue = useCallback(async () => {
+    setRearranging(true)
+    try {
+      await dbRescheduleOverdue()
+      await load()
+    } catch (e) {
+      console.error('rescheduleOverdue:', e.message)
+    } finally {
+      setRearranging(false)
+    }
+  }, [load])
 
   const name  = currentUser?.nombre?.split(' ')[0] || currentUser?.username || ''
   const greet = greeting(tz)
@@ -236,10 +259,32 @@ export default function HomePage({ currentUser, onOpenCreate }) {
           </section>
         )}
 
+        {/* El panel de cierre de seguimiento. Es un overlay fijo, así
+            que da igual dónde esté en el DOM. */}
+        <FollowUpSheet
+          item={followUp}
+          onClose={() => setFollowUp(null)}
+          onDone={(item) => dropFromAgenda(item)}
+        />
+
         {/* 3 · NECESITA ATENCIÓN */}
         <section style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 8 }}>
-            {t('home.needsAttention')}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: 1.2, textTransform: 'uppercase' }}>
+              {t('home.needsAttention')}
+            </div>
+            {/* Volver de tres días y encontrar cuarenta vencidas es la
+                forma más rápida de que alguien deje de abrir el sistema.
+                Un toque las reparte, lo más viejo primero. */}
+            {overdueCount > 1 && (
+              <button
+                onClick={handleRescheduleOverdue}
+                disabled={rearranging}
+                style={{ fontSize: 11, fontWeight: 600, color: '#FB923C', background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.3)', borderRadius: 8, padding: '4px 10px', cursor: rearranging ? 'default' : 'pointer', whiteSpace: 'nowrap' }}
+              >
+                {rearranging ? t('loading.generic') : t('home.rescheduleOverdue', { n: overdueCount })}
+              </button>
+            )}
           </div>
           {agenda.length === 0 ? (
             <div style={{ padding: '16px 14px', borderRadius: 12, background: 'rgba(52,211,153,0.06)', border: '1px dashed rgba(52,211,153,0.25)', textAlign: 'center' }}>

@@ -3,7 +3,8 @@ import AgendaItem from '../components/AgendaItem.jsx'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { getMyAgenda } from '../../lib/metrics.js'
-import { dbCompleteNextAction, dbSetNextAction, dbCompleteTask } from '../../lib/database.js'
+import { dbSetNextAction, dbCompleteTask } from '../../lib/database.js'
+import FollowUpSheet from '../components/FollowUpSheet.jsx'
 
 const GROUP_SIZE = 20
 
@@ -61,6 +62,7 @@ export default function FollowUpsPage() {
   const [allItems, setAllItems] = useState([])
   const [loading,  setLoading]  = useState(true)
   const [typeFilter, setTypeFilter] = useState('all')
+  const [followUp,   setFollowUp]   = useState(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -73,12 +75,15 @@ export default function FollowUpsPage() {
 
   useEffect(() => { load() }, [load])
 
+  // Igual que en el Home: un seguimiento no se cierra sin decir cuando
+  // se vuelve, o la ficha queda invisible.
   const handleComplete = useCallback(async (item) => {
-    if (item.kind === 'task') {
-      await dbCompleteTask(item.entityId)
-    } else {
-      await dbCompleteNextAction(item.entityType, item.entityId)
-    }
+    if (item.kind !== 'task') { setFollowUp(item); return }
+    await dbCompleteTask(item.entityId)
+    dropItem(item)
+  }, [])
+
+  const dropItem = useCallback((item) => {
     setAllItems(prev => prev.filter(a => !(a.entityId === item.entityId && a.entityType === item.entityType && a.kind === item.kind)))
   }, [])
 
@@ -140,6 +145,11 @@ export default function FollowUpsPage() {
         </div>
       ) : (
         <div style={{ paddingBottom: 40 }}>
+          <FollowUpSheet
+            item={followUp}
+            onClose={() => setFollowUp(null)}
+            onDone={(item) => dropItem(item)}
+          />
           <Group labelKey="overdue" items={overdue} onComplete={handleComplete} onReschedule={handleReschedule}/>
           <Group labelKey="today"   items={today}   onComplete={handleComplete} onReschedule={handleReschedule}/>
           <Group labelKey="week"    items={week}    onComplete={handleComplete} onReschedule={handleReschedule}/>
