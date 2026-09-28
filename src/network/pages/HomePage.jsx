@@ -84,6 +84,19 @@ export default function HomePage({ currentUser, onOpenCreate }) {
     if (path) navigate(path)
   }, [navigate])
 
+  // Una proxima accion tambien tiene que poder abrirse. Con
+  // colaboraciones en la agenda esto deja de ser comodidad: el bloque
+  // de registrar lo de ayer arranca abriendo la ficha.
+  const handleOpenEntity = useCallback((item) => {
+    const path = {
+      influencer:    `/network/influencers/${item.entityId}`,
+      brand:         `/network/brands/${item.entityId}`,
+      opportunity:   `/network/opportunities/${item.entityId}`,
+      collaboration: `/network/collaborations/${item.entityId}`,
+    }[item.entityType]
+    if (path) navigate(path)
+  }, [navigate])
+
   const handleReschedule = useCallback(async (item, isoAt) => {
     await dbSetNextAction(item.entityType, item.entityId, item.title, isoAt)
     setAgenda(prev => prev.map(a =>
@@ -164,6 +177,32 @@ export default function HomePage({ currentUser, onOpenCreate }) {
           </div>
         )}
 
+        {/* 1.5 · COBERTURA — el numero que predice el mes */}
+        {stats && (stats.coverage7d > 0 || stats.collaborations > 0) && (() => {
+          const c = stats.coverage7d
+          const tone = c >= 9 ? '#34D399' : c >= 6 ? '#FBBF24' : '#F87171'
+          return (
+            <button
+              onClick={() => navigate('/network/collaborations')}
+              style={{
+                width: '100%', marginBottom: 20, padding: '14px 16px', borderRadius: 14,
+                display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left',
+                background: `${tone}0F`, border: `1px solid ${tone}45`, cursor: 'pointer',
+              }}
+            >
+              <span style={{ fontSize: 30, fontWeight: 800, color: tone, lineHeight: 1, flexShrink: 0 }}>{c}</span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {t('home.coverage')}
+                </span>
+                <span style={{ display: 'block', fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>
+                  {t(c >= 9 ? 'home.coverageOk' : c >= 6 ? 'home.coverageLow' : 'home.coverageCritical')}
+                </span>
+              </span>
+            </button>
+          )
+        })()}
+
         {/* 2 · HOY */}
         {stats && (
           <section style={{ marginBottom: 20 }}>
@@ -223,7 +262,7 @@ export default function HomePage({ currentUser, onOpenCreate }) {
                   item={item}
                   onComplete={handleComplete}
                   onReschedule={item.kind === 'next_action' ? handleReschedule : undefined}
-                  onNavigate={item.kind === 'task' ? handleNavigate : undefined}
+                  onNavigate={item.kind === 'task' ? handleNavigate : handleOpenEntity}
                 />
               ))}
               {agenda.length > AGENDA_PREVIEW && !showAll && (

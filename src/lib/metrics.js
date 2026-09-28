@@ -74,6 +74,12 @@ export const getMyNetworkStats = async () => {
     brands:           Number(d.brands           ?? 0),
     opportunities:    Number(d.opportunities    ?? 0),
     collaborations:   Number(d.collaborations   ?? 0),
+    // Cobertura: colaboraciones confirmadas en los proximos 7 dias.
+    // Es el unico numero que predice el mes; las ejecutadas miden un
+    // pasado que ya no se puede corregir.
+    coverage7d:       Number(d.coverage_7d      ?? 0),
+    collabsWeek:      Number(d.collabs_week     ?? 0),
+    contentPending:   Number(d.content_pending  ?? 0),
     tasksToday:       Number(d.tasks_today      ?? 0),
     tasksOverdue:     Number(d.tasks_overdue    ?? 0),
     followupsToday:   Number(d.followups_today  ?? 0),
@@ -182,6 +188,8 @@ export const getNetworkScouters = async ({ cityId, countryId, regionId } = {}) =
     tasksOverdue:  Number(r.tasks_overdue),
     lastActivity:  r.last_activity,
     daysInactive:  r.days_inactive,
+    coverage:      Number(r.coverage      ?? 0),
+    collabsMonth:  Number(r.collabs_month ?? 0),
   }))
 }
 

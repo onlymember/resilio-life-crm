@@ -244,6 +244,10 @@
       "evening": "Buenas noches"
     },
     "today": "HOY",
+    "coverage": "Cobertura · próximos 7 días",
+    "coverageOk": "La semana está cubierta. Seguí el ritmo.",
+    "coverageLow": "Se está achicando. Agendá 3 hoy en vez de 2.",
+    "coverageCritical": "La semana que viene está vacía. Hoy, todo a agendar.",
     "needsAttention": "Necesita atención",
     "myNetwork": "Mi Network",
     "missions": "Misiones",
@@ -531,6 +535,7 @@
     "pickScouter": "¿A quién asignar?"
   },
   "scouter": {
+    "coverage": "Cobertura",
     "create":          "Nuevo Scouter",
     "editCity":        "Cambiar ciudad",
     "selectUser":      "Seleccionar usuario",

@@ -9,7 +9,7 @@ import { personName } from '../utils/people.js'
 import { getNetworkScouters, getScouterPerformance } from '../../lib/metrics.js'
 import { dbGetGeography } from '../../lib/database.js'
 
-const SORT_COLS = ['nombre','ciudad','level','influencers','brands','opportunities','tasksOverdue','daysInactive']
+const SORT_COLS = ['nombre','ciudad','level','influencers','brands','opportunities','coverage','tasksOverdue','daysInactive']
 
 const useIsMobile = () => {
   const [mobile, setMobile] = useState(window.innerWidth < 640)
@@ -87,6 +87,7 @@ export default function ScoutersPage({ currentUser }) {
     influencers:  s => s.influencers,
     brands:       s => s.brands,
     opportunities:s => s.opportunities,
+    coverage:     s => s.coverage,
     tasksOverdue: s => s.tasksOverdue,
     daysInactive: s => s.daysInactive ?? 9999,
   }
@@ -178,7 +179,7 @@ export default function ScoutersPage({ currentUser }) {
         <>
           {/* Column headers — desktop only */}
           {!isMobile && (
-            <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 50px 55px 55px 55px 55px 70px 28px', gap:8, padding:'4px 14px' }}>
+            <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 50px 55px 55px 55px 55px 55px 70px 28px', gap:8, padding:'4px 14px' }}>
               {SORT_COLS.map(col => <ColHeader key={col} col={col}/>)}
               <span/>
             </div>

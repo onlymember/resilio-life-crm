@@ -92,6 +92,8 @@ export default function ScouterRow({ scouter, expanded, onToggle, performance, i
             <Chip label="Inf" value={scouter.influencers}/>
             <Chip label="Marcas" value={scouter.brands}/>
             <Chip label="Opps" value={scouter.opportunities}/>
+            <Chip label={t('scouter.coverage')} value={scouter.coverage}
+                  color={scouter.coverage >= 9 ? '#34D399' : scouter.coverage >= 6 ? '#FBBF24' : '#F87171'}/>
             {scouter.tasksOverdue > 0 && <Chip label="Venc" value={scouter.tasksOverdue} color="#F87171"/>}
             {inactive && <Chip value={t('scouter.daysInactive', { n: scouter.daysInactive })} color="#F87171"/>}
           </div>
@@ -108,7 +110,7 @@ export default function ScouterRow({ scouter, expanded, onToggle, performance, i
         onClick={onToggle}
         style={{
           width: '100%', display: 'grid', textAlign: 'left',
-          gridTemplateColumns: '2fr 1fr 50px 55px 55px 55px 55px 70px 28px',
+          gridTemplateColumns: '2fr 1fr 50px 55px 55px 55px 55px 55px 70px 28px',
           alignItems: 'center', gap: 8,
           padding: '10px 14px',
           background: 'none', border: 'none', cursor: 'pointer',
@@ -143,6 +145,12 @@ export default function ScouterRow({ scouter, expanded, onToggle, performance, i
         <span style={{ fontSize: 12, color: 'var(--text-primary)', textAlign: 'center' }}>{num(scouter.influencers)}</span>
         <span style={{ fontSize: 12, color: 'var(--text-primary)', textAlign: 'center' }}>{num(scouter.brands)}</span>
         <span style={{ fontSize: 12, color: 'var(--text-primary)', textAlign: 'center' }}>{num(scouter.opportunities)}</span>
+        <span style={{
+          fontSize: 12, textAlign: 'center', fontWeight: 700,
+          color: scouter.coverage >= 9 ? '#34D399' : scouter.coverage >= 6 ? '#FBBF24' : '#F87171',
+        }}>
+          {num(scouter.coverage)}
+        </span>
         <span style={{ fontSize: 12, color: scouter.tasksOverdue > 0 ? '#F87171' : 'var(--text-primary)', textAlign: 'center', fontWeight: scouter.tasksOverdue > 0 ? 700 : 400 }}>
           {num(scouter.tasksOverdue)}
         </span>

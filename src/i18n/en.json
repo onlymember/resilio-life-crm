@@ -167,6 +167,10 @@
     "active": "Active",
     "activeF": "Active",
     "today": "Follow-up today",
+    "coverage": "Coverage · next 7 days",
+    "coverageOk": "The week is covered. Keep the rhythm.",
+    "coverageLow": "It is shrinking. Book 3 today instead of 2.",
+    "coverageCritical": "Next week is empty. Everything to booking today.",
     "overdue": "Overdue",
     "noOwner": "No owner",
     "noCity": "No city"
@@ -244,6 +248,10 @@
       "evening": "Buenas noches"
     },
     "today": "HOY",
+    "coverage": "Coverage · next 7 days",
+    "coverageOk": "The week is covered. Keep the rhythm.",
+    "coverageLow": "It is shrinking. Book 3 today instead of 2.",
+    "coverageCritical": "Next week is empty. Everything to booking today.",
     "needsAttention": "Necesita atención",
     "myNetwork": "Mi Network",
     "missions": "Misiones",
@@ -531,6 +539,7 @@
     "pickScouter": "¿A quién asignar?"
   },
   "scouter": {
+    "coverage": "Coverage",
     "create":          "Nuevo Scouter",
     "editCity":        "Cambiar ciudad",
     "selectUser":      "Seleccionar usuario",
