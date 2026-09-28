@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, Users } from 'lucide-react'
+import { ChevronLeft, Users, MessageSquare } from 'lucide-react'
 import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import EmptyState from '../components/EmptyState.jsx'
+import MessageSheet from '../components/MessageSheet.jsx'
 import RelationshipHistory from '../components/RelationshipHistory.jsx'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
@@ -86,6 +87,7 @@ export default function InfluencerDetailPage() {
   const tz = useTz()
 
   const [entity,     setEntity]     = useState(null)
+  const [msgOpen, setMsgOpen] = useState(false)
   const [activities, setActivities] = useState([])
   const [geo,        setGeo]        = useState({ cities: [], countries: [] })
   const [loading,    setLoading]    = useState(true)
@@ -172,10 +174,28 @@ export default function InfluencerDetailPage() {
             <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>@{entity.username}</div>
           )}
         </div>
+        {/* Los mensajes se abren desde acá: es el momento en que la
+            Scouter ya tiene la ficha delante y va a escribir. */}
+        <button
+          onClick={() => setMsgOpen(true)}
+          title={t('messages.title')}
+          style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, fontWeight:600, color:'#25D366', background:'rgba(37,211,102,0.1)', border:'1px solid rgba(37,211,102,0.3)', borderRadius:8, padding:'5px 10px', cursor:'pointer', flexShrink:0 }}
+        >
+          <MessageSquare size={12}/>{t('messages.title')}
+        </button>
         {cityName && (
           <div style={{ fontSize: 10, color: 'var(--text-secondary)', flexShrink: 0 }}>{cityName}</div>
         )}
       </div>
+
+      <MessageSheet
+        open={msgOpen}
+        onClose={() => setMsgOpen(false)}
+        entity={entity}
+        entityType="influencer"
+        cityName={cityName}
+        me={currentUser?.nombre?.split(' ')[0] || ''}
+      />
 
       <div style={{ padding: '16px 20px' }}>
 

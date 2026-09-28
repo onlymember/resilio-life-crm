@@ -45,6 +45,32 @@
       "doneNoFollow": "Done, no follow-up",
       "doneNoFollowHint": "Closes without changing the relationship"
   },
+  "messages": {
+      "title": "Messages",
+      "new": "New template",
+      "empty": "No message templates",
+      "emptySubtitle": "This is the company script: defined once, every city says the same thing.",
+      "emptyForEntity": "No template for this record at this relationship stage. They are managed under Messages in the menu.",
+      "seed": "Load the 4 suggested",
+      "copy": "Copy",
+      "copied": "Copied",
+      "sendWhatsApp": "Open WhatsApp",
+      "preview": "How it will read",
+      "anyStage": "Any stage",
+      "allCities": "All cities",
+      "placeholders": "Placeholders: {nombre} · {nombre_completo} · {marca} · {ciudad} · {usuario} · {yo}",
+      "explainer": "Each template shows up on the matching record with the data already filled in. With WhatsApp it opens the chat with the message written: no copy, no paste.",
+      "confirmDelete": "Delete the template \\u00ab{title}\\u00bb?",
+      "field": {
+          "title": "What this message is for",
+          "body": "The message"
+      },
+      "target": {
+          "any": "Influencers and brands",
+          "influencer": "Influencers only",
+          "brand": "Brands only"
+      }
+  },
   "brand": "RESILIO NETWORK",
   "soon": "Soon",
   "nav": {
@@ -60,6 +86,7 @@
     "command": "Command Center",
     "scouters": "Scouters",
     "templates": "Templates",
+    "messages": "Messages",
     "missions": "Misiones",
     "roadmap": "Hoja de Ruta",
     "rewards": "Premios",
@@ -476,7 +503,8 @@
     "opportunities":  { "title": "Oportunidades", "subtitle": "Pipeline activo" },
     "collaborations": { "title": "Colaboraciones","subtitle": "Activaciones" },
     "tasks":          { "title": "Tareas",         "subtitle": "Tus pendientes" },
-    "templates":      { "title": "Templates",     "subtitle": "The habits the system generates on its own" }
+    "templates":      { "title": "Templates",     "subtitle": "The habits the system generates on its own" },
+    "messages":       { "title": "Messages", "subtitle": "The script the whole network uses" }
   },
   "layout": {
     "backToApp": "Salir de Network",
@@ -529,6 +557,33 @@
     "noCityPlaceholder": "Seleccionar ciudad"
   },
   "command": {
+    "runway": {
+        "title": "Each Scouter's runway",
+        "coverage": "{n} this week",
+        "overdue": "{n} overdue",
+        "noAgenda": "{n} unscheduled",
+        "hint": "The big number is days until the last confirmed collaboration. Under 3 is critical; 7 or more is the goal.",
+        "level": {
+            "ok": "On track",
+            "bajo": "Low",
+            "critico": "Critical"
+        }
+    },
+    "cities": {
+        "title": "Cities side by side",
+        "hint": "Tap a row to filter the whole board by that city.",
+        "cols": {
+            "city": "City",
+            "scouters": "Scouters",
+            "influencers": "Infl.",
+            "brands": "Brands",
+            "opportunities": "Opps",
+            "collaborations": "Collabs",
+            "coverage": "Coverage",
+            "noAgenda": "No agenda",
+            "new": "New"
+        }
+    },
     "allAlertsClear":    "Todo al día",
     "allAlertsClearSub": "Sin alertas activas.",
     "allScoutersClear":  "Todos los Scouters al día",
@@ -582,6 +637,7 @@
     }
   },
   "bulk": {
+    "suggested": "Suggested",
     "selectAll": "Select all {n}",
     "selected":    "{n} seleccionados",
     "assign":      "Asignar en lote",
@@ -881,6 +937,9 @@
     }
   },
   "import": {
+    "dupMine": "already yours",
+    "dupOwner": "{owner} has it, in {city}",
+    "dupCity": "already exists, in {city}",
     "button":        "Import",
     "title":         "Import from spreadsheet",
     "acceptedTitle": "Columns the importer recognizes",

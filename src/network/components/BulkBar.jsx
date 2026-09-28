@@ -73,9 +73,25 @@ export default function BulkBar({ selected, rows, entityType, onClear, onRefresh
     onClear()
   }
 
-  const filteredScouters = scouters.filter(s =>
-    !scouterSearch || personName(s).toLowerCase().includes(scouterSearch.toLowerCase())
-  )
+  // La ciudad que mas se repite entre lo seleccionado. Con 250 fichas
+  // filtradas por ciudad, esto acierta siempre; y cuando el lote viene
+  // mezclado, no sugiere nada en vez de sugerir mal.
+  const suggestedCityId = (() => {
+    const counts = {}
+    for (const r of rows) {
+      if (!selected.has(r.id) || !r.cityId) continue
+      counts[r.cityId] = (counts[r.cityId] || 0) + 1
+    }
+    const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
+    // Mayoria real, no la ciudad que casualmente saco un voto mas.
+    return top && top[1] > count / 2 ? top[0] : null
+  })()
+
+  const filteredScouters = scouters
+    .filter(s => !scouterSearch || personName(s).toLowerCase().includes(scouterSearch.toLowerCase()))
+    // La sugerida arriba. No se autoselecciona: reasignar 250 fichas sin
+    // que nadie haya mirado a quien no es una comodidad, es un riesgo.
+    .sort((a, b) => (b.cityId === suggestedCityId ? 1 : 0) - (a.cityId === suggestedCityId ? 1 : 0))
 
   const failed  = results.filter(r => !r.ok)
   const okCount = results.filter(r => r.ok).length
@@ -114,10 +130,15 @@ export default function BulkBar({ selected, rows, entityType, onClear, onRefresh
                   <div style={{ width:30, height:30, borderRadius:'50%', flexShrink:0, background:avatarColor(personName(s)), display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:700, color:'white' }}>
                     {initials(personName(s))}
                   </div>
-                  <div>
+                  <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:13, fontWeight:600, color:'var(--text-primary)' }}>{personName(s)}</div>
                     <div style={{ fontSize:10, color:'var(--text-secondary)' }}>{s.sobrenombre || s.email}</div>
                   </div>
+                  {suggestedCityId && s.cityId === suggestedCityId && (
+                    <span style={{ flexShrink:0, fontSize:9, fontWeight:700, color:'#34D399', background:'rgba(52,211,153,0.12)', border:'1px solid rgba(52,211,153,0.3)', borderRadius:6, padding:'2px 7px', textTransform:'uppercase', letterSpacing:0.5 }}>
+                      {t('bulk.suggested')}
+                    </span>
+                  )}
                 </button>
               ))
             }

@@ -1,7 +1,7 @@
 import {
   Home, Users, Building2, Briefcase, CheckCircle,
   CheckSquare, Calendar, ArrowRight, FileText,
-  Target, Map, Award, BarChart3, BookOpen, Users2, Repeat,
+  Target, Map, Award, BarChart3, BookOpen, Users2, Repeat, MessageSquare,
 } from 'lucide-react'
 import { COMMAND_ROLES, DIRECTION_ROLES } from './routes.js'
 
@@ -51,7 +51,8 @@ export const NAV_SECTIONS = [
     items: [
       { path: '/network/command',  labelKey: 'nav.command',  icon: BarChart3, soon: false, roles: COMMAND_ROLES },
       { path: '/network/scouters', labelKey: 'nav.scouters', icon: Users2,    soon: false, roles: COMMAND_ROLES },
-      { path: '/network/templates', labelKey: 'nav.templates', icon: Repeat,   soon: false, roles: DIRECTION_ROLES },
+      { path: '/network/templates', labelKey: 'nav.templates', icon: Repeat,        soon: false, roles: DIRECTION_ROLES },
+      { path: '/network/messages',  labelKey: 'nav.messages',  icon: MessageSquare, soon: false, roles: DIRECTION_ROLES },
     ],
   },
 ]

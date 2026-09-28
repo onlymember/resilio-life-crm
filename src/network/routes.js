@@ -37,6 +37,7 @@ export const ROUTES = [
   { path: '/network/command',               pageKey: 'command',            soon: false, roles: COMMAND_ROLES },
   { path: '/network/scouters',              pageKey: 'scouters',           soon: false, roles: COMMAND_ROLES },
   { path: '/network/templates',             pageKey: 'templates',          soon: false, roles: DIRECTION_ROLES },
+  { path: '/network/messages',              pageKey: 'messages',           soon: false, roles: DIRECTION_ROLES },
   { path: '/network/scouters/:id',          pageKey: 'scouter-detail',     soon: false, roles: COMMAND_ROLES },
   { path: '/network/calendar',              pageKey: 'calendar',           soon: false, roles: null },
   { path: '/network/follow-ups',            pageKey: 'follow-ups',         soon: false, roles: null },

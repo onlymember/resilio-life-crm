@@ -17,6 +17,7 @@ import {
 import {
   dbGetGoals, dbGetGeography, dbGetMonthlySnapshots, dbCloseMonthlySnapshot,
   dbGetInfluencers, dbGetBrands, dbRunDailyMaintenance,
+  dbGetCoverageRunway, dbGetCityComparison,
 } from '../../lib/database.js'
 
 const SectionTitle = ({ children, action }) => (
@@ -91,6 +92,8 @@ export default function CommandPage({ currentUser }) {
   // agenda se arma por next_action_at. Son las fichas dormidas, y sin
   // este contador no hay forma de verlas desde ningun lado.
   const [dormant, setDormant] = useState({ influencers: 0, brands: 0 })
+  const [runway,  setRunway]  = useState([])
+  const [ciudades, setCiudades] = useState([])
 
   const PERIODS = getPeriods()
   const [snapPeriod,    setSnapPeriod]    = useState(PERIODS[0].value)
@@ -123,18 +126,22 @@ export default function CommandPage({ currentUser }) {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [al, st, sc, un, gl] = await Promise.all([
+      const [al, st, sc, un, gl, rw, cc] = await Promise.all([
         getNetworkAlerts(),
         getNetworkStats({ cityId, countryId, regionId, from, to }),
         getNetworkScouters({ cityId, countryId, regionId }),
         getUnassignedSummary(),
         dbGetGoals({ status: 'active' }),
+        dbGetCoverageRunway().catch(() => []),
+        dbGetCityComparison({ from, to }).catch(() => []),
       ])
       setAlerts(al)
       setStats(st)
       setScouters(sc)
       setUnassigned(un)
       setGoals(gl)
+      setRunway(rw)
+      setCiudades(cc)
     } catch (e) {
       console.error('CommandPage load:', e.message)
     } finally {
@@ -254,6 +261,39 @@ export default function CommandPage({ currentUser }) {
         )}
       </section>
 
+      {/* ── 1b. PISTA ────────────────────────────────────────── */}
+      {/* La cobertura dice cuántas colaboraciones hay en la semana. La
+          pista dice hasta qué día. Alguien con 9 colaboraciones todas
+          pasado mañana tiene cobertura perfecta y se queda sin nada el
+          miércoles: la cobertura avisa cuando ya cayó, la pista antes. */}
+      {runway.length > 0 && (
+        <section>
+          <SectionTitle>{t('command.runway.title')}</SectionTitle>
+          <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+            {runway.map(r => {
+              const tone = r.nivel === 'ok' ? '#34D399' : r.nivel === 'bajo' ? '#FBBF24' : '#F87171'
+              return (
+                <div key={r.userId} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 13px', borderRadius:10, background:`${tone}0D`, border:`1px solid ${tone}33` }}>
+                  <span style={{ fontSize:19, fontWeight:800, color:tone, minWidth:34, lineHeight:1 }}>{r.runwayDays}</span>
+                  <span style={{ flex:1, minWidth:0 }}>
+                    <span style={{ display:'block', fontSize:12.5, fontWeight:600, color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.nombre}</span>
+                    <span style={{ display:'block', fontSize:10, color:'var(--text-secondary)' }}>
+                      {r.ciudad} · {t('command.runway.coverage', { n: r.coverage7d })}
+                      {r.overdue    > 0 && <> · {t('command.runway.overdue',   { n: r.overdue })}</>}
+                      {r.sinAgenda  > 0 && <> · {t('command.runway.noAgenda',  { n: r.sinAgenda })}</>}
+                    </span>
+                  </span>
+                  <span style={{ flexShrink:0, fontSize:9, fontWeight:700, color:tone, textTransform:'uppercase', letterSpacing:0.6 }}>
+                    {t(`command.runway.level.${r.nivel}`)}
+                  </span>
+                </div>
+              )
+            })}
+            <div style={{ fontSize:10, color:'var(--text-secondary)', marginTop:2 }}>{t('command.runway.hint')}</div>
+          </div>
+        </section>
+      )}
+
       {/* ── 2. LA RED ────────────────────────────────────────── */}
       <section>
         <SectionTitle>{t('pages.command.sections.network')}</SectionTitle>
@@ -368,6 +408,49 @@ export default function CommandPage({ currentUser }) {
           </>
         )}
       </section>
+
+      {/* ── 3b. CIUDADES LADO A LADO ─────────────────────────── */}
+      {/* Filtrar de a una ciudad y acordarse de los números no es
+          comparar: es recordar mal. */}
+      {ciudades.length > 1 && (
+        <section>
+          <SectionTitle>{t('command.cities.title')}</SectionTitle>
+          <div style={{ overflowX:'auto' }}>
+            <table style={{ borderCollapse:'collapse', width:'100%', minWidth:560, fontSize:12 }}>
+              <thead>
+                <tr>
+                  {['city','scouters','influencers','brands','opportunities','collaborations','coverage','noAgenda','new'].map((c, i) => (
+                    <th key={c} style={{ textAlign: i === 0 ? 'left' : 'right', padding:'6px 8px', fontSize:9, fontWeight:700, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:0.6, borderBottom:'1px solid var(--border-violet)', whiteSpace:'nowrap' }}>
+                      {t(`command.cities.cols.${c}`)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {ciudades.map(c => (
+                  <tr key={c.cityId} style={{ cursor:'pointer' }} onClick={() => setParam('city', c.cityId)}>
+                    <td style={{ padding:'7px 8px', color:'var(--text-primary)', fontWeight:600, whiteSpace:'nowrap', borderBottom:'1px solid rgba(139,92,246,0.1)' }}>
+                      {c.ciudad}
+                      <span style={{ color:'var(--text-secondary)', fontWeight:400, fontSize:10 }}> · {c.pais}</span>
+                    </td>
+                    {[c.scouters, c.influencers, c.marcas, c.oportunidades, c.colaboraciones].map((v, i) => (
+                      <td key={i} style={{ padding:'7px 8px', textAlign:'right', color:'var(--text-primary)', borderBottom:'1px solid rgba(139,92,246,0.1)' }}>{v}</td>
+                    ))}
+                    <td style={{ padding:'7px 8px', textAlign:'right', fontWeight:700, borderBottom:'1px solid rgba(139,92,246,0.1)', color: c.coverage7d >= 9 ? '#34D399' : c.coverage7d >= 6 ? '#FBBF24' : '#F87171' }}>
+                      {c.coverage7d}
+                    </td>
+                    <td style={{ padding:'7px 8px', textAlign:'right', borderBottom:'1px solid rgba(139,92,246,0.1)', color: c.sinAgenda > 0 ? '#FBBF24' : 'var(--text-secondary)' }}>
+                      {c.sinAgenda}
+                    </td>
+                    <td style={{ padding:'7px 8px', textAlign:'right', color:'var(--text-secondary)', borderBottom:'1px solid rgba(139,92,246,0.1)' }}>{c.nuevasFichas}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div style={{ fontSize:10, color:'var(--text-secondary)', marginTop:6 }}>{t('command.cities.hint')}</div>
+        </section>
+      )}
 
       {/* ── 4. OBJETIVOS ─────────────────────────────────────── */}
       <section style={{ marginBottom: 40 }}>

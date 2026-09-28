@@ -1217,6 +1217,109 @@ export const dbCancelStaleTasks = async (days = 3, ownerId = null) => {
 }
 
 // ═══════════════════════════════════════════════════════════
+// PLANTILLAS DE MENSAJE
+// Ver supabase/044_mensajes.sql. El reemplazo de marcadores vive en
+// MessageSheet.jsx, no acá: la vista previa lo necesita sin ir a la base.
+// ═══════════════════════════════════════════════════════════
+
+const rowToMessageTemplate = (r) => ({
+  id: r.id, title: r.title, body: r.body,
+  target: r.target, stage: r.stage, cityId: r.city_id,
+  active: r.active, createdAt: r.created_at,
+})
+
+// El filtrado por etapa y ciudad se hace acá y no en la consulta porque
+// una plantilla con stage NULL sirve para TODAS las etapas, y eso en
+// PostgREST serían dos condiciones OR anidadas por cada eje. Son
+// decenas de filas: traerlas y filtrar en memoria es más simple de leer
+// y no cambia nada en velocidad.
+export const dbGetMessageTemplates = async ({ target, stage, cityId, all = false } = {}) => {
+  let q = supabase.from('message_templates').select('*').order('created_at')
+  if (!all) q = q.eq('active', true)
+  const { data, error } = await q
+  if (error) throw friendly(error)
+  let rows = (data || []).map(rowToMessageTemplate)
+  if (all) return rows
+  if (target) rows = rows.filter(r => r.target === 'any' || r.target === target)
+  if (stage)  rows = rows.filter(r => !r.stage  || r.stage === stage)
+  if (cityId) rows = rows.filter(r => !r.cityId || r.cityId === cityId)
+  else        rows = rows.filter(r => !r.cityId)
+  return rows
+}
+
+export const dbSaveMessageTemplate = async (tpl) => {
+  const uid = await myId()
+  if (!uid) throw new Error('Sesión expirada. Volvé a entrar.')
+  const row = {
+    title:   tpl.title?.trim() || 'Sin título',
+    body:    tpl.body ?? '',
+    target:  tpl.target || 'any',
+    stage:   tpl.stage  || null,
+    city_id: tpl.cityId || null,
+    active:  tpl.active !== false,
+    updated_at: new Date().toISOString(),
+  }
+  if (isUuid(tpl.id)) {
+    const { data, error } = await supabase.from('message_templates')
+      .update(row).eq('id', tpl.id).select('*').single()
+    if (error) throw friendly(error)
+    return rowToMessageTemplate(data)
+  }
+  const { data, error } = await supabase.from('message_templates')
+    .insert([{ ...row, created_by: uid }]).select('*').single()
+  if (error) throw friendly(error)
+  return rowToMessageTemplate(data)
+}
+
+// RLS niega el DELETE sin error: 0 filas y ningún mensaje. Sin el
+// .select() de control, borrar sin permiso se ve igual que borrar con.
+export const dbDeleteMessageTemplate = async (id) => {
+  const { data, error } = await supabase.from('message_templates').delete().eq('id', id).select('id')
+  if (error) throw friendly(error)
+  if (!data?.length) throw new Error('No tenés permiso para borrar esta plantilla.')
+}
+
+// ═══════════════════════════════════════════════════════════
+// DIRECCION · pista y comparacion entre ciudades
+// Ver supabase/045_direccion.sql.
+// ═══════════════════════════════════════════════════════════
+
+// runwayDays = hasta que dia tiene algo agendado. La cobertura avisa
+// cuando ya cayo; la pista avisa antes.
+export const dbGetCoverageRunway = async () => {
+  const { data, error } = await supabase.rpc('coverage_runway')
+  if (error) throw friendly(error)
+  return (data || []).map(r => ({
+    userId:     r.user_id,
+    nombre:     r.nombre,
+    ciudad:     r.ciudad,
+    coverage7d: r.coverage_7d,
+    runwayDays: r.runway_days,
+    overdue:    r.overdue,
+    sinAgenda:  r.sin_agenda,
+    nivel:      r.nivel,
+  }))
+}
+
+export const dbGetCityComparison = async ({ from = null, to = null } = {}) => {
+  const { data, error } = await supabase.rpc('city_comparison', { p_from: from, p_to: to })
+  if (error) throw friendly(error)
+  return (data || []).map(r => ({
+    cityId:         r.city_id,
+    ciudad:         r.ciudad,
+    pais:           r.pais,
+    scouters:       r.scouters,
+    influencers:    r.influencers,
+    marcas:         r.marcas,
+    oportunidades:  r.oportunidades,
+    colaboraciones: r.colaboraciones,
+    coverage7d:     r.coverage_7d,
+    sinAgenda:      r.sin_agenda,
+    nuevasFichas:   r.nuevas_fichas,
+  }))
+}
+
+// ═══════════════════════════════════════════════════════════
 // GOALS / MISSIONS
 // ═══════════════════════════════════════════════════════════
 
@@ -1692,6 +1795,73 @@ export const dbSaveInfluencer = async (inf) => {
     .select('*').single()
   if (error) throw friendly(error)
   return rowToInfluencer(data)
+}
+
+// ═══════════════════════════════════════════════════════════
+// CARGA EN LOTE
+//
+// El importador guardaba fila por fila: un `await` dentro de un `for`.
+// 500 marcas eran 500 viajes al servidor, con el usuario mirando una
+// barra de progreso durante minutos. De a 100 son 5 viajes.
+//
+// El mapeo a columnas sigue siendo el mismo (influencerToRow /
+// brandToRow), asi que una fila importada queda IDENTICA a una cargada
+// a mano. Lo unico que cambia es cuantas viajan juntas.
+//
+// resolveGeo() usa el cache de dbGetGeography(), asi que resolver la
+// ciudad de 500 filas no cuesta 500 consultas: cuesta una.
+// ═══════════════════════════════════════════════════════════
+
+// Nombre propio: BULK_CHUNK ya existe mas abajo, para el reparto en
+// lote. Son dos cosas distintas y cada una tiene su tamaño.
+const IMPORT_CHUNK = 100
+
+const saveBulk = async (table, rows, toRow, onProgress) => {
+  const uid = await myId()
+  if (!uid) throw new Error('Sesión expirada. Volvé a entrar.')
+
+  const mapped = []
+  for (const r of rows) mapped.push({ ...(await toRow(r)), created_by: uid, owner_scouter_id: uid })
+
+  const ok = []
+  const failed = []
+  for (let i = 0; i < mapped.length; i += IMPORT_CHUNK) {
+    const chunk = mapped.slice(i, i + IMPORT_CHUNK)
+    const { data, error } = await supabase.from(table).insert(chunk).select('id')
+    if (error) {
+      // Postgres aborta el INSERT entero si UNA fila falla, asi que el
+      // lote se reintenta de a una para no perder las 99 buenas por
+      // culpa de una mala, y para poder decir CUAL fallo.
+      for (const row of chunk) {
+        const one = await supabase.from(table).insert([row]).select('id')
+        if (one.error) failed.push({ name: row.name || '?', error: friendly(one.error).message })
+        else ok.push(one.data[0].id)
+        onProgress?.(ok.length + failed.length, mapped.length)
+      }
+    } else {
+      ok.push(...(data || []).map(d => d.id))
+      onProgress?.(ok.length + failed.length, mapped.length)
+    }
+  }
+  return { created: ok.length, failed }
+}
+
+export const dbSaveInfluencersBulk = (list, onProgress) =>
+  saveBulk('influencers', list, influencerToRow, onProgress)
+
+export const dbSaveBrandsBulk = (list, onProgress) =>
+  saveBulk('brands', list, brandToRow, onProgress)
+
+// Revisa un archivo entero contra la base en UNA llamada. Devuelve solo
+// las filas que ya existen, indexadas por la clave que se mando.
+// Ver supabase/043_duplicados_en_lote.sql.
+export const dbCheckDuplicates = async (type, rows) => {
+  if (!rows?.length) return {}
+  const { data, error } = await supabase.rpc('check_duplicates_bulk', {
+    p_type: type, p_rows: rows,
+  })
+  if (error) throw friendly(error)
+  return data || {}
 }
 
 export const dbDeleteInfluencer = async (id) => {

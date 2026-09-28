@@ -17,6 +17,7 @@ import TasksPage from './pages/TasksPage.jsx'
 import CommandPage from './pages/CommandPage.jsx'
 import ScoutersPage from './pages/ScoutersPage.jsx'
 import TaskTemplatesPage from './pages/TaskTemplatesPage.jsx'
+import MessageTemplatesPage from './pages/MessageTemplatesPage.jsx'
 import ScouterDetailPage from './pages/ScouterDetailPage.jsx'
 import ComingSoonPage from './pages/ComingSoonPage.jsx'
 import CalendarPage from './pages/CalendarPage.jsx'
@@ -161,6 +162,11 @@ export default function NetworkApp({ currentUser }) {
           <Route path="templates"   element={
             <RoleGuard user={currentUser} allowedRoles={DIRECTION_ROLES}>
               <TaskTemplatesPage/>
+            </RoleGuard>
+          }/>
+          <Route path="messages"    element={
+            <RoleGuard user={currentUser} allowedRoles={DIRECTION_ROLES}>
+              <MessageTemplatesPage/>
             </RoleGuard>
           }/>
           <Route path="calendar"    element={<CalendarPage currentUser={currentUser}/>}/>

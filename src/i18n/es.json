@@ -45,6 +45,32 @@
       "doneNoFollow": "Listo, sin seguimiento",
       "doneNoFollowHint": "Se cierra sin cambiar el estado de la relación"
   },
+  "messages": {
+      "title": "Mensajes",
+      "new": "Nueva plantilla",
+      "empty": "Sin plantillas de mensaje",
+      "emptySubtitle": "Es el guion de la empresa: se define una vez y todas las ciudades escriben lo mismo.",
+      "emptyForEntity": "No hay ninguna plantilla para esta ficha en este momento de la relación. Se cargan desde Mensajes, en el menú.",
+      "seed": "Cargar las 4 sugeridas",
+      "copy": "Copiar",
+      "copied": "Copiado",
+      "sendWhatsApp": "Abrir WhatsApp",
+      "preview": "Así se va a leer",
+      "anyStage": "Cualquier momento",
+      "allCities": "Todas las ciudades",
+      "placeholders": "Marcadores: {nombre} · {nombre_completo} · {marca} · {ciudad} · {usuario} · {yo}",
+      "explainer": "Cada plantilla aparece en la ficha que le corresponde, con los datos ya reemplazados. Con WhatsApp se abre el chat con el mensaje escrito: no hay que copiar ni pegar.",
+      "confirmDelete": "¿Borrar la plantilla «{title}»?",
+      "field": {
+          "title": "Para qué sirve este mensaje",
+          "body": "El mensaje"
+      },
+      "target": {
+          "any": "Influencers y marcas",
+          "influencer": "Solo influencers",
+          "brand": "Solo marcas"
+      }
+  },
   "brand": "RESILIO NETWORK",
   "soon": "Pronto",
   "nav": {
@@ -60,6 +86,7 @@
     "command": "Command Center",
     "scouters": "Scouters",
     "templates": "Plantillas",
+    "messages": "Mensajes",
     "missions": "Misiones",
     "roadmap": "Hoja de Ruta",
     "rewards": "Premios",
@@ -472,7 +499,8 @@
     "opportunities":  { "title": "Oportunidades", "subtitle": "Pipeline activo" },
     "collaborations": { "title": "Colaboraciones","subtitle": "Activaciones" },
     "tasks":          { "title": "Tareas",         "subtitle": "Tus pendientes" },
-    "templates":      { "title": "Plantillas",    "subtitle": "Los hábitos que el sistema genera solo" }
+    "templates":      { "title": "Plantillas",    "subtitle": "Los hábitos que el sistema genera solo" },
+    "messages":       { "title": "Mensajes", "subtitle": "El guion que usa toda la red" }
   },
   "layout": {
     "backToApp": "Salir de Network",
@@ -525,6 +553,33 @@
     "noCityPlaceholder": "Seleccionar ciudad"
   },
   "command": {
+    "runway": {
+        "title": "Pista de cada Scouter",
+        "coverage": "{n} en la semana",
+        "overdue": "{n} vencidas",
+        "noAgenda": "{n} sin agendar",
+        "hint": "El número grande son los días hasta la última colaboración confirmada. Menos de 3 es crítico; 7 o más es el objetivo.",
+        "level": {
+            "ok": "Con pista",
+            "bajo": "Bajo",
+            "critico": "Crítico"
+        }
+    },
+    "cities": {
+        "title": "Ciudades lado a lado",
+        "hint": "Tocá una fila para filtrar todo el tablero por esa ciudad.",
+        "cols": {
+            "city": "Ciudad",
+            "scouters": "Scouters",
+            "influencers": "Infl.",
+            "brands": "Marcas",
+            "opportunities": "Oport.",
+            "collaborations": "Colabs",
+            "coverage": "Cobertura",
+            "noAgenda": "Sin agenda",
+            "new": "Nuevas"
+        }
+    },
     "allAlertsClear":    "Todo al día",
     "allAlertsClearSub": "Sin alertas activas.",
     "allScoutersClear":  "Todos los Scouters al día",
@@ -578,6 +633,7 @@
     }
   },
   "bulk": {
+    "suggested": "Sugerida",
     "selectAll": "Seleccionar los {n}",
     "selected":    "{n} seleccionados",
     "assign":      "Asignar en lote",
@@ -877,6 +933,9 @@
     }
   },
   "import": {
+    "dupMine": "ya la tenés vos",
+    "dupOwner": "la tiene {owner}, en {city}",
+    "dupCity": "ya existe, en {city}",
     "button":        "Importar",
     "title":         "Importar desde planilla",
     "acceptedTitle": "Columnas que reconoce el importador",

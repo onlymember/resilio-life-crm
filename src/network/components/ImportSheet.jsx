@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { X, Upload, AlertTriangle } from 'lucide-react'
 import { t } from '../../i18n/index.js'
 import { supabase } from '../../lib/supabase.js'
-import { dbGetGeography, dbSaveInfluencer, dbSaveBrand } from '../../lib/database.js'
+import { dbGetGeography, dbSaveInfluencersBulk, dbSaveBrandsBulk, dbCheckDuplicates } from '../../lib/database.js'
 
 // ── Normalization ─────────────────────────────────────────
 const norm = (s) => (s||'').toString().trim().toLowerCase()
@@ -123,7 +123,14 @@ function parseDate(val) {
 }
 
 // ── Build one preview row ──────────────────────────────────
-function buildRow(kind, rawRow, headerMap, geo, existingSet) {
+// El duplicado ya no se decide aca. Antes esta funcion comparaba contra
+// un Set traido al navegador con supabase.from(tabla).select(...), sin
+// limit: PostgREST corta en 1000 filas y RLS lo acota a lo que el que
+// importa ya puede ver. O sea que el chequeo fallaba justo en el caso
+// que importa — una marca cargada por OTRA Scouter. Ahora lo resuelve
+// check_duplicates_bulk() del lado de la base (043), que ve todo y
+// viaja una sola vez.
+function buildRow(kind, rawRow, headerMap, geo) {
   const obj = {}
   const warnings = []
 
@@ -174,22 +181,7 @@ function buildRow(kind, rawRow, headerMap, geo, existingSet) {
     }
   }
 
-  let isDuplicate = false
-  if (kind === 'influencers') {
-    const eN = obj.email ? norm(obj.email) : null
-    const iN = obj.instagram ? norm(obj.instagram) : null
-    if ((eN && existingSet.emails.has(eN)) || (iN && existingSet.instagrams.has(iN))) {
-      isDuplicate = true
-    }
-  } else {
-    const nN = obj.name ? norm(obj.name) : null
-    const eN = obj.email ? norm(obj.email) : null
-    if ((nN && existingSet.names.has(nN)) || (eN && existingSet.emails.has(eN))) {
-      isDuplicate = true
-    }
-  }
-
-  return { obj, errors, warnings, isDuplicate, checked: errors.length === 0 && !isDuplicate }
+  return { obj, errors, warnings, isDuplicate: false, dup: null, checked: errors.length === 0 }
 }
 
 // ── Component ──────────────────────────────────────────────
@@ -207,28 +199,11 @@ export default function ImportSheet({ kind, onClose, onDone }) {
   const [progress,    setProgress]    = useState({ done:0, total:0 })
   const [results,     setResults]     = useState(null)
   const [geo,         setGeo]         = useState(null)
-  const [existingSet, setExistingSet] = useState({ emails:new Set(), instagrams:new Set(), names:new Set() })
+  const [checkingDups, setCheckingDups] = useState(false)
   const fileRef = useRef(null)
 
   useEffect(() => {
     dbGetGeography().then(setGeo).catch(() => setGeo({ cities:[], countries:[] }))
-    const table = isInfluencers ? 'influencers' : 'brands'
-    const cols  = isInfluencers ? 'email,instagram' : 'name,email'
-    supabase.from(table).select(cols).then(({ data }) => {
-      if (isInfluencers) {
-        setExistingSet({
-          emails:     new Set((data||[]).map(r => r.email     ? norm(r.email)     : null).filter(Boolean)),
-          instagrams: new Set((data||[]).map(r => r.instagram ? norm(r.instagram) : null).filter(Boolean)),
-          names:      new Set(),
-        })
-      } else {
-        setExistingSet({
-          emails:     new Set((data||[]).map(r => r.email ? norm(r.email) : null).filter(Boolean)),
-          names:      new Set((data||[]).map(r => r.name  ? norm(r.name)  : null).filter(Boolean)),
-          instagrams: new Set(),
-        })
-      }
-    }).catch(() => {})
   }, [kind, isInfluencers])
 
   const handleFile = async (e) => {
@@ -246,9 +221,37 @@ export default function ImportSheet({ kind, onClose, onDone }) {
     const { headers, rows: rawRows } = parsed
     const unknown = headers.filter(h => h.trim() && !headerMap[normHeader(h)])
     setUnknownCols(unknown)
-    const built = rawRows.map(rr => buildRow(kind, rr, headerMap, geo, existingSet))
+    const built = rawRows.map(rr => buildRow(kind, rr, headerMap, geo))
     setRows(built)
     setStep('preview')
+    checkDuplicates(built)
+  }
+
+  // Una sola llamada para el archivo entero. Si falla, la importacion
+  // sigue: no avisar de un duplicado es molesto, no dejar importar
+  // porque el chequeo se cayo es peor.
+  const checkDuplicates = async (built) => {
+    setCheckingDups(true)
+    try {
+      const payload = built.map((r, i) => ({
+        k: String(i),
+        instagram: r.obj.instagram ?? null,
+        email:     r.obj.email ?? null,
+        name:      r.obj.name ?? null,
+      }))
+      const found = await dbCheckDuplicates(isInfluencers ? 'influencer' : 'brand', payload)
+      setRows(prev => prev.map((r, i) => {
+        const d = found[String(i)]
+        if (!d) return r
+        // Se desmarca sola: importar un duplicado tiene que ser un acto
+        // deliberado, no el default.
+        return { ...r, isDuplicate: true, dup: d, checked: false }
+      }))
+    } catch (e) {
+      console.error('checkDuplicates:', e.message)
+    } finally {
+      setCheckingDups(false)
+    }
   }
 
   const toggleRow = (idx) =>
@@ -264,21 +267,17 @@ export default function ImportSheet({ kind, onClose, onDone }) {
     if (!toImport.length) return
     setStep('importing')
     setProgress({ done:0, total: toImport.length })
-    const created = []
-    const failed  = []
-    for (let i = 0; i < toImport.length; i++) {
-      try {
-        if (isInfluencers) await dbSaveInfluencer(toImport[i].obj)
-        else               await dbSaveBrand(toImport[i].obj)
-        created.push(toImport[i].obj.name || '?')
-      } catch(e) {
-        failed.push({ name: toImport[i].obj.name || '?', error: e.message })
-      }
-      setProgress({ done: i+1, total: toImport.length })
-    }
-    setResults({ created: created.length, failed })
+    // De a 100 por viaje en vez de uno por fila. Si un lote falla se
+    // reintenta de a una adentro de dbSave*Bulk, asi que una fila mala
+    // no se lleva puestas a las 99 buenas.
+    const save = isInfluencers ? dbSaveInfluencersBulk : dbSaveBrandsBulk
+    const { created, failed } = await save(
+      toImport.map(r => r.obj),
+      (done, total) => setProgress({ done, total }),
+    )
+    setResults({ created, failed })
     setStep('done')
-    if (created.length > 0) onDone()
+    if (created > 0) onDone()
   }
 
   // Plantilla con exactamente las columnas que el importador entiende.
@@ -489,7 +488,16 @@ export default function ImportSheet({ kind, onClose, onDone }) {
                               <div key={i} style={{ fontSize:10, color:'#F87171' }}>✗ {e}</div>
                             ))}
                             {!isInvalid && row.isDuplicate && (
-                              <div style={{ fontSize:10, color:'#FBBF24' }}>⚠ {t('import.duplicateRow')}</div>
+                              <div style={{ fontSize:10, color:'#FBBF24' }}>
+                                ⚠ {t('import.duplicateRow')}
+                                {row.dup && (
+                                  <> · {row.dup.mine
+                                        ? t('import.dupMine')
+                                        : row.dup.owner
+                                          ? t('import.dupOwner', { owner: row.dup.owner, city: row.dup.city })
+                                          : t('import.dupCity',  { city: row.dup.city })}</>
+                                )}
+                              </div>
                             )}
                             {row.warnings.map((w,i) => (
                               <div key={i} style={{ fontSize:10, color:'#FBBF24' }}>⚠ {w}</div>

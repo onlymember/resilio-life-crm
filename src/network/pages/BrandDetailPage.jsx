@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, Building2, ExternalLink } from 'lucide-react'
+import { ChevronLeft, Building2, ExternalLink, MessageSquare } from 'lucide-react'
 import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import AssignModal from '../components/AssignModal.jsx'
 import EmptyState from '../components/EmptyState.jsx'
+import MessageSheet from '../components/MessageSheet.jsx'
 import RelationshipHistory from '../components/RelationshipHistory.jsx'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
@@ -104,6 +105,8 @@ export default function BrandDetailPage({ currentUser }) {
   const tz       = useTz()
   const canReassign = COMMAND_ROLES.includes(currentUser?.rol)
 
+  const [msgOpen, setMsgOpen] = useState(false)
+
   const [entity,        setEntity]        = useState(null)
   const [timeline,      setTimeline]      = useState([])
   const [opps,          setOpps]          = useState([])
@@ -195,6 +198,15 @@ export default function BrandDetailPage({ currentUser }) {
           <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entity.name}</div>
           {cityName && <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{cityName}</div>}
         </div>
+        {/* Los mensajes se abren desde acá: es el momento en que la
+            Scouter ya tiene la ficha delante y va a escribir. */}
+        <button
+          onClick={() => setMsgOpen(true)}
+          title={t('messages.title')}
+          style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, fontWeight:600, color:'#25D366', background:'rgba(37,211,102,0.1)', border:'1px solid rgba(37,211,102,0.3)', borderRadius:8, padding:'5px 10px', cursor:'pointer', flexShrink:0 }}
+        >
+          <MessageSquare size={12}/>{t('messages.title')}
+        </button>
         {canReassign && (
           <button
             onClick={() => setAssignOpen(true)}
@@ -204,6 +216,15 @@ export default function BrandDetailPage({ currentUser }) {
           </button>
         )}
       </div>
+
+      <MessageSheet
+        open={msgOpen}
+        onClose={() => setMsgOpen(false)}
+        entity={entity}
+        entityType="brand"
+        cityName={cityName}
+        me={currentUser?.nombre?.split(' ')[0] || ''}
+      />
 
       <div style={{ padding: '16px 20px' }}>
 
