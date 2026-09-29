@@ -1737,6 +1737,8 @@ export const dbGetInfluencers = async ({
   search, cityId, countryId, ownerId, status, relationshipStatus, category,
   noOwner = false, noCity = false, overdueOnly = false, overdueToday = false,
   noNextAction = false, idsOnly = false,
+  // Fecha de alta (ISO, "to" excluyente) y quién la cargó.
+  createdFrom, createdTo, createdBy,
   orderBy = 'created_at', orderDir = 'desc',
 } = {}) => {
   const nullsFirst = !INF_NULLS_LAST_COLS.has(orderBy)
@@ -1761,12 +1763,54 @@ export const dbGetInfluencers = async ({
   if (noNextAction)       q = q.is('next_action_at', null)
   if (relationshipStatus) q = q.eq('relationship_status', relationshipStatus)
   if (category)           q = q.eq('category', category)
+  if (createdFrom)        q = q.gte('created_at', createdFrom)
+  if (createdTo)          q = q.lt('created_at', createdTo)
+  if (createdBy)          q = q.eq('created_by', createdBy)
   if (search)             q = q.or(`name.ilike.%${safe(search)}%,username.ilike.%${safe(search)}%`)
   const { data, count, error } = await q
   if (error) throw friendly(error)
   if (idsOnly) return { ids: (data || []).map(r => r.id), total: count ?? 0 }
   const rows = (data || []).map(rowToInfluencer)
   return { rows, total: count ?? 0, hasMore: (count ?? 0) > (page + 1) * pageSize }
+}
+
+// ═══════════════════════════════════════════════════════════
+// ALTAS DE INFLUENCERS (reporte del Command Center)
+//
+// Trae solo fecha de alta, quién la cargó y dueña actual de las fichas
+// creadas desde `from`. RLS acota: Dirección ve toda la red; un lead de
+// territorio, su territorio. Se agrupa en el navegador para contar los
+// días en el huso de quien mira. De a 1000 filas (tope de PostgREST).
+// ═══════════════════════════════════════════════════════════
+export const dbGetInfluencerIntake = async ({ from, cityId, countryId } = {}) => {
+  const PAGE = 1000, MAX = 20000
+  const out = []
+  for (let off = 0; off < MAX; off += PAGE) {
+    let q = supabase.from('influencers')
+      .select('id, created_at, created_by, owner_scouter_id')
+      .gte('created_at', from)
+      .order('created_at', { ascending: true })
+      .range(off, off + PAGE - 1)
+    if (cityId)    q = q.eq('city_id', cityId)
+    if (countryId) q = q.eq('country_id', countryId)
+    const { data, error } = await q
+    if (error) throw friendly(error)
+    out.push(...(data || []))
+    if (!data || data.length < PAGE) break
+  }
+  return out.map(r => ({ id: r.id, createdAt: r.created_at, createdBy: r.created_by, ownerId: r.owner_scouter_id }))
+}
+
+// Nombres visibles para una lista de ids de usuario (quién cargó / dueña).
+export const dbGetPeopleNames = async (ids = []) => {
+  const uniq = [...new Set(ids.filter(Boolean))]
+  if (!uniq.length) return {}
+  const { data, error } = await supabase.from('profiles')
+    .select('id, nombre, sobrenombre, email').in('id', uniq)
+  if (error) throw friendly(error)
+  const m = {}
+  for (const p of data || []) m[p.id] = (p.sobrenombre || '').trim() || p.nombre || p.email || '—'
+  return m
 }
 
 // Legacy — InfluencersView de Resilio Life. Cap duro: no escala con 20K registros.

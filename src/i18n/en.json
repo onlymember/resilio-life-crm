@@ -1160,5 +1160,47 @@
       "empty": "No leads here",
       "emptyHint": "Leads arrive when someone fills in the form with an invitation link."
     }
+  },
+  "intake": {
+    "title": "Influencers added",
+    "mode": {
+      "day": "By day",
+      "week": "By week"
+    },
+    "current": {
+      "day": "Today",
+      "week": "This week"
+    },
+    "previous": {
+      "day": "Yesterday",
+      "week": "Last week"
+    },
+    "total": {
+      "day": "Last {n} days",
+      "week": "Last {n} weeks"
+    },
+    "addedBy": "Added by",
+    "totalCol": "Total",
+    "totalRow": "Total",
+    "unknown": "Unknown",
+    "empty": "No influencers were added in this period.",
+    "hint": "By who created the profile. Tap a number to see those influencers. Days use your local time.",
+    "filter": {
+      "added": "Added",
+      "from": "From",
+      "to": "To",
+      "scouter": "Scouter",
+      "allScouters": "All",
+      "addedBy": "Added by {name}"
+    },
+    "presets": {
+      "any": "Any date",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last7": "Last 7 days",
+      "thisWeek": "This week",
+      "last30": "Last 30 days",
+      "custom": "Pick dates…"
+    }
   }
 }

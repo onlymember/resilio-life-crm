@@ -6,6 +6,7 @@ import { useSyncExternalStore } from 'react'
 const es = {
   brand: 'Resilio Club',
   tagline: 'La red curada de influencers de Resilio',
+  sub: 'Red de influencers',
   common: {
     loading: 'Cargando…', save: 'Guardar', saving: 'Guardando…', saved: 'Guardado',
     back: 'Volver', logout: 'Cerrar sesión', copy: 'Copiar link', copied: 'Copiado',
@@ -115,6 +116,7 @@ const es = {
 const en = {
   brand: 'Resilio Club',
   tagline: "Resilio's curated influencer network",
+  sub: 'Influencer network',
   common: {
     loading: 'Loading…', save: 'Save', saving: 'Saving…', saved: 'Saved',
     back: 'Back', logout: 'Log out', copy: 'Copy link', copied: 'Copied',

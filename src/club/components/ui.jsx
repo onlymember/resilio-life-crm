@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Copy, Check, MessageCircle } from 'lucide-react'
 import { t, CATEGORY_KEYS } from '../i18n.js'
+import { LangToggle } from './chrome.jsx'
 
 export function Field({ label, hint, children, id }) {
   return (
@@ -66,12 +67,20 @@ export function LinkShare({ link, message }) {
   )
 }
 
-// Pantalla centrada con el logo arriba (login, alta, estados).
-export function Centered({ children, top }) {
+// Pantallas de acceso (entrar, alta, activar, estados): la misma card
+// que LoginScreen del CRM, con nebulosas y el logo arriba.
+export function Centered({ children }) {
   return (
-    <div className="club-wrap club-center">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>{top}</div>
-      {children}
+    <div className="club-auth">
+      <div className="club-auth-card">
+        <div className="club-auth-head">
+          <img src="/logoresilio.png" alt="Resilio" onError={e => { e.currentTarget.style.display = 'none' }}/>
+          <div className="club-auth-title">RESILIO CLUB</div>
+          <div className="club-auth-sub">{t('sub')}</div>
+        </div>
+        <div className="club-auth-body">{children}</div>
+        <div className="club-auth-foot"><LangToggle/></div>
+      </div>
     </div>
   )
 }

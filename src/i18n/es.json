@@ -1156,5 +1156,47 @@
       "empty": "No hay leads acá",
       "emptyHint": "Los leads llegan cuando alguien completa el formulario con un link de invitación."
     }
+  },
+  "intake": {
+    "title": "Influencers agregadas",
+    "mode": {
+      "day": "Por día",
+      "week": "Por semana"
+    },
+    "current": {
+      "day": "Hoy",
+      "week": "Esta semana"
+    },
+    "previous": {
+      "day": "Ayer",
+      "week": "Semana pasada"
+    },
+    "total": {
+      "day": "Últimos {n} días",
+      "week": "Últimas {n} semanas"
+    },
+    "addedBy": "Cargó",
+    "totalCol": "Total",
+    "totalRow": "Total",
+    "unknown": "Sin dato",
+    "empty": "No se agregaron influencers en este período.",
+    "hint": "Por quién cargó la ficha. Tocá un número para ver esas influencers. Los días se cuentan en tu horario.",
+    "filter": {
+      "added": "Agregadas",
+      "from": "Desde",
+      "to": "Hasta",
+      "scouter": "Scouter",
+      "allScouters": "Todas",
+      "addedBy": "Cargadas por {name}"
+    },
+    "presets": {
+      "any": "Cualquier fecha",
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "last7": "Últimos 7 días",
+      "thisWeek": "Esta semana",
+      "last30": "Últimos 30 días",
+      "custom": "Elegir fechas…"
+    }
   }
 }

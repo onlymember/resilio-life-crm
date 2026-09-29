@@ -54,7 +54,14 @@ export function LangToggle() {
   )
 }
 
+// Marca del Club: la misma del menú de Network (cuadrado con el logo y
+// "Resilio" en degradé), con "Club" al lado.
 export function Logo() {
-  return <div className="club-logo">Resilio <span>Club</span></div>
+  return (
+    <div className="club-logo">
+      <div className="club-logo-mark"><img src="/logoresilio.png" alt=""/></div>
+      <div className="club-logo-text">RESILIO CLUB</div>
+    </div>
+  )
 }
 

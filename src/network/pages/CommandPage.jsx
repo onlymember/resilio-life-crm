@@ -7,6 +7,7 @@ import ScouterRow from '../components/ScouterRow.jsx'
 import ScouterModal from '../components/ScouterModal.jsx'
 import AssignModal from '../components/AssignModal.jsx'
 import PeriodFilter from '../components/PeriodFilter.jsx'
+import IntakeReport from '../components/IntakeReport.jsx'
 import { t } from '../../i18n/index.js'
 import { personName } from '../utils/people.js'
 import {
@@ -353,6 +354,10 @@ export default function CommandPage({ currentUser }) {
           <div style={{ height:80, borderRadius:10, background:'rgba(139,92,246,0.06)', animation:'pulse 1.5s ease-in-out infinite' }}/>
         )}
       </section>
+
+      {/* ── 2b. ALTAS DE INFLUENCERS ─────────────────────────── */}
+      {/* Cuántas fichas se cargaron por día y por semana, y quién. */}
+      {DIRECTION_ROLES.includes(currentUser?.rol) && <IntakeReport SectionTitle={SectionTitle}/>}
 
       {/* ── 3. SCOUTERS CON ATENCIÓN ─────────────────────────── */}
       <section>

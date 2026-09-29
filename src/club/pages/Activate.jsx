@@ -5,7 +5,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { Lock, MailCheck } from 'lucide-react'
 import { checkInvitation, acceptInvitation, signUp, signIn } from '../api.js'
 import { t, errText, useLang } from '../i18n.js'
-import { Field, ErrorBox, Centered, Chips } from '../components/ui.jsx'
+import { Field, ErrorBox, Centered } from '../components/ui.jsx'
 import { Logo, LangToggle, useAuth } from '../components/chrome.jsx'
 
 export default function Activate() {
@@ -102,9 +102,12 @@ export default function Activate() {
     <Centered top={top}>
       <h1>{t('activate.title')}</h1>
       <p className="muted" style={{ marginBottom: 20 }}>{t('activate.intro')}</p>
-      <div style={{ marginBottom: 16 }}>
-        <Chips multi={false} value={mode} onChange={m => { setMode(m); setError(null) }}
-          options={[{ value: 'new', label: t('activate.newAccount') }, { value: 'login', label: t('activate.haveAccount') }]}/>
+      {/* Mismas pestañas que el login del CRM. */}
+      <div className="club-tabs" role="tablist">
+        {[['new', t('activate.newAccount')], ['login', t('activate.haveAccount')]].map(([m, label]) => (
+          <button key={m} type="button" role="tab" aria-selected={mode === m}
+            className={`club-tab${mode === m ? ' on' : ''}`} onClick={() => { setMode(m); setError(null) }}>{label}</button>
+        ))}
       </div>
       <form className="club-panel" onSubmit={submit} noValidate>
         {mode === 'new' && (

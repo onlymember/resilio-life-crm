@@ -74,11 +74,10 @@ export default function Join() {
   )
 
   return (
-    <div className="club-wrap" style={{ paddingTop: 20, paddingBottom: 40 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>{top}</div>
-      <div style={{ margin: '28px 0 22px' }}>
-        <div className="club-chip on" style={{ cursor: 'default' }}><span className="dot"/>{t('join.invitedBy', { name: by })}</div>
-        <h1 style={{ marginTop: 16 }}>{t('join.title')}</h1>
+    <Centered>
+      <div style={{ marginBottom: 20 }}>
+        <div className="club-chip on" style={{ cursor: 'default', marginBottom: 14 }}><span className="dot"/>{t('join.invitedBy', { name: by })}</div>
+        <h1>{t('join.title')}</h1>
         <p className="muted">{t('join.intro')}</p>
       </div>
 
@@ -118,6 +117,6 @@ export default function Join() {
         <ErrorBox>{error}</ErrorBox>
         <button className="club-btn" disabled={busy || !f.consent}>{busy ? t('common.saving') : t('join.submit')}</button>
       </form>
-    </div>
+    </Centered>
   )
 }
