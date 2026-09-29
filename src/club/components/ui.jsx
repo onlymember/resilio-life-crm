@@ -74,7 +74,7 @@ export function Centered({ children }) {
     <div className="club-auth">
       <div className="club-auth-card">
         <div className="club-auth-head">
-          <img src="/logoresilio.png" alt="Resilio" onError={e => { e.currentTarget.style.display = 'none' }}/>
+          <img src="/logoresilio.png" alt="Resilio" width="64" height="64" onError={e => { e.currentTarget.style.display = 'none' }}/>
           <div className="club-auth-title">RESILIO CLUB</div>
           <div className="club-auth-sub">{t('sub')}</div>
         </div>

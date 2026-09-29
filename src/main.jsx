@@ -6,12 +6,17 @@ import ReactDOM from 'react-dom/client'
 // el código del CRM, y al revés.
 //   · club.*            → app de influencers (Resilio Club)
 //   · cualquier otro    → CRM
-// En desarrollo: `npm run dev:club` (usa .env.club con VITE_CLUB_MODE=1).
+// En desarrollo: `npm run dev:club` (vite --mode club).
 const isClub =
   window.location.hostname.startsWith('club.') ||
-  import.meta.env.VITE_CLUB_MODE === '1'
+  import.meta.env.MODE === 'club'
 
-const Root = lazy(() => (isClub ? import('./club/ClubApp.jsx') : import('./App')))
+// Cada import() va en su propia función, a propósito. Con los dos en un
+// mismo ternario, Vite le arma a los dos la misma lista de archivos a
+// precargar (la del CRM) y el Club se quedaba sin su CSS en producción.
+const loadClub = () => import('./club/ClubApp.jsx')
+const loadCrm  = () => import('./App')
+const Root = lazy(isClub ? loadClub : loadCrm)
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

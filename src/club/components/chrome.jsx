@@ -59,7 +59,7 @@ export function LangToggle() {
 export function Logo() {
   return (
     <div className="club-logo">
-      <div className="club-logo-mark"><img src="/logoresilio.png" alt=""/></div>
+      <div className="club-logo-mark"><img src="/logoresilio.png" alt="" width="16" height="16"/></div>
       <div className="club-logo-text">RESILIO CLUB</div>
     </div>
   )
