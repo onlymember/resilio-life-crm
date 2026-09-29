@@ -23,7 +23,11 @@ function Shell({ children }) {
   return (
     <>
       <header className="club-top">
-        <div className="club-wrap club-top-in"><Logo/><LangToggle/></div>
+        <div className="club-wrap club-top-in">
+          <div className="club-logo-mark"><img src="/logoresilio.png" alt="Resilio" width="16" height="16"/></div>
+          <div className="club-logo-text club-top-title">RESILIO CLUB</div>
+          <LangToggle short/>
+        </div>
       </header>
       <main className="club-wrap club-page">{children}</main>
       {/* Misma barra flotante que Network en celular (.nw-bottom-nav). */}

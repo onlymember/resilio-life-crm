@@ -57,6 +57,7 @@ const es = {
   },
   reset: { title: 'Nueva contraseña', submit: 'Guardar contraseña', done: 'Listo, ya podés usar tu nueva contraseña.' },
   feed: {
+    searchCity: 'Buscar ciudad…', allCountries: 'Todos los países',
     title: 'Ofertas', all: 'Todas', mine: 'Mis ciudades', new: 'Nueva',
     interested: 'Me interesa', notInterested: 'No me interesa',
     emptyTitle: 'Estás al día',
@@ -80,7 +81,12 @@ const es = {
     state: { pending: 'Sin usar', used: 'Usada', expired: 'Vencida', revoked: 'Anulada' },
     none: 'Todavía no invitaste a nadie.',
   },
-  profile: { title: 'Tu perfil', intro: 'Estos datos los ve el equipo de Resilio.' },
+  profile: { title: 'Tu perfil', intro: 'Estos datos los ve el equipo de Resilio.',
+    searchCity: 'Buscar ciudad…', addTopic: 'Agregar un tema', add: 'Agregar',
+    changePassword: 'Cambiar contraseña', changeEmail: 'Cambiar mail', newEmail: 'Nuevo mail',
+    requestEmail: 'Pedir cambio', emailPending: 'Pediste cambiar tu mail a {email}. Lo tiene que autorizar Resilio.',
+    emailSent: 'Listo, Resilio va a revisar tu pedido.', passwordSaved: 'Contraseña actualizada.',
+    emailLocked: 'Para cambiarlo usá "Cambiar mail" más abajo.' },
   blocked: {
     title: 'Tu acceso no está activo',
     body: 'Si creés que es un error, escribile a quien te invitó.',
@@ -110,6 +116,8 @@ const es = {
     email_not_confirmed: 'Todavía no confirmaste tu email. Revisá tu casilla.',
     over_email_send_rate_limit: 'Demasiados intentos. Esperá unos minutos.',
     password_short: 'La contraseña tiene que tener al menos 8 caracteres.',
+    email_same: 'Es el mismo mail que ya tenés.',
+    email_requires_approval: 'El cambio de mail lo autoriza Resilio.',
   },
 }
 
@@ -167,6 +175,7 @@ const en = {
   },
   reset: { title: 'New password', submit: 'Save password', done: 'Done, you can now use your new password.' },
   feed: {
+    searchCity: 'Search city…', allCountries: 'All countries',
     title: 'Offers', all: 'All', mine: 'My cities', new: 'New',
     interested: "I'm interested", notInterested: 'Not for me',
     emptyTitle: "You're all caught up",
@@ -190,7 +199,12 @@ const en = {
     state: { pending: 'Unused', used: 'Used', expired: 'Expired', revoked: 'Revoked' },
     none: "You haven't invited anyone yet.",
   },
-  profile: { title: 'Your profile', intro: 'The Resilio team can see this information.' },
+  profile: { title: 'Your profile', intro: 'The Resilio team can see this information.',
+    searchCity: 'Search city…', addTopic: 'Add a topic', add: 'Add',
+    changePassword: 'Change password', changeEmail: 'Change email', newEmail: 'New email',
+    requestEmail: 'Request change', emailPending: 'You asked to change your email to {email}. Resilio has to approve it.',
+    emailSent: 'Done, Resilio will review your request.', passwordSaved: 'Password updated.',
+    emailLocked: 'To change it use "Change email" below.' },
   blocked: {
     title: 'Your access is not active',
     body: 'If you think this is a mistake, contact the person who invited you.',
@@ -220,6 +234,8 @@ const en = {
     email_not_confirmed: "You haven't confirmed your email yet. Check your inbox.",
     over_email_send_rate_limit: 'Too many attempts. Wait a few minutes.',
     password_short: 'The password must be at least 8 characters.',
+    email_same: 'That is already your email.',
+    email_requires_approval: 'Resilio has to approve email changes.',
   },
 }
 

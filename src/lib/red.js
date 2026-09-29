@@ -255,3 +255,24 @@ export const redGetConversion = async ({ from, to } = {}) => {
     pct:               r.conversion_pct == null ? null : Number(r.conversion_pct),
   }
 }
+
+// ── Cambios de email pedidos desde el Club (migración 048) ──
+export const redGetEmailRequests = async () => {
+  const { data, error } = await supabase.from('influencer_email_requests')
+    .select('id, old_email, new_email, created_at, influencer_id, influencers(name)')
+    .eq('status', 'pending').order('created_at', { ascending: false })
+  if (error) return []                       // sin 048 o sin permiso: no se muestra
+  return (data || []).map(r => ({ id: r.id, oldEmail: r.old_email, newEmail: r.new_email,
+    createdAt: r.created_at, influencerId: r.influencer_id, name: r.influencers?.name || '—' }))
+}
+export const redDecideEmailChange = async (id, approve) => {
+  const { error } = await supabase.rpc('decide_email_change', { p_id: id, p_approve: approve })
+  if (error) throw fail(error)
+}
+
+// Temas que eligió la influencer en el Club (incluye los que escribió ella).
+export const redGetInfluencerTopics = async (influencerId) => {
+  const { data } = await supabase.from('influencer_preferences').select('categories')
+    .eq('influencer_id', influencerId).maybeSingle()
+  return data?.categories || []
+}

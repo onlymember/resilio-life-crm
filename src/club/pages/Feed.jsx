@@ -1,51 +1,26 @@
-// Ofertas. Por defecto las de sus ciudades de interés (si no eligió
-// ninguna, todas). Un toque cambia de ciudad. Cada voto saca la card.
-import React, { useEffect, useState, useCallback } from 'react'
-import { Link } from 'react-router-dom'
-import { Sparkles, Heart, X } from 'lucide-react'
-import { myFeed, feedCities, voteOffer, markFeedSeen, offerImageUrl } from '../api.js'
-import { t, errText, useLang, getLang } from '../i18n.js'
+// Inicio: pantalla fija, sin scroll vertical.
+//   Arriba: buscador de ciudad + país, y una fila con Mis ciudades /
+//   Todas / cada ciudad. Abajo: una oferta a la vez, solo la imagen,
+//   con "No me interesa" / "Me interesa" encima. Al votar pasa a la otra.
+import React, { useEffect, useState, useCallback, useMemo } from 'react'
+import { Sparkles, Heart, X, Search } from 'lucide-react'
+import { myFeed, feedCities, voteOffer, markFeedSeen, offerImageUrl, listCities } from '../api.js'
+import { t, errText, useLang } from '../i18n.js'
 import { Chips, Toast } from '../components/ui.jsx'
 import { useAuth } from '../components/chrome.jsx'
-
-function OfferCard({ offer, onVote, leaving }) {
-  const img = offerImageUrl(offer.image_path)
-  const type = getLang() === 'en' ? offer.type_label_en : offer.type_label_es
-  return (
-    <article className={`club-card${leaving ? ' leaving' : ''}`}>
-      <div className="club-card-img">
-        {img && <img src={img} alt="" loading="lazy"/>}
-        <span className={`club-badge${offer.is_new ? ' new' : ''}`}>{offer.is_new ? t('feed.new') : type}</span>
-        <div className="club-card-over">
-          <div className="club-card-meta">
-            {offer.brand_logo && <img className="club-brand-logo" src={offer.brand_logo} alt=""/>}
-            <span>{offer.brand_name}</span><span>·</span><span>{offer.city_name}</span>
-            {offer.is_new && <><span>·</span><span>{type}</span></>}
-          </div>
-          <h3>{offer.title}</h3>
-        </div>
-      </div>
-      <div className="club-card-actions">
-        <button className="club-btn ghost" onClick={() => onVote(offer, 'not_interested')} disabled={leaving}>
-          <X size={16}/>{t('feed.notInterested')}
-        </button>
-        <button className="club-btn" onClick={() => onVote(offer, 'interested')} disabled={leaving}>
-          <Heart size={16}/>{t('feed.interested')}
-        </button>
-      </div>
-    </article>
-  )
-}
 
 export default function Feed() {
   useLang()
   const { profile } = useAuth()
   const hasCities = (profile?.city_ids || []).length > 0
-  const [filter,  setFilter]  = useState('mine')   // 'mine' | 'all' | <cityId>
-  const [cities,  setCities]  = useState([])
-  const [offers,  setOffers]  = useState(null)
-  const [leaving, setLeaving] = useState(new Set())
-  const [toast,   setToast]   = useState(null)
+  const [filter,   setFilter]   = useState(hasCities ? 'mine' : 'all')
+  const [cities,   setCities]   = useState([])     // con ofertas activas
+  const [catalog,  setCatalog]  = useState({})     // id → { countryId, countryName }
+  const [q,        setQ]        = useState('')
+  const [country,  setCountry]  = useState('')
+  const [offers,   setOffers]   = useState(null)
+  const [leaving,  setLeaving]  = useState(false)
+  const [toast,    setToast]    = useState(null)
 
   const load = useCallback(async (flt) => {
     setOffers(null)
@@ -55,7 +30,10 @@ export default function Feed() {
     } catch (e) { setOffers([]); setToast(errText(e)) }
   }, [])
 
-  useEffect(() => { feedCities().then(setCities).catch(() => {}) }, [])
+  useEffect(() => {
+    feedCities().then(setCities).catch(() => {})
+    listCities().then(list => { const m = {}; list.forEach(c => { m[c.id] = c }); setCatalog(m) })
+  }, [])
   useEffect(() => { load(filter) }, [filter, load])
 
   // "Visto" al salir: las "Nueva" de esta visita dejan de serlo la próxima.
@@ -65,48 +43,75 @@ export default function Feed() {
     return () => { document.removeEventListener('visibilitychange', onHide); markFeedSeen().catch(() => {}) }
   }, [])
 
-  const vote = async (offer, v) => {
-    setLeaving(prev => new Set(prev).add(offer.id))
-    try {
-      await voteOffer(offer.id, v)
-      setTimeout(() => setOffers(prev => (prev || []).filter(o => o.id !== offer.id)), 420)
-      setCities(prev => prev.map(c => c.city_name === offer.city_name ? { ...c, unvoted: Math.max(0, c.unvoted - 1) } : c))
-    } catch (e) {
-      setLeaving(prev => { const n = new Set(prev); n.delete(offer.id); return n })
-      setToast(errText(e))
-    }
-  }
+  const countries = useMemo(() => {
+    const m = {}
+    cities.forEach(c => { const k = catalog[c.city_id]; if (k?.countryId) m[k.countryId] = k.countryName })
+    return Object.entries(m).sort((a, b) => a[1].localeCompare(b[1]))
+  }, [cities, catalog])
+
+  const visibleCities = cities.filter(c =>
+    (!country || catalog[c.city_id]?.countryId === country) &&
+    (!q || c.city_name.toLowerCase().includes(q.trim().toLowerCase())))
 
   const options = [
     ...(hasCities ? [{ value: 'mine', label: t('feed.mine') }] : []),
     { value: 'all', label: t('feed.all') },
-    ...cities.map(c => ({ value: c.city_id, label: c.city_name, dot: Number(c.new_offers) > 0 })),
+    ...visibleCities.map(c => ({ value: c.city_id, label: c.city_name, dot: Number(c.new_offers) > 0 })),
   ]
-  const current = !hasCities && filter === 'mine' ? 'all' : filter
+
+  const offer = offers?.[0]
+  const vote = async (v) => {
+    if (!offer || leaving) return
+    setLeaving(true)
+    try {
+      await voteOffer(offer.id, v)
+      setTimeout(() => { setOffers(prev => (prev || []).slice(1)); setLeaving(false) }, 350)
+    } catch (e) { setLeaving(false); setToast(errText(e)) }
+  }
 
   return (
-    <>
-      <h1>{t('feed.title')}</h1>
-      <div style={{ margin: '12px 0 18px' }}>
-        <Chips scroll multi={false} value={current} onChange={setFilter} options={options}/>
+    <div className="club-feed">
+      <div className="club-feed-bar">
+        <div className="club-feed-search">
+          <div className="club-feed-search-in">
+            <Search size={14}/>
+            <input className="club-input" value={q} onChange={e => setQ(e.target.value)} placeholder={t('feed.searchCity')} aria-label={t('feed.searchCity')}/>
+          </div>
+          {countries.length > 1 && (
+            <select className="club-input" value={country} onChange={e => setCountry(e.target.value)} aria-label={t('feed.allCountries')}>
+              <option value="">{t('feed.allCountries')}</option>
+              {countries.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+            </select>
+          )}
+        </div>
+        <Chips scroll multi={false} value={filter} onChange={setFilter} options={options}/>
       </div>
 
-      {!hasCities && <div className="club-note" style={{ marginBottom: 16 }}>
-        <Link to="/perfil">{t('feed.chooseCities')}</Link>
-      </div>}
-
-      {offers === null ? (
-        <div className="club-skel" style={{ aspectRatio: '4 / 5', width: '100%' }}/>
-      ) : offers.length === 0 ? (
-        <div className="club-empty">
-          <div className="ico"><Sparkles size={24}/></div>
-          <h2>{t('feed.emptyTitle')}</h2>
-          <p className="muted">{t('feed.emptyBody')}</p>
-        </div>
-      ) : (
-        offers.map(o => <OfferCard key={o.id} offer={o} onVote={vote} leaving={leaving.has(o.id)}/>)
-      )}
+      <div className="club-feed-stage">
+        {offers === null ? (
+          <div className="club-skel" style={{ width: '100%', height: '100%' }}/>
+        ) : !offer ? (
+          <div className="club-empty">
+            <div className="ico"><Sparkles size={24}/></div>
+            <h2>{t('feed.emptyTitle')}</h2>
+            <p className="muted">{t('feed.emptyBody')}</p>
+          </div>
+        ) : (
+          <div key={offer.id} className={`club-feed-card${leaving ? ' leaving' : ''}`}>
+            <img src={offerImageUrl(offer.image_path)} alt={offer.title}/>
+            {offer.is_new && <span className="club-badge new">{t('feed.new')}</span>}
+            <div className="club-feed-actions">
+              <button className="club-btn ghost" onClick={() => vote('not_interested')} disabled={leaving} aria-label={t('feed.notInterested')}>
+                <X size={16}/>{t('feed.notInterested')}
+              </button>
+              <button className="club-btn" onClick={() => vote('interested')} disabled={leaving} aria-label={t('feed.interested')}>
+                <Heart size={16}/>{t('feed.interested')}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
       <Toast message={toast} onDone={() => setToast(null)}/>
-    </>
+    </div>
   )
 }

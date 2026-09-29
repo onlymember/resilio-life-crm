@@ -45,11 +45,13 @@ export function AuthProvider({ children }) {
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>
 }
 
-export function LangToggle() {
+// short: solo "ES" / "EN" (barra superior).
+export function LangToggle({ short = false }) {
   useLang()
+  const next = getLang() === 'es' ? 'en' : 'es'
   return (
-    <button className="club-link small" onClick={() => setLang(getLang() === 'es' ? 'en' : 'es')}>
-      {t('common.language')}
+    <button className="club-link small" aria-label={t('common.language')} onClick={() => setLang(next)}>
+      {short ? next.toUpperCase() : t('common.language')}
     </button>
   )
 }

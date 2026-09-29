@@ -10,7 +10,7 @@ import EmptyState from '../components/EmptyState.jsx'
 import { t } from '../../i18n/index.js'
 import { dbGetActiveScouters } from '../../lib/database.js'
 import { personName } from '../utils/people.js'
-import { redGetLeads, redApproveLead, redRejectLead, redCreateInvitation } from '../../lib/red.js'
+import { redGetLeads, redApproveLead, redRejectLead, redCreateInvitation, redGetEmailRequests, redDecideEmailChange } from '../../lib/red.js'
 import { DIRECTION_ROLES } from '../routes.js'
 import { Sheet, ErrorLine, LinkShare, btn, inputStyle, labelStyle, card } from '../red/ui.jsx'
 
@@ -45,7 +45,9 @@ export function InviteSheet({ onClose }) {
               <label style={labelStyle} htmlFor="inv-hint">{t('red.invite.hint')}</label>
               <input id="inv-hint" value={hint} maxLength={120} onChange={e => setHint(e.target.value)} placeholder="@usuario" style={inputStyle}/>
             </div>
-            <ErrorLine error={error}/>
+            {isDirection && <EmailRequests/>}
+
+      <ErrorLine error={error}/>
             <button onClick={create} disabled={busy} style={{ ...btn.primary, opacity: busy ? 0.6 : 1 }}>
               <Link2 size={14}/>{busy ? t('red.common.saving') : t('red.invite.generate')}
             </button>
@@ -220,6 +222,34 @@ function LeadCard({ lead, isDirection, ownerName, onApprove, onReject }) {
           <button onClick={() => onApprove(lead)} style={{ ...btn.primary, flex: 1 }}><Check size={14}/>{t('red.leads.approve')}</button>
         </div>
       )}
+    </div>
+  )
+}
+
+// Pedidos de cambio de email desde el Club: solo Dirección los autoriza.
+function EmailRequests() {
+  const [items, setItems] = useState([])
+  const [err, setErr] = useState(null)
+  const load = () => redGetEmailRequests().then(setItems)
+  useEffect(() => { load() }, [])
+  const decide = async (id, ok) => {
+    setErr(null)
+    try { await redDecideEmailChange(id, ok); load() } catch (e) { setErr(e.message) }
+  }
+  if (!items.length) return null
+  return (
+    <div style={{ ...card, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}><Mail size={13} style={{ verticalAlign: -2 }}/> {t('red.emailReq.title')} · {items.length}</div>
+      {items.map(r => (
+        <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 12 }}>
+          <div style={{ flex: 1, minWidth: 180, color: 'var(--text-secondary)' }}>
+            <b style={{ color: 'var(--text-primary)' }}>{r.name}</b> · {r.oldEmail || '—'} → <b style={{ color: 'var(--text-primary)' }}>{r.newEmail}</b>
+          </div>
+          <button onClick={() => decide(r.id, false)} style={btn.ghost}><X size={13}/>{t('red.emailReq.reject')}</button>
+          <button onClick={() => decide(r.id, true)} style={btn.primary}><Check size={13}/>{t('red.emailReq.approve')}</button>
+        </div>
+      ))}
+      <ErrorLine error={err}/>
     </div>
   )
 }

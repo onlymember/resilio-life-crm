@@ -14,8 +14,6 @@ export default function Interests() {
 
   return (
     <>
-      <h1>{t('interests.title')}</h1>
-      <p className="muted" style={{ marginBottom: 18 }}>{t('interests.intro')}</p>
       <ErrorBox>{error}</ErrorBox>
       {rows === null ? (
         [0, 1, 2].map(i => <div key={i} className="club-skel" style={{ height: 80, marginBottom: 10 }}/>)

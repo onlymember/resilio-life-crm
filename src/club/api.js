@@ -73,14 +73,16 @@ export const markFeedSeen  = () => call('mark_feed_seen')
 export const voteOffer     = (offerId, vote) => call('vote_offer', { p_offer_id: offerId, p_vote: vote })
 export const myInterests   = () => call('my_interests')
 export const myInvitations = () => call('my_invitations')
+export const requestEmailChange = (email) => call('request_email_change', { p_new_email: email })
+export const myEmailRequest     = () => call('my_email_request')
 export const createInvite  = (hint) => call('create_invitation', { p_kind: 'join', p_target_influencer: null, p_hint: hint || null })
 
 // Catálogo de ciudades. Si la base no deja leerlo (por ejemplo sin
 // sesión), la pantalla cae a un campo de texto.
 export const listCities = async () => {
-  const { data, error } = await supabase.from('cities').select('id, name').order('name')
+  const { data, error } = await supabase.from('cities').select('id, name, country_id, countries(name)').order('name')
   if (error) return []
-  return data || []
+  return (data || []).map(c => ({ id: c.id, name: c.name, countryId: c.country_id, countryName: c.countries?.name || '' }))
 }
 
 export const offerImageUrl = (path) =>

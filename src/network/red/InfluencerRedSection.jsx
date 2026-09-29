@@ -5,7 +5,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { Smartphone, Heart } from 'lucide-react'
 import { t } from '../../i18n/index.js'
-import { redGetAppAccess, redCreateInvitation, redGetInfluencerInterests, redUpdateInterest } from '../../lib/red.js'
+import { redGetAppAccess, redCreateInvitation, redGetInfluencerInterests, redUpdateInterest, redGetInfluencerTopics } from '../../lib/red.js'
 import { LinkShare, ErrorLine, btn, inputStyle } from './ui.jsx'
 
 const INTERNAL = ['new', 'reviewed', 'contacted', 'discarded', 'matched']
@@ -103,12 +103,26 @@ function Interests({ influencerId }) {
   )
 }
 
+function Topics({ influencerId }) {
+  const [list, setList] = useState([])
+  useEffect(() => { redGetInfluencerTopics(influencerId).then(setList).catch(() => {}) }, [influencerId])
+  if (!list.length) return null
+  const label = (c) => { const k = `categories.${c}`; const v = t(k); return v && v !== k ? v : c }
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+      {list.map(c => <span key={c} style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, background: 'rgba(139,92,246,0.1)', border: '1px solid var(--border-violet)', color: 'var(--text-primary)' }}>{label(c)}</span>)}
+    </div>
+  )
+}
+
 export default function InfluencerRedSection({ influencerId, sectionStyle }) {
   const title = { fontSize: 11, fontWeight: 700, letterSpacing: 0.6, textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 10 }
   return (
     <div style={sectionStyle}>
       <div style={title}>{t('red.access.section')}</div>
       <AppAccess influencerId={influencerId}/>
+      <div style={{ ...title, marginTop: 18 }}>{t('red.topics')}</div>
+      <Topics influencerId={influencerId}/>
       <div style={{ ...title, marginTop: 18 }}>{t('red.interests.title')}</div>
       <Interests influencerId={influencerId}/>
     </div>
