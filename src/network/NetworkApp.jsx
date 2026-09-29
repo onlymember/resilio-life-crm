@@ -24,10 +24,12 @@ import CalendarPage from './pages/CalendarPage.jsx'
 import MissionsPage from './pages/MissionsPage.jsx'
 import NotesPage from './pages/NotesPage.jsx'
 import RewardsPage from './pages/RewardsPage.jsx'
+import OffersPage from './pages/OffersPage.jsx'
+import LeadsPage from './pages/LeadsPage.jsx'
 import CreateSheet from './components/CreateSheet.jsx'
 import EmptyState from './components/EmptyState.jsx'
 import { Shield } from 'lucide-react'
-import { getDefaultRoute, COMMAND_ROLES, DIRECTION_ROLES } from './routes.js'
+import { getDefaultRoute, COMMAND_ROLES, DIRECTION_ROLES, OFFERS_ROLES } from './routes.js'
 import { t } from '../i18n/index.js'
 
 const useIsMobile = () => {
@@ -169,6 +171,12 @@ export default function NetworkApp({ currentUser }) {
               <MessageTemplatesPage/>
             </RoleGuard>
           }/>
+          <Route path="offers"      element={
+            <RoleGuard user={currentUser} allowedRoles={OFFERS_ROLES}>
+              <OffersPage currentUser={currentUser}/>
+            </RoleGuard>
+          }/>
+          <Route path="leads"       element={<LeadsPage currentUser={currentUser}/>}/>
           <Route path="calendar"    element={<CalendarPage currentUser={currentUser}/>}/>
           <Route path="follow-ups"  element={<FollowUpsPage currentUser={currentUser}/>}/>
           <Route path="notes"       element={<NotesPage    currentUser={currentUser}/>}/>

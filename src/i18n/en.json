@@ -94,13 +94,16 @@
     "back": "Volver",
     "more": "Más",
     "network": "Network",
+    "offers": "Offers",
+    "leads": "Club leads",
     "sections": {
       "inicio": "INICIO",
       "network": "NETWORK",
       "operation": "OPERACIÓN",
       "growth": "GROWTH",
       "intelligence": "INTELLIGENCE",
-      "manual": "MANUAL"
+      "manual": "MANUAL",
+      "club": "CLUB"
     }
   },
   "loading": {
@@ -1044,6 +1047,118 @@
       "collaborationsClosed": "Collaborations",
       "totalValue":           "Total value",
       "avgEngagement":        "Avg. engagement"
+    }
+  },
+  "red": {
+    "common": {
+      "close": "Close",
+      "copy": "Copy link",
+      "copied": "Copied",
+      "whatsapp": "Send via WhatsApp",
+      "expires": "Expires {date}",
+      "saving": "Saving…",
+      "save": "Save changes",
+      "choose": "Choose…"
+    },
+    "offers": {
+      "title": "Offers",
+      "subtitle": "{active} active of {total} · what influencers see in the Club",
+      "tabBrands": "Brands",
+      "tabOffers": "All offers",
+      "searchBrand": "Search brand…",
+      "brandCount": "{active} active · {total} offers",
+      "newShort": "Offer",
+      "moreBrands": "{n} more brands: search by name.",
+      "newTitle": "New offer",
+      "editTitle": "Edit offer",
+      "create": "Create offer",
+      "edit": "Edit",
+      "photo": "Photo",
+      "photoHint": "Tap to upload a photo (JPG, PNG or WEBP, up to 5 MB)",
+      "titleField": "Title",
+      "titlePlaceholder": "E.g.: Dinner for two on the terrace",
+      "city": "City",
+      "type": "Type",
+      "activeLabel": "Active",
+      "activeHint": "Visible in the Club. Can't be activated without a photo.",
+      "active": "Active",
+      "inactive": "Inactive",
+      "interested": "{n} interested",
+      "filterAll": "All",
+      "filterActive": "Active",
+      "filterInactive": "Inactive",
+      "empty": "No offers yet",
+      "emptyHint": "Offers are created from a brand.",
+      "errImageType": "The photo must be JPG, PNG or WEBP.",
+      "errImageSize": "The photo can't be larger than 5 MB."
+    },
+    "invite": {
+      "button": "Invite",
+      "title": "Invite to the network",
+      "subtitle": "Personal, single-use link that expires in 30 days.",
+      "hint": "Who is it for? (optional, as a reminder)",
+      "generate": "Generate link",
+      "ready": "Done. Send them this link: they fill in the form and Management reviews their profile.",
+      "message": "You're invited to Resilio Club, Resilio's influencer network. Complete your profile here:"
+    },
+    "access": {
+      "section": "Club · app access",
+      "active": "Has app access",
+      "suspended": "Access suspended",
+      "lastSeen": "last visit {date}",
+      "pending": "Access link created, not used yet:",
+      "none": "No Club access yet. Generate their link and send it.",
+      "give": "Give app access",
+      "message": "You now have access to Resilio Club! Create your account with this link:"
+    },
+    "interests": {
+      "title": "Their \"interested\"",
+      "none": "No offers marked yet.",
+      "status": "Internal status",
+      "internal": {
+        "new": "New",
+        "reviewed": "Reviewed",
+        "contacted": "Contacted",
+        "discarded": "Discarded",
+        "matched": "Collaboration"
+      }
+    },
+    "leads": {
+      "title": "Club leads",
+      "subtitleDirection": "People who filled in the form with an invitation. Approve or discard.",
+      "subtitleScouter": "Your invitees and where each one stands. Management approves them.",
+      "tabs": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Discarded",
+        "all": "All"
+      },
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Discarded"
+      },
+      "byScouter": "Invited by a scouter",
+      "byInfluencer": "Invited by an influencer",
+      "byAgency": "Invited by the agency",
+      "goesTo": "goes to {name}",
+      "alreadyInCrm": "Already in the CRM · view profile",
+      "openProfile": "View profile",
+      "approve": "Approve",
+      "reject": "Discard",
+      "approveTitle": "Approve lead",
+      "approvedTitle": "Approved",
+      "approveMatched": "A profile with that Instagram or email already exists: no new one is created, that one is used.",
+      "approveNew": "The profile is created in the CRM and assigned to the right scouter.",
+      "owner": "Assign to",
+      "allCities": "Show scouters from all cities",
+      "sendActivation": "Send them this link so they can create their Club account:",
+      "alreadyHasAccount": "This influencer already had app access.",
+      "rejectTitle": "Discard lead",
+      "rejectHint": "The person is not notified. The reason stays in the CRM only.",
+      "reason": "Reason",
+      "empty": "No leads here",
+      "emptyHint": "Leads arrive when someone fills in the form with an invitation link."
     }
   }
 }

@@ -13,6 +13,10 @@ export const COMMAND_ROLES = [
 // RLS les va a negar.
 export const DIRECTION_ROLES = ['super_admin', 'network_direction']
 
+// Ofertas del Club (047): las gestionan super_admin, admin y
+// network_direction. Coincide con app_can_manage_offers() de la base.
+export const OFFERS_ROLES = ['super_admin', 'admin', 'network_direction']
+
 export const canSeeCommand = (user) =>
   user && COMMAND_ROLES.includes(user.rol)
 
@@ -45,5 +49,7 @@ export const ROUTES = [
   { path: '/network/missions',              pageKey: 'missions',           soon: false, roles: null },
   { path: '/network/roadmap',               pageKey: 'roadmap',            soon: true,  roles: null },
   { path: '/network/rewards',               pageKey: 'rewards',            soon: false, roles: null },
+  { path: '/network/offers',                pageKey: 'offers',             soon: false, roles: OFFERS_ROLES },
+  { path: '/network/leads',                 pageKey: 'leads',              soon: false, roles: null },
   { path: '/network/manual',               pageKey: 'manual',             soon: false, roles: null },
 ]

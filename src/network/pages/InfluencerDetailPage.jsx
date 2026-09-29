@@ -5,6 +5,7 @@ import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import MessageSheet from '../components/MessageSheet.jsx'
 import RelationshipHistory from '../components/RelationshipHistory.jsx'
+import InfluencerRedSection from '../red/InfluencerRedSection.jsx'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { isoToDatetimeLocal, datetimeLocalToIso } from '../utils/date.js'
@@ -81,7 +82,7 @@ const SelectField = ({ label, value, onChange, children }) => (
   </div>
 )
 
-export default function InfluencerDetailPage() {
+export default function InfluencerDetailPage({ currentUser }) {
   const { id } = useParams()
   const navigate = useNavigate()
   const tz = useTz()
@@ -308,6 +309,9 @@ export default function InfluencerDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* CLUB: acceso a la app e intereses (red de influencers, 047) */}
+        <InfluencerRedSection influencerId={entity.id} sectionStyle={sectionStyle}/>
 
         {/* HISTORIAL DE RELACIÓN */}
         <div style={sectionStyle}>

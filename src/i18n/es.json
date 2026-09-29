@@ -94,13 +94,16 @@
     "back": "Volver",
     "more": "Más",
     "network": "Network",
+    "offers": "Ofertas",
+    "leads": "Leads del Club",
     "sections": {
       "inicio": "INICIO",
       "network": "NETWORK",
       "operation": "OPERACIÓN",
       "growth": "GROWTH",
       "intelligence": "INTELLIGENCE",
-      "manual": "MANUAL"
+      "manual": "MANUAL",
+      "club": "CLUB"
     }
   },
   "loading": {
@@ -1040,6 +1043,118 @@
       "collaborationsClosed": "Colaboraciones",
       "totalValue":           "Valor total",
       "avgEngagement":        "Eng. prom."
+    }
+  },
+  "red": {
+    "common": {
+      "close": "Cerrar",
+      "copy": "Copiar link",
+      "copied": "Copiado",
+      "whatsapp": "Enviar por WhatsApp",
+      "expires": "Vence el {date}",
+      "saving": "Guardando…",
+      "save": "Guardar cambios",
+      "choose": "Elegí…"
+    },
+    "offers": {
+      "title": "Ofertas",
+      "subtitle": "{active} activas de {total} · lo que ven las influencers en el Club",
+      "tabBrands": "Marcas",
+      "tabOffers": "Todas las ofertas",
+      "searchBrand": "Buscar marca…",
+      "brandCount": "{active} activas · {total} ofertas",
+      "newShort": "Oferta",
+      "moreBrands": "Hay {n} marcas más: buscá por nombre.",
+      "newTitle": "Nueva oferta",
+      "editTitle": "Editar oferta",
+      "create": "Crear oferta",
+      "edit": "Editar",
+      "photo": "Foto",
+      "photoHint": "Tocá para subir una foto (JPG, PNG o WEBP, hasta 5 MB)",
+      "titleField": "Título",
+      "titlePlaceholder": "Ej.: Cena para dos en la terraza",
+      "city": "Ciudad",
+      "type": "Tipo",
+      "activeLabel": "Activa",
+      "activeHint": "Visible en el Club. Sin foto no se puede activar.",
+      "active": "Activa",
+      "inactive": "Inactiva",
+      "interested": "{n} Me interesa",
+      "filterAll": "Todas",
+      "filterActive": "Activas",
+      "filterInactive": "Inactivas",
+      "empty": "Todavía no hay ofertas",
+      "emptyHint": "Se crean desde una marca.",
+      "errImageType": "La foto tiene que ser JPG, PNG o WEBP.",
+      "errImageSize": "La foto no puede pesar más de 5 MB."
+    },
+    "invite": {
+      "button": "Invitar",
+      "title": "Invitar a la red",
+      "subtitle": "Link personal, de un solo uso, que vence a los 30 días.",
+      "hint": "¿A quién? (opcional, para acordarte)",
+      "generate": "Generar link",
+      "ready": "Listo. Mandale este link: con él completa el formulario y Dirección revisa su perfil.",
+      "message": "Te invito a Resilio Club, la red de influencers de Resilio. Completá tu perfil acá:"
+    },
+    "access": {
+      "section": "Club · acceso a la app",
+      "active": "Tiene acceso a la app",
+      "suspended": "Acceso suspendido",
+      "lastSeen": "última visita {date}",
+      "pending": "Link de acceso generado, todavía sin usar:",
+      "none": "Todavía no tiene acceso al Club. Generá su link y mandáselo.",
+      "give": "Dar acceso a la app",
+      "message": "¡Ya tenés acceso a Resilio Club! Creá tu cuenta con este link:"
+    },
+    "interests": {
+      "title": "Sus \"Me interesa\"",
+      "none": "Todavía no marcó ninguna oferta.",
+      "status": "Estado interno",
+      "internal": {
+        "new": "Nuevo",
+        "reviewed": "Revisado",
+        "contacted": "Contactada",
+        "discarded": "Descartado",
+        "matched": "Colaboración"
+      }
+    },
+    "leads": {
+      "title": "Leads del Club",
+      "subtitleDirection": "Quienes completaron el formulario con una invitación. Aprobás o descartás.",
+      "subtitleScouter": "Tus invitados y en qué quedó cada uno. Los aprueba Dirección.",
+      "tabs": {
+        "pending": "Pendientes",
+        "approved": "Aprobados",
+        "rejected": "Descartados",
+        "all": "Todos"
+      },
+      "status": {
+        "pending": "Pendiente",
+        "approved": "Aprobado",
+        "rejected": "Descartado"
+      },
+      "byScouter": "Invitó un scouter",
+      "byInfluencer": "Invitó una influencer",
+      "byAgency": "Invitó la agencia",
+      "goesTo": "va a {name}",
+      "alreadyInCrm": "Ya está en el CRM · ver ficha",
+      "openProfile": "Ver ficha",
+      "approve": "Aprobar",
+      "reject": "Descartar",
+      "approveTitle": "Aprobar lead",
+      "approvedTitle": "Aprobado",
+      "approveMatched": "Ya existe una ficha con ese Instagram o email: no se crea otra, se usa esa.",
+      "approveNew": "Se crea la ficha en el CRM y se asigna al scouter que corresponde.",
+      "owner": "Asignar a",
+      "allCities": "Mostrar scouters de todas las ciudades",
+      "sendActivation": "Mandale este link para que cree su cuenta en el Club:",
+      "alreadyHasAccount": "Esta influencer ya tenía acceso a la app.",
+      "rejectTitle": "Descartar lead",
+      "rejectHint": "No se le avisa nada a la persona. El motivo queda solo en el CRM.",
+      "reason": "Motivo",
+      "empty": "No hay leads acá",
+      "emptyHint": "Los leads llegan cuando alguien completa el formulario con un link de invitación."
     }
   }
 }

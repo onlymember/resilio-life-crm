@@ -2,8 +2,9 @@ import {
   Home, Users, Building2, Briefcase, CheckCircle,
   CheckSquare, Calendar, ArrowRight, FileText,
   Target, Map, Award, BarChart3, BookOpen, Users2, Repeat, MessageSquare,
+  Gift, UserPlus,
 } from 'lucide-react'
-import { COMMAND_ROLES, DIRECTION_ROLES } from './routes.js'
+import { COMMAND_ROLES, DIRECTION_ROLES, OFFERS_ROLES } from './routes.js'
 
 // Estructura del menú. soon:true → muestra badge "Pronto" y redirige a ComingSoon.
 // roles → si está definido, la sección/ítem solo aparece si el rol está en la lista.
@@ -24,6 +25,16 @@ export const NAV_SECTIONS = [
       { path: '/network/brands',        labelKey: 'nav.brands',         icon: Building2,   soon: false, roles: null },
       { path: '/network/opportunities', labelKey: 'nav.opportunities',  icon: Briefcase,   soon: false, roles: null },
       { path: '/network/collaborations',labelKey: 'nav.collaborations', icon: CheckCircle, soon: false, roles: null },
+    ],
+  },
+  {
+    // Red de influencers (club.resilio.company). Leads: todos (el scouter
+    // ve solo los suyos, en lectura); Ofertas: solo quien las gestiona.
+    sectionKey: 'nav.sections.club',
+    roles: null,
+    items: [
+      { path: '/network/leads',  labelKey: 'nav.leads',  icon: UserPlus, soon: false, roles: null },
+      { path: '/network/offers', labelKey: 'nav.offers', icon: Gift,     soon: false, roles: OFFERS_ROLES },
     ],
   },
   {
