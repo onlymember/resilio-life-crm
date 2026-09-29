@@ -1782,11 +1782,14 @@ export const dbGetInfluencers = async ({
 // territorio, su territorio. Se agrupa en el navegador para contar los
 // días en el huso de quien mira. De a 1000 filas (tope de PostgREST).
 // ═══════════════════════════════════════════════════════════
-export const dbGetInfluencerIntake = async ({ from, cityId, countryId } = {}) => {
+export const dbGetInfluencerIntake = (opts = {}) => dbGetIntake({ ...opts, table: 'influencers' })
+export const dbGetBrandIntake      = (opts = {}) => dbGetIntake({ ...opts, table: 'brands' })
+
+const dbGetIntake = async ({ table, from, cityId, countryId } = {}) => {
   const PAGE = 1000, MAX = 20000
   const out = []
   for (let off = 0; off < MAX; off += PAGE) {
-    let q = supabase.from('influencers')
+    let q = supabase.from(table)
       .select('id, created_at, created_by, owner_scouter_id')
       .gte('created_at', from)
       .order('created_at', { ascending: true })
@@ -1957,6 +1960,8 @@ export const dbGetBrands = async ({
   search, cityId, countryId, ownerId, status, relationshipStatus, category, categoryId,
   noOwner = false, noCity = false, overdueFollowup = false, noNextAction = false,
   idsOnly = false,
+  // Fecha de alta (ISO, "to" excluyente) y quién la cargó.
+  createdFrom, createdTo, createdBy,
   orderBy = 'created_at', orderDir = 'desc',
 } = {}) => {
   const nullsFirst = !BRAND_NULLS_LAST_COLS.has(orderBy)
@@ -1975,6 +1980,9 @@ export const dbGetBrands = async ({
   if (categoryId)         q = q.eq('category_id', categoryId)
   if (overdueFollowup)    q = q.lt('next_action_at', new Date().toISOString())
   if (noNextAction)       q = q.is('next_action_at', null)
+  if (createdFrom)        q = q.gte('created_at', createdFrom)
+  if (createdTo)          q = q.lt('created_at', createdTo)
+  if (createdBy)          q = q.eq('created_by', createdBy)
   if (search)             q = q.or(`name.ilike.%${safe(search)}%`)
   const { data, count, error } = await q
   if (error) throw friendly(error)

@@ -11,7 +11,7 @@ import { useTz } from '../utils/tz.js'
 import { isoToDatetimeLocal, datetimeLocalToIso } from '../utils/date.js'
 import {
   dbGetBrandCategories, dbPatchBrand, dbGetEntityTimeline,
-  dbGetGeography,
+  dbGetGeography, dbGetPeopleNames,
 } from '../../lib/database.js'
 import { supabase } from '../../lib/supabase.js'
 import { COMMAND_ROLES } from '../routes.js'
@@ -117,6 +117,7 @@ export default function BrandDetailPage({ currentUser }) {
   const [saving,        setSaving]        = useState(false)
   const [saveError,     setSaveError]     = useState(null)
   const [assignOpen,    setAssignOpen]    = useState(false)
+  const [people,        setPeople]        = useState({})   // a cargo / cargó
 
   const get = (f) => f in dirty ? dirty[f] : entity?.[f]
   const set = (f, v) => setDirty(prev => ({ ...prev, [f]: v }))
@@ -167,6 +168,12 @@ export default function BrandDetailPage({ currentUser }) {
   const handleAssigned = (entityId, scouter) => {
     setEntity(prev => ({ ...prev, ownerScouterId: scouter.userId }))
   }
+
+  // Nombres de la scouter a cargo y de quién la cargó (se recarga al reasignar).
+  useEffect(() => {
+    if (!entity) return
+    dbGetPeopleNames([entity.ownerScouterId, entity.createdBy]).then(setPeople).catch(() => {})
+  }, [entity?.ownerScouterId, entity?.createdBy])
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>{t('loading.generic')}</div>
   if (!entity)  return <EmptyState icon={Building2} title={t('errors.notFound')} subtitle={t('errors.notFoundAccess')}/>
@@ -367,6 +374,28 @@ export default function BrandDetailPage({ currentUser }) {
             </div>
           </div>
         )}
+
+        {/* SCOUTER A CARGO */}
+        <div style={sectionStyle}>
+          <SectionHeader label={t('brand.owner.title')} fields={[]} dirty={dirty}/>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: entity.ownerScouterId ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                {entity.ownerScouterId ? (people[entity.ownerScouterId] || '…') : t('brand.owner.none')}
+              </div>
+              {entity.createdBy && entity.createdAt && (
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
+                  {t('brand.owner.createdBy', { name: people[entity.createdBy] || '…', date: new Date(entity.createdAt).toLocaleDateString(undefined, { timeZone: tz, day: 'numeric', month: 'short', year: 'numeric' }) })}
+                </div>
+              )}
+            </div>
+            {canReassign && (
+              <button onClick={() => setAssignOpen(true)} style={{ fontSize: 11, fontWeight: 600, color: 'var(--primary-violet-light)', background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer', flexShrink: 0 }}>
+                {t('brand.owner.reassign')}
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* HISTORIAL DE RELACIÓN */}
         <div style={sectionStyle}>

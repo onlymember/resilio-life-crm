@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Building2, Search, SlidersHorizontal, Upload } from 'lucide-react'
+import { Building2, Search, SlidersHorizontal, Upload, ChevronDown, X } from 'lucide-react'
 import NetworkCard from '../components/NetworkCard.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import FilterSheet from '../components/FilterSheet.jsx'
@@ -7,9 +7,11 @@ import AssignModal from '../components/AssignModal.jsx'
 import BulkBar from '../components/BulkBar.jsx'
 import ImportSheet from '../components/ImportSheet.jsx'
 import { t } from '../../i18n/index.js'
-import { dbGetBrands, dbGetGeography, dbGetBrandCategories, dbLogContact } from '../../lib/database.js'
+import { dbGetBrands, dbGetGeography, dbGetBrandCategories, dbLogContact, dbGetActiveScouters, dbGetPeopleNames } from '../../lib/database.js'
+import { personName } from '../utils/people.js'
+import { ADDED_PRESETS, addedRange, rangeToFilters, toDateInput } from '../utils/addedRanges.js'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { COMMAND_ROLES } from '../routes.js'
+import { COMMAND_ROLES, DIRECTION_ROLES } from '../routes.js'
 
 const useIsDesktop = () => {
   const [desktop, setDesktop] = useState(window.innerWidth >= 640)
@@ -42,10 +44,30 @@ const chipFromParams = (sp) => {
   return null
 }
 
+// Igual que en Influencers: fecha de alta, scouter a cargo y quién la
+// cargó. Vienen también del reporte del Command Center (?createdBy=&from=&to=).
+const extraFromParams = (sp) => {
+  const ex = {}
+  if (sp.get('owner'))     ex.ownerId     = sp.get('owner')
+  if (sp.get('createdBy')) ex.createdBy   = sp.get('createdBy')
+  if (sp.get('from'))      ex.createdFrom = sp.get('from')
+  if (sp.get('to'))        ex.createdTo   = sp.get('to')
+  return ex
+}
+
+const selStyle = { padding: '5px 26px 5px 10px', borderRadius: 8, background: 'rgba(139,92,246,0.07)', border: '1px solid var(--border-violet)', color: 'var(--text-primary)', fontSize: 12, cursor: 'pointer', appearance: 'none' }
+const Select = ({ value, onChange, children, label }) => (
+  <div style={{ position: 'relative' }}>
+    <select aria-label={label} value={value} onChange={e => onChange(e.target.value)} style={selStyle}>{children}</select>
+    <ChevronDown size={12} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-secondary)' }}/>
+  </div>
+)
+
 export default function BrandsPage({ onOpenCreate, currentUser }) {
   const navigate    = useNavigate()
   const isDesktop   = useIsDesktop()
   const canReassign = COMMAND_ROLES.includes(currentUser?.rol)
+  const isDirection = DIRECTION_ROLES.includes(currentUser?.rol)
 
   const [rows,           setRows]           = useState([])
   const [total,          setTotal]          = useState(0)
@@ -63,6 +85,15 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
   const [selected,       setSelected]       = useState(new Set())
   const [selectingAll,   setSelectingAll]   = useState(false)
   const [importOpen,     setImportOpen]     = useState(false)
+  const initialExtra = extraFromParams(searchParams)
+  const [extra,          setExtra]          = useState(initialExtra)
+  const [addedPreset,    setAddedPreset]    = useState(initialExtra.createdFrom || initialExtra.createdTo ? 'custom' : 'any')
+  const [customRange,    setCustomRange]    = useState({
+    from: initialExtra.createdFrom ? toDateInput(initialExtra.createdFrom) : '',
+    to:   initialExtra.createdTo ? toDateInput(new Date(new Date(initialExtra.createdTo).getTime() - 1)) : '',
+  })
+  const [scouters,       setScouters]       = useState([])
+  const [names,          setNames]          = useState({})   // userId → nombre (a cargo / cargó)
 
   const toggleSelect = (id) => setSelected(prev => {
     const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next
@@ -75,7 +106,7 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
   const handleSelectAll = async () => {
     setSelectingAll(true)
     try {
-      const res = await dbGetBrands({ search: search || undefined, ...filters, idsOnly: true })
+      const res = await dbGetBrands({ search: search || undefined, ...filters, ...extra, idsOnly: true })
       setSelected(new Set(res.ids))
     } catch (e) { console.error('selectAll:', e.message) }
     finally { setSelectingAll(false) }
@@ -90,21 +121,52 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
       }).catch(() => {})
   }, [])
 
-  const load = useCallback(async (pg = 0, s = search, f = filters) => {
+  const load = useCallback(async (pg = 0, s = search, f = filters, ex = extra) => {
     setLoading(true)
     try {
-      const res = await dbGetBrands({ page: pg, pageSize: PAGE_SIZE, search: s || undefined, ...f })
+      const res = await dbGetBrands({ page: pg, pageSize: PAGE_SIZE, search: s || undefined, ...f, ...ex })
       if (pg === 0) setRows(res.rows); else setRows(p => [...p, ...res.rows])
       setTotal(res.total); setPage(pg)
     } catch(e) { console.error('BrandsPage load:', e.message) }
     finally { setLoading(false) }
-  }, [search, filters])
+  }, [search, filters, extra])
 
   useEffect(() => {
     const chip = chipFromParams(searchParams)
     if (chip) { setFilters(chip.filters); load(0, '', chip.filters) }
     else      { load(0) }
   }, [])
+
+  // Scouters para el filtro de Dirección y nombres de quién tiene cada marca.
+  useEffect(() => {
+    if (isDirection) dbGetActiveScouters(null).then(setScouters).catch(() => {})
+  }, [])
+  useEffect(() => {
+    if (!isDirection) return
+    const ids = [...rows.map(r => r.ownerScouterId), extra.createdBy].filter(id => id && !(id in names))
+    if (ids.length) dbGetPeopleNames(ids).then(m => setNames(p => ({ ...p, ...m }))).catch(() => {})
+  }, [rows, extra.createdBy])
+
+  const applyExtra = (ex) => { setExtra(ex); load(0, search, filters, ex) }
+  const handleAdded = (preset, custom = customRange) => {
+    setAddedPreset(preset)
+    const { createdFrom, createdTo, ...rest } = extra
+    const r = preset === 'custom' ? addedRange('custom', custom) : addedRange(preset)
+    applyExtra({ ...rest, ...rangeToFilters(r) })
+  }
+  const handleCustom = (k, v) => {
+    const next = { ...customRange, [k]: v }
+    setCustomRange(next)
+    handleAdded('custom', next)
+  }
+  const handleOwner = (id) => {
+    const { ownerId, ...rest } = extra
+    applyExtra(id ? { ...rest, ownerId: id } : rest)
+  }
+  const clearCreatedBy = () => {
+    const { createdBy, ...rest } = extra
+    applyExtra(rest)
+  }
 
   useEffect(() => {
     const h = (e) => { if (e.detail?.type === 'brand') load(0) }
@@ -171,6 +233,37 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
         ))}
       </div>
 
+      {/* Fecha de alta (todos) y scouter a cargo (solo Dirección). */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 11, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{t('intake.brands.added')}:</span>
+        <Select label={t('intake.brands.added')} value={addedPreset} onChange={p => handleAdded(p)}>
+          {ADDED_PRESETS.map(p => <option key={p} value={p}>{t(`intake.presets.${p}`)}</option>)}
+        </Select>
+        {addedPreset === 'custom' && (
+          <>
+            <input type="date" aria-label={t('intake.filter.from')} value={customRange.from} onChange={e => handleCustom('from', e.target.value)} style={{ ...selStyle, padding: '4px 8px' }}/>
+            <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>–</span>
+            <input type="date" aria-label={t('intake.filter.to')} value={customRange.to} onChange={e => handleCustom('to', e.target.value)} style={{ ...selStyle, padding: '4px 8px' }}/>
+          </>
+        )}
+        {isDirection && (
+          <>
+            <span style={{ fontSize: 11, color: 'var(--text-secondary)', whiteSpace: 'nowrap', marginLeft: 4 }}>{t('intake.filter.scouter')}:</span>
+            <Select label={t('intake.filter.scouter')} value={extra.ownerId || ''} onChange={handleOwner}>
+              <option value="">{t('intake.filter.allScouters')}</option>
+              {[...scouters].sort((a, b) => personName(a).localeCompare(personName(b))).map(sc => (
+                <option key={sc.userId} value={sc.userId}>{personName(sc)}</option>
+              ))}
+            </Select>
+          </>
+        )}
+        {extra.createdBy && (
+          <button onClick={clearCreatedBy} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: 'rgba(139,92,246,0.25)', color: 'var(--primary-violet-light)', border: '1px solid rgba(139,92,246,0.5)', cursor: 'pointer' }}>
+            {t('intake.filter.addedBy', { name: names[extra.createdBy] || '…' })}<X size={11}/>
+          </button>
+        )}
+      </div>
+
       {/* Seleccionar todo lo que matchea el filtro, no solo lo cargado.
           Sin esto, repartir cientos de fichas eran muchos "cargar mas"
           y un clic por ficha; con esto es uno. */}
@@ -208,6 +301,7 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
                   entity={b}
                   entityType="brand"
                   cityName={cityMap[b.cityId]}
+                  ownerName={isDirection ? (b.ownerScouterId ? names[b.ownerScouterId] : t('brand.owner.none')) : undefined}
                   onClick={() => navigate(`/network/brands/${b.id}`)}
                   onContact={handleContact}
                   canReassign={canReassign}

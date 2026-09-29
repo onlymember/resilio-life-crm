@@ -3,12 +3,15 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { t, currentLocale } from '../../i18n/index.js'
-import { dbGetInfluencerIntake, dbGetPeopleNames } from '../../lib/database.js'
+import { dbGetInfluencerIntake, dbGetBrandIntake, dbGetPeopleNames } from '../../lib/database.js'
 import { buildBuckets, bucketIndex } from '../utils/addedRanges.js'
 
 const MODES = { day: 14, week: 8 }
 
-export default function IntakeReport({ SectionTitle }) {
+// kind: 'influencers' | 'brands'. Mismo reporte, otra tabla y otra lista.
+export default function IntakeReport({ SectionTitle, kind = 'influencers' }) {
+  const isBrands = kind === 'brands'
+  const tk = (k) => t(isBrands ? `intake.brands.${k}` : `intake.${k}`)
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const cityId = params.get('city') || null
@@ -23,13 +26,13 @@ export default function IntakeReport({ SectionTitle }) {
 
   useEffect(() => {
     setRows(null); setError(null)
-    dbGetInfluencerIntake({ from: buckets[0].from.toISOString(), cityId, countryId })
+    ;(isBrands ? dbGetBrandIntake : dbGetInfluencerIntake)({ from: buckets[0].from.toISOString(), cityId, countryId })
       .then(async list => {
         setRows(list)
         setNames(await dbGetPeopleNames(list.map(r => r.createdBy)))
       })
       .catch(e => setError(e.message))
-  }, [buckets, cityId, countryId])
+  }, [buckets, cityId, countryId, isBrands])
 
   // Matriz: una fila por quien cargó + totales por columna.
   const { people, totals, grand } = useMemo(() => {
@@ -55,7 +58,7 @@ export default function IntakeReport({ SectionTitle }) {
     if (createdBy) q.set('createdBy', createdBy)
     q.set('from', from.toISOString())
     q.set('to', to.toISOString())
-    navigate(`/network/influencers?${q.toString()}`)
+    navigate(`/network/${isBrands ? 'brands' : 'influencers'}?${q.toString()}`)
   }
   const whole = { from: buckets[0].from, to: buckets[buckets.length - 1].to }
 
@@ -76,7 +79,7 @@ export default function IntakeReport({ SectionTitle }) {
 
   return (
     <section>
-      <SectionTitle action={toggle}>{t('intake.title')}</SectionTitle>
+      <SectionTitle action={toggle}>{tk('title')}</SectionTitle>
 
       {error && <div style={{ fontSize: 12, color: '#F87171' }}>{error}</div>}
 
@@ -117,7 +120,7 @@ export default function IntakeReport({ SectionTitle }) {
 
           {/* Por quién las cargó */}
           {people.length === 0 ? (
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{t('intake.empty')}</div>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{tk('empty')}</div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 12, minWidth: 420 }}>
@@ -159,7 +162,7 @@ export default function IntakeReport({ SectionTitle }) {
               </table>
             </div>
           )}
-          <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 8 }}>{t('intake.hint')}</div>
+          <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 8 }}>{tk('hint')}</div>
         </>
       )}
     </section>

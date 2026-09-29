@@ -1,5 +1,5 @@
 import React from 'react'
-import { MapPin, Clock, MoreVertical } from 'lucide-react'
+import { MapPin, Clock, MoreVertical, UserCheck } from 'lucide-react'
 import RelationshipBadge from './RelationshipBadge.jsx'
 import QuickActions from './QuickActions.jsx'
 import { t } from '../../i18n/index.js'
@@ -32,7 +32,7 @@ const _lastContact = new Map()
 
 export default function NetworkCard({
   entity, entityType = 'influencer', cityName, onClick,
-  onContact, canReassign = false, onReassign,
+  onContact, canReassign = false, onReassign, ownerName,
 }) {
   const name      = entity.name || entity.username || '—'
   const username  = entityType === 'influencer' ? entity.username : null
@@ -136,6 +136,11 @@ export default function NetworkCard({
             {cityName && (
               <span style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 3 }}>
                 <MapPin size={10}/>{cityName}
+              </span>
+            )}
+            {ownerName && (
+              <span style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 3 }}>
+                <UserCheck size={10}/>{ownerName}
               </span>
             )}
           </div>

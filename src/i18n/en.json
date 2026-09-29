@@ -102,7 +102,13 @@
     "saved": "Guardado",
     "unsavedWarning": "Tenés cambios sin guardar. ¿Salir de todos modos?",
     "cityWarning": "Sin ciudad asignada — algunos filtros no van a funcionar.",
-    "noCategoryPlaceholder": "Seleccionar categoría"
+    "noCategoryPlaceholder": "Seleccionar categoría",
+    "owner": {
+      "title": "Scouter in charge",
+      "none": "No scouter",
+      "createdBy": "Added by {name} on {date}",
+      "reassign": "Reassign"
+    }
   },
   "soon": "Soon",
   "nav": {
@@ -1255,6 +1261,12 @@
       "thisWeek": "This week",
       "last30": "Last 30 days",
       "custom": "Pick dates…"
+    },
+    "brands": {
+      "title": "Brands added",
+      "empty": "No brands added in this period.",
+      "hint": "By who added the brand. Tap a number to see those brands. Days use your time zone.",
+      "added": "Added"
     }
   }
 }
