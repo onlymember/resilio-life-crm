@@ -1,5 +1,6 @@
 import React from 'react'
 import { t } from '../../i18n/index.js'
+import { checklistDone, CHECK_STEPS } from './CollabChecklist.jsx'
 
 const todayStr = () => new Date().toISOString().slice(0, 10)
 
@@ -74,6 +75,11 @@ export default function CollaborationCard({ collab, activationType, onClick }) {
         {(collab.startDate || collab.endDate) && (
           <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>
             {fmtDate(collab.startDate)}{collab.endDate ? ` → ${fmtDate(collab.endDate)}` : ''}
+          </span>
+        )}
+        {checklistDone(collab.checklist) > 0 && (
+          <span title={t('checklist.title')} style={{ fontSize: 10, fontWeight: 700, color: checklistDone(collab.checklist) === CHECK_STEPS.length ? '#34D399' : 'var(--text-secondary)' }}>
+            ✓ {checklistDone(collab.checklist)}/{CHECK_STEPS.length}
           </span>
         )}
         {urgColor && (

@@ -1435,5 +1435,55 @@
       "city": "City",
       "campaign": "Campaign"
     }
+  },
+  "dup": {
+    "named": "Already exists: {name} ({city}), same {field}.",
+    "hidden": "There's already a record with this {field} in {city}.",
+    "mine": "It's yours.",
+    "open": "Open",
+    "field": {
+      "instagram": "Instagram",
+      "email": "email",
+      "whatsapp": "WhatsApp",
+      "name": "name"
+    },
+    "whatsappLabel": "WhatsApp",
+    "emailLabel": "Email"
+  },
+  "checklist": {
+    "title": "Checklist",
+    "confirmed": "Confirmed",
+    "visited": "Visit done",
+    "content": "Content posted",
+    "link": "Link received",
+    "brand_notified": "Brand notified"
+  },
+  "calendarCollabs": {
+    "mode": {
+      "mine": "My agenda",
+      "collabs": "Collaborations"
+    },
+    "city": "City",
+    "allCities": "All cities",
+    "summary": "{n} collaborations · {gaps} free days",
+    "conflicts": "{n} with date clash"
+  },
+  "funnel": {
+    "title": "Time per stage",
+    "days": "{n} days",
+    "kind": {
+      "influencer": "Influencers",
+      "brand": "Brands"
+    },
+    "step": {
+      "cold_warm": "Cold → Warm",
+      "warm_strong": "Warm → Strong",
+      "strong_collab": "Strong → Collaboration",
+      "cold_collab": "Added → Collaboration"
+    },
+    "avg": "{n} days on average",
+    "noTime": "No data yet",
+    "needsSql": "Run migration 049 to see this report.",
+    "hint": "Records created in the period. Stage changes are logged since migration 049."
   }
 }

@@ -4,7 +4,7 @@ import { t } from '../../i18n/index.js'
 const KIND_COLOR = { task: '#A78BFA', next_action: '#22D3EE' }
 
 function ItemPill({ item, onClick }) {
-  const col = KIND_COLOR[item.kind] || 'var(--primary-violet-light)'
+  const col = item.conflict ? '#F87171' : (item.color || KIND_COLOR[item.kind] || 'var(--primary-violet-light)')
   return (
     <button
       onClick={e => { e.stopPropagation(); onClick(item) }}
@@ -17,7 +17,7 @@ function ItemPill({ item, onClick }) {
         marginBottom: 2, display: 'block',
       }}
     >
-      {item.isOverdue && '⚡ '}{item.title}
+      {item.conflict && '⚠ '}{item.isOverdue && '⚡ '}{item.title}
     </button>
   )
 }

@@ -7,6 +7,7 @@ import EmptyState from '../components/EmptyState.jsx'
 import MessageSheet from '../components/MessageSheet.jsx'
 import QuickReply from '../components/QuickReply.jsx'
 import HandoffCard from '../components/HandoffCard.jsx'
+import DuplicateHint from '../components/DuplicateHint.jsx'
 import BrandCollabs from '../components/BrandCollabs.jsx'
 import RelationshipHistory from '../components/RelationshipHistory.jsx'
 import { t } from '../../i18n/index.js'
@@ -275,6 +276,10 @@ export default function BrandDetailPage({ currentUser }) {
             <Field label={t('brand.fields.instagram')} value={get('instagram')} onChange={v => set('instagram', v)} placeholder="@marca"/>
             <Field label={t('brand.fields.phone')} value={get('phone')} onChange={v => set('phone', v)} type="tel" placeholder="+54 11 1234 5678"/>
             <Field label={t('brand.fields.email')} value={get('email')} onChange={v => set('email', v)} type="email" placeholder="contacto@marca.com"/>
+          </div>
+          {/* Solo mira lo que se está cambiando ahora, no lo ya guardado. */}
+          <div style={{ marginTop: 10 }}>
+            <DuplicateHint type="brand" name={dirty.name} email={dirty.email} whatsapp={dirty.whatsapp} excludeId={entity.id}/>
           </div>
         </div>
 

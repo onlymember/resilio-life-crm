@@ -5,6 +5,7 @@ import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import AssignModal from '../components/AssignModal.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import DuplicateCollabSheet from '../components/DuplicateCollabSheet.jsx'
+import CollabChecklist, { checklistDone, CHECK_STEPS } from '../components/CollabChecklist.jsx'
 import { t } from '../../i18n/index.js'
 import { COMMAND_ROLES } from '../routes.js'
 import {
@@ -39,6 +40,7 @@ async function fetchCollab(id) {
     startDate:           data.start_date,
     endDate:             data.end_date,
     deliverables:        data.deliverables || [],
+    checklist:           data.checklist || {},
     contentStatus:       data.content_status,
     paymentStatus:       data.payment_status,
     amount:              data.amount,
@@ -249,6 +251,12 @@ export default function CollaborationDetailPage({ currentUser }) {
       )}
 
       <div style={{ padding:'16px 20px', display:'flex', flexDirection:'column', gap:0 }}>
+
+        {/* CHECKLIST: confirmada, visita, contenido, link, marca avisada */}
+        <div style={SH}>
+          <SectionHeader label={`${t('checklist.title')} · ${checklistDone(entity.checklist)}/${CHECK_STEPS.length}`} fields={[]} dirty={dirty}/>
+          <CollabChecklist collabId={entity.id} value={entity.checklist || {}} onChange={(c) => setEntity(prev => ({ ...prev, checklist: c }))}/>
+        </div>
 
         {/* DATOS */}
         <div style={SH}>

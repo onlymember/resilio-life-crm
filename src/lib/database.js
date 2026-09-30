@@ -391,6 +391,7 @@ const rowToCollaboration = (r) => ({
   saves:                r.saves               ?? null,
   linkClicks:           r.link_clicks         ?? null,
   engagementRate:       r.engagement_rate     ?? null,
+  checklist:            r.checklist           || {},
   estimatedMediaValue:  r.estimated_media_value ?? null,
   resultsNotes:         r.results_notes       ?? null,
   createdBy:            r.created_by,
@@ -2706,4 +2707,52 @@ export const dbGetWeeklySummary = async () => {
   for (const r of inf.data || []) if (r.created_by) byCreator[r.created_by] = (byCreator[r.created_by] || 0) + 1
 
   return { influencers, brands, contacts, answers, collabs, completed, byCity, byCreator }
+}
+
+// ═══════════════════════════════════════════════════════════
+// FASE 2 (migración 049)
+// ═══════════════════════════════════════════════════════════
+
+// Aviso de duplicado mientras se escribe. Sin la 049 (o sin permiso)
+// devuelve "no existe" y la pantalla sigue igual que antes.
+export const dbCheckDuplicateLive = async (type, { instagram, email, whatsapp, name, excludeId } = {}) => {
+  const { data, error } = await supabase.rpc('check_duplicate_v2', {
+    p_type: type, p_instagram: instagram || null, p_email: email || null,
+    p_whatsapp: whatsapp || null, p_name: name || null, p_exclude: excludeId || null,
+  })
+  if (error) return { exists: false }
+  return data || { exists: false }
+}
+
+// Checklist de la colaboración (confirmada, visita, contenido, link, marca avisada).
+export const dbSetCollabChecklist = async (id, checklist) => {
+  const { error } = await supabase.from('collaborations').update({ checklist }).eq('id', id)
+  if (error) throw friendly(error)
+}
+
+// Colaboraciones del mes para el calendario (lo que RLS deja ver).
+export const dbGetCollabCalendar = async (from, to, cityId = null) => {
+  let q = supabase.from('collaborations')
+    .select('id, start_date, status, city_id, influencer_id, brand_id, influencers(name, username), brands(name)')
+    .gte('start_date', from).lte('start_date', to)
+    .neq('status', 'cancelled').order('start_date').limit(2000)
+  if (cityId) q = q.eq('city_id', cityId)
+  const { data, error } = await q
+  if (error) throw friendly(error)
+  return (data || []).map(r => ({
+    id: r.id, date: r.start_date, status: r.status, cityId: r.city_id,
+    influencerId: r.influencer_id, brandId: r.brand_id,
+    influencerName: r.influencers?.name || r.influencers?.username || '—',
+    brandName: r.brands?.name || '—',
+  }))
+}
+
+// Embudo cold → warm → strong → colaboración (Dirección).
+export const dbGetStageFunnel = async (days = 90) => {
+  const { data, error } = await supabase.rpc('stage_funnel', { p_days: days })
+  if (error) throw friendly(error)
+  return (data || []).map(r => ({
+    entityType: r.entity_type, step: r.step, entered: Number(r.entered), advanced: Number(r.advanced),
+    pct: r.pct == null ? null : Number(r.pct), avgDays: r.avg_days == null ? null : Number(r.avg_days),
+  }))
 }

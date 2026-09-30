@@ -1431,5 +1431,55 @@
       "city": "Ciudad",
       "campaign": "Campaña"
     }
+  },
+  "dup": {
+    "named": "Ya existe: {name} ({city}), mismo {field}.",
+    "hidden": "Ya hay una ficha con este {field} en {city}.",
+    "mine": "Es tuya.",
+    "open": "Abrir",
+    "field": {
+      "instagram": "Instagram",
+      "email": "mail",
+      "whatsapp": "WhatsApp",
+      "name": "nombre"
+    },
+    "whatsappLabel": "WhatsApp",
+    "emailLabel": "Mail"
+  },
+  "checklist": {
+    "title": "Checklist",
+    "confirmed": "Confirmada",
+    "visited": "Visita hecha",
+    "content": "Contenido subido",
+    "link": "Link recibido",
+    "brand_notified": "Marca avisada"
+  },
+  "calendarCollabs": {
+    "mode": {
+      "mine": "Mi agenda",
+      "collabs": "Colaboraciones"
+    },
+    "city": "Ciudad",
+    "allCities": "Todas las ciudades",
+    "summary": "{n} colaboraciones · {gaps} días libres",
+    "conflicts": "{n} con choque de fecha"
+  },
+  "funnel": {
+    "title": "Tiempo por etapa",
+    "days": "{n} días",
+    "kind": {
+      "influencer": "Influencers",
+      "brand": "Marcas"
+    },
+    "step": {
+      "cold_warm": "Cold → Warm",
+      "warm_strong": "Warm → Strong",
+      "strong_collab": "Strong → Colaboración",
+      "cold_collab": "Alta → Colaboración"
+    },
+    "avg": "{n} días promedio",
+    "noTime": "Sin datos todavía",
+    "needsSql": "Falta correr la migración 049 para ver este reporte.",
+    "hint": "Fichas creadas en el período. Los cambios de etapa se registran desde que se instaló la 049."
   }
 }

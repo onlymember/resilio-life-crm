@@ -5,7 +5,7 @@ import { t } from '../../i18n/index.js'
 const KIND_COLOR = { task: '#A78BFA', next_action: '#22D3EE' }
 
 function AgendaItem({ item, onNavigate }) {
-  const col = KIND_COLOR[item.kind] || 'var(--primary-violet-light)'
+  const col = item.color || KIND_COLOR[item.kind] || 'var(--primary-violet-light)'
   return (
     <button
       onClick={() => onNavigate(item)}
@@ -18,7 +18,7 @@ function AgendaItem({ item, onNavigate }) {
       <div style={{ width: 4, alignSelf: 'stretch', minHeight: 36, borderRadius: 2, background: item.isOverdue ? '#F87171' : col, flexShrink: 0 }}/>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>
-          {item.isOverdue && '⚡ '}{item.title}
+          {item.conflict && '⚠ '}{item.isOverdue && '⚡ '}{item.title}
         </div>
         {item.subtitle && (
           <div style={{ fontSize: 11, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -26,7 +26,7 @@ function AgendaItem({ item, onNavigate }) {
           </div>
         )}
       </div>
-      {item.dueAt && (
+      {item.dueAt && !item.allDay && (
         <div style={{ fontSize: 10, color: item.isOverdue ? '#F87171' : 'var(--text-secondary)', flexShrink: 0 }}>
           {new Date(item.dueAt).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
         </div>

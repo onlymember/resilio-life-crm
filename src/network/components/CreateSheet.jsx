@@ -4,6 +4,7 @@ import { t } from '../../i18n/index.js'
 import { dbGetGeography, dbSaveInfluencer, dbSaveBrand, dbSaveOpportunity, dbSaveCollaboration, dbGetActivationTypes } from '../../lib/database.js'
 import EntityPicker from './EntityPicker.jsx'
 import QuickTaskForm from './QuickTaskForm.jsx'
+import DuplicateHint from './DuplicateHint.jsx'
 import { toast } from './Toaster.jsx'
 
 const CATEGORIES = t('categories') // array desde es.json
@@ -32,8 +33,8 @@ const Field = ({ label, required, children }) => (
 
 // ─── Formulario Influencer ────────────────────────────────────────────────────
 
-function InfluencerForm({ cities, onSave, saving, error }) {
-  const [form, setForm] = useState({ username: '', name: '', cityId: '', category: '' })
+function InfluencerForm({ cities, onSave, saving, error, onClose }) {
+  const [form, setForm] = useState({ username: '', name: '', cityId: '', category: '', whatsapp: '', email: '' })
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
   return (
@@ -56,6 +57,15 @@ function InfluencerForm({ cities, onSave, saving, error }) {
           onBlur={e => e.target.style.border = '1px solid rgba(139,92,246,0.25)'}
         />
       </Field>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <Field label={t('dup.whatsappLabel')}>
+          <input type="tel" inputMode="tel" value={form.whatsapp} onChange={e => set('whatsapp', e.target.value)} placeholder="+54 9 11 1234 5678" style={INPUT_STYLE}/>
+        </Field>
+        <Field label={t('dup.emailLabel')}>
+          <input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="mail@ejemplo.com" style={INPUT_STYLE}/>
+        </Field>
+      </div>
+      <DuplicateHint type="influencer" instagram={form.username} whatsapp={form.whatsapp} email={form.email} onOpen={onClose}/>
       <Field label={t('form.city')}>
         <select value={form.cityId} onChange={e => set('cityId', e.target.value)} style={SELECT_STYLE}>
           <option value="">{t('form.selectCity')}</option>
@@ -75,8 +85,8 @@ function InfluencerForm({ cities, onSave, saving, error }) {
 
 // ─── Formulario Marca ─────────────────────────────────────────────────────────
 
-function BrandForm({ cities, onSave, saving, error }) {
-  const [form, setForm] = useState({ name: '', category: '', cityId: '' })
+function BrandForm({ cities, onSave, saving, error, onClose }) {
+  const [form, setForm] = useState({ name: '', category: '', cityId: '', whatsapp: '', email: '' })
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
   return (
@@ -90,6 +100,15 @@ function BrandForm({ cities, onSave, saving, error }) {
           onBlur={e => e.target.style.border = '1px solid rgba(139,92,246,0.25)'}
         />
       </Field>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <Field label={t('dup.whatsappLabel')}>
+          <input type="tel" inputMode="tel" value={form.whatsapp} onChange={e => set('whatsapp', e.target.value)} placeholder="+54 9 11 1234 5678" style={INPUT_STYLE}/>
+        </Field>
+        <Field label={t('dup.emailLabel')}>
+          <input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="mail@ejemplo.com" style={INPUT_STYLE}/>
+        </Field>
+      </div>
+      <DuplicateHint type="brand" name={form.name} whatsapp={form.whatsapp} email={form.email} onOpen={onClose}/>
       <Field label={t('form.category')}>
         <select value={form.category} onChange={e => set('category', e.target.value)} style={SELECT_STYLE}>
           <option value="">{t('form.selectCategory')}</option>
@@ -272,6 +291,8 @@ export default function CreateSheet({ isOpen, onClose, currentUser, onCreated, i
         username: form.username.trim() || null,
         cityId:   form.cityId || null,
         category: form.category || null,
+        whatsapp: form.whatsapp.trim() || null,
+        email:    form.email.trim() || null,
       })
       onCreated?.('influencer', saved)
       onClose()
@@ -290,6 +311,8 @@ export default function CreateSheet({ isOpen, onClose, currentUser, onCreated, i
         name:     form.name.trim(),
         category: form.category || null,
         cityId:   form.cityId || null,
+        whatsapp: form.whatsapp.trim() || null,
+        email:    form.email.trim() || null,
       })
       onCreated?.('brand', saved)
       onClose()
@@ -390,8 +413,8 @@ export default function CreateSheet({ isOpen, onClose, currentUser, onCreated, i
           </div>
         )}
 
-        {step === 'influencer'    && <InfluencerForm    cities={cities}                        onSave={handleSaveInfluencer}    saving={saving} error={error}/>}
-        {step === 'brand'         && <BrandForm          cities={cities}                        onSave={handleSaveBrand}          saving={saving} error={error}/>}
+        {step === 'influencer'    && <InfluencerForm    cities={cities}                        onSave={handleSaveInfluencer}    saving={saving} error={error} onClose={onClose}/>}
+        {step === 'brand'         && <BrandForm          cities={cities}                        onSave={handleSaveBrand}          saving={saving} error={error} onClose={onClose}/>}
         {step === 'opportunity'   && <OpportunityForm                                           onSave={handleSaveOpportunity}    saving={saving} error={error}/>}
         {step === 'task'          && <QuickTaskForm currentUser={currentUser} onDone={() => { onCreated?.('task', null); toast(t('quickTask.saved')); onClose() }}/>}
         {step === 'collaboration' && <CollaborationForm  activationTypes={activationTypes}      onSave={handleSaveCollaboration} saving={saving} error={error}/>}

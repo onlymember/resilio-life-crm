@@ -6,6 +6,7 @@ import EmptyState from '../components/EmptyState.jsx'
 import MessageSheet from '../components/MessageSheet.jsx'
 import QuickReply from '../components/QuickReply.jsx'
 import HandoffCard from '../components/HandoffCard.jsx'
+import DuplicateHint from '../components/DuplicateHint.jsx'
 import RelationshipHistory from '../components/RelationshipHistory.jsx'
 import InfluencerRedSection from '../red/InfluencerRedSection.jsx'
 import { DIRECTION_ROLES } from '../routes.js'
@@ -222,6 +223,10 @@ export default function InfluencerDetailPage({ currentUser }) {
             <Field label={t('influencer.fields.tiktok')} value={get('tiktok')} onChange={v => set('tiktok', v)} placeholder="@usuario"/>
             <Field label={t('influencer.fields.email')} value={get('email')} onChange={v => set('email', v)} type="email" placeholder="correo@ejemplo.com"/>
             <Field label={t('influencer.fields.phone')} value={get('phone')} onChange={v => set('phone', v)} type="tel" placeholder="+54 11 1234 5678"/>
+          </div>
+          {/* Solo mira lo que se está cambiando ahora, no lo ya guardado. */}
+          <div style={{ marginTop: 10 }}>
+            <DuplicateHint type="influencer" instagram={dirty.instagram} email={dirty.email} whatsapp={dirty.whatsapp} excludeId={entity.id}/>
           </div>
         </div>
 
