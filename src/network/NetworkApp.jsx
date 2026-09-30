@@ -32,7 +32,8 @@ import Toaster from './components/Toaster.jsx'
 import GlobalSearch from './components/GlobalSearch.jsx'
 import EmptyState from './components/EmptyState.jsx'
 import { Shield } from 'lucide-react'
-import { getDefaultRoute, COMMAND_ROLES, DIRECTION_ROLES, OFFERS_ROLES } from './routes.js'
+import { getDefaultRoute, COMMAND_ROLES, DIRECTION_ROLES, OFFERS_ROLES, clubRoles, setClubForScouters, useClubForScouters } from './routes.js'
+import { dbGetSetting } from '../lib/database.js'
 import { t } from '../i18n/index.js'
 
 const useIsMobile = () => {
@@ -79,6 +80,9 @@ function Page({ component: Comp, currentUser, onOpenCreate, onCreated, ...rest }
 
 export default function NetworkApp({ currentUser }) {
   const isMobile = useIsMobile()
+  useClubForScouters()
+  // ¿El Club está abierto para los scouters? (interruptor en la sección Club)
+  useEffect(() => { dbGetSetting('club_for_scouters').then(v => setClubForScouters(v === true)).catch(() => {}) }, [])
   const [createOpen, setCreateOpen] = useState(false)
   const [createStep, setCreateStep] = useState('select')
 
@@ -182,7 +186,11 @@ export default function NetworkApp({ currentUser }) {
               <OffersPage currentUser={currentUser}/>
             </RoleGuard>
           }/>
-          <Route path="leads"       element={<LeadsPage currentUser={currentUser}/>}/>
+          <Route path="leads"       element={
+            <RoleGuard user={currentUser} allowedRoles={clubRoles()}>
+              <LeadsPage currentUser={currentUser}/>
+            </RoleGuard>
+          }/>
           <Route path="approvals"   element={
             <RoleGuard user={currentUser} allowedRoles={DIRECTION_ROLES}>
               <ApprovalsPage currentUser={currentUser}/>

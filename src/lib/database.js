@@ -2792,3 +2792,49 @@ export const dbGetEntityRaw = async (type, id) => {
   if (error) throw friendly(error)
   return data
 }
+
+// Agenda: las tareas vinculadas a una influencer o marca traen el
+// WhatsApp/Instagram/teléfono de esa ficha, igual que los seguimientos.
+// Son dos o tres consultas chicas; si algo falla, la agenda queda como estaba.
+export const dbEnrichAgendaContacts = async (items = []) => {
+  try {
+    const taskIds = items.filter(i => i.kind === 'task' && !i.whatsapp && !i.phone && !i.instagram).map(i => i.entityId)
+    if (!taskIds.length) return items
+    const { data: tasks } = await supabase.from('tasks').select('id, entity_type, entity_id').in('id', taskIds)
+    const link = {}
+    const ids = { influencer: [], brand: [] }
+    for (const tk of tasks || []) {
+      if ((tk.entity_type === 'influencer' || tk.entity_type === 'brand') && tk.entity_id) {
+        link[tk.id] = { type: tk.entity_type, id: tk.entity_id }
+        ids[tk.entity_type].push(tk.entity_id)
+      }
+    }
+    const fetch = async (table, list) => list.length
+      ? (await supabase.from(table).select('id, whatsapp, instagram, phone').in('id', [...new Set(list)])).data || []
+      : []
+    const [infs, brands] = await Promise.all([fetch('influencers', ids.influencer), fetch('brands', ids.brand)])
+    const contact = {}
+    for (const r of infs) contact[`influencer:${r.id}`] = r
+    for (const r of brands) contact[`brand:${r.id}`] = r
+    return items.map(i => {
+      const l = i.kind === 'task' && link[i.entityId]
+      const c = l && contact[`${l.type}:${l.id}`]
+      return c ? { ...i, whatsapp: c.whatsapp || null, instagram: c.instagram || null, phone: c.phone || null } : i
+    })
+  } catch { return items }
+}
+
+// ═══════════════════════════════════════════════════════════
+// AJUSTES GENERALES (app_settings, migración 051)
+// ═══════════════════════════════════════════════════════════
+export const dbGetSetting = async (key) => {
+  const { data, error } = await supabase.from('app_settings').select('value').eq('key', key).maybeSingle()
+  if (error) return null
+  return data?.value ?? null
+}
+export const dbSetSetting = async (key, value) => {
+  const uid = await myId()
+  const { error } = await supabase.from('app_settings')
+    .upsert({ key, value, updated_by: uid, updated_at: new Date().toISOString() }, { onConflict: 'key' })
+  if (error) throw friendly(error)
+}

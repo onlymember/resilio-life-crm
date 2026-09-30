@@ -32,6 +32,7 @@ export const NAV_SECTIONS = [
     // ve solo los suyos, en lectura); Ofertas: solo quien las gestiona.
     sectionKey: 'nav.sections.club',
     roles: null,
+    club: true,   // se oculta si el Club no está abierto para este rol (ver routes.js)
     items: [
       { path: '/network/approvals', labelKey: 'nav.approvals', icon: Inbox, soon: false, roles: DIRECTION_ROLES },
       { path: '/network/leads',  labelKey: 'nav.leads',  icon: UserPlus, soon: false, roles: null },

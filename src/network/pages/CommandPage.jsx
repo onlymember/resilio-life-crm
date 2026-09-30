@@ -11,6 +11,7 @@ import IntakeReport from '../components/IntakeReport.jsx'
 import WeeklySummary from '../components/WeeklySummary.jsx'
 import WeekGoalsEditor from '../components/WeekGoalsEditor.jsx'
 import StageFunnel from '../components/StageFunnel.jsx'
+import ClubConversion from '../components/ClubConversion.jsx'
 import { t } from '../../i18n/index.js'
 import { personName } from '../utils/people.js'
 import {
@@ -364,6 +365,7 @@ export default function CommandPage({ currentUser }) {
       {DIRECTION_ROLES.includes(currentUser?.rol) && <WeeklySummary SectionTitle={SectionTitle}/>}
       {DIRECTION_ROLES.includes(currentUser?.rol) && <WeekGoalsEditor SectionTitle={SectionTitle}/>}
       {DIRECTION_ROLES.includes(currentUser?.rol) && <StageFunnel SectionTitle={SectionTitle}/>}
+      {DIRECTION_ROLES.includes(currentUser?.rol) && <ClubConversion SectionTitle={SectionTitle}/>}
       {DIRECTION_ROLES.includes(currentUser?.rol) && <IntakeReport SectionTitle={SectionTitle}/>}
       {DIRECTION_ROLES.includes(currentUser?.rol) && <IntakeReport SectionTitle={SectionTitle} kind="brands"/>}
 

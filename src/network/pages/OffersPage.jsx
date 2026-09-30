@@ -13,6 +13,7 @@ import {
   OFFER_IMAGE_TYPES, OFFER_IMAGE_MAX_BYTES,
 } from '../../lib/red.js'
 import { Sheet, ErrorLine, btn, inputStyle, labelStyle, card } from '../red/ui.jsx'
+import ClubAccessToggle from '../components/ClubAccessToggle.jsx'
 
 const typeLabel = (types, slug) => {
   const ty = types.find(x => x.slug === slug)
@@ -169,7 +170,7 @@ function OfferSheet({ brand, offer, cities, types, onClose, onSaved }) {
   )
 }
 
-export default function OffersPage() {
+export default function OffersPage({ currentUser }) {
   const [tab,       setTab]       = useState('brands')
   const [brands,    setBrands]    = useState([])
   const [brandTotal,setBrandTotal]= useState(0)
@@ -248,6 +249,9 @@ export default function OffersPage() {
         <h1 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>{t('red.offers.title')}</h1>
         <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{t('red.offers.subtitle', { active: activeCount, total: offers.length })}</p>
       </div>
+
+      {/* Prender / apagar el Club para los scouters */}
+      <ClubAccessToggle currentUser={currentUser}/>
 
       <div style={{ display: 'flex', gap: 6 }}>
         {tabBtn('brands', t('red.offers.tabBrands'))}

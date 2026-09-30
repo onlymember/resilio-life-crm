@@ -131,6 +131,9 @@ export default function Profile() {
           <button className="club-btn">{panel === 'password' ? t('common.save') : t('profile.requestEmail')}</button>
         </form>
       )}
+      <div style={{ textAlign: 'center', marginTop: 18 }}>
+        <a className="club-link" href="/privacidad" style={{ fontSize: 12 }}>{t('join.privacyLink')}</a>
+      </div>
       <Toast message={toast} onDone={() => setToast(null)}/>
     </>
   )

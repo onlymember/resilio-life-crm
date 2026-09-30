@@ -4,6 +4,7 @@ import { Home, CheckSquare, Plus, Users, Menu, X, LogOut, Bell, Search } from 'l
 import CreateSheet from './components/CreateSheet.jsx'
 import { SPEED_DIAL_ITEMS } from './createOptions.js'
 import { NAV_SECTIONS } from './nav.js'
+import { canSeeClub, useClubForScouters } from './routes.js'
 import { t } from '../i18n/index.js'
 import { openSearch } from './components/GlobalSearch.jsx'
 import { dbGetNotifications } from '../lib/database.js'
@@ -170,6 +171,7 @@ function MobileHeader({ currentUser, onOpenDrawer }) {
 
 function NavDrawer({ currentUser, onClose }) {
   const userRol = currentUser?.rol || ''
+  useClubForScouters()
 
   return (
     <>
@@ -198,6 +200,7 @@ function NavDrawer({ currentUser, onClose }) {
         <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 8px' }}>
           {NAV_SECTIONS.map((section, si) => {
             if (section.roles && !section.roles.includes(userRol)) return null
+            if (section.club && !canSeeClub({ rol: userRol })) return null
             const visibleItems = section.items.filter(item => !item.roles || item.roles.includes(userRol))
             if (!visibleItems.length) return null
             return (

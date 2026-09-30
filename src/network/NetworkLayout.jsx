@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, LogOut, Bell, X, Plus, Search } from 'lucide-react'
 import { SPEED_DIAL_ITEMS } from './createOptions.js'
 import { NAV_SECTIONS } from './nav.js'
+import { canSeeClub, useClubForScouters } from './routes.js'
 import { t } from '../i18n/index.js'
 import { openSearch } from './components/GlobalSearch.jsx'
 import { dbGetNotifications } from '../lib/database.js'
@@ -201,6 +202,7 @@ const initials = (name = '') => {
 
 function NetworkSidebar({ currentUser, collapsed, onToggle }) {
   const userRol = currentUser?.rol || ''
+  useClubForScouters()   // re-renderiza el menú si se prende/apaga el Club
 
   return (
     <aside style={{
@@ -236,6 +238,7 @@ function NetworkSidebar({ currentUser, collapsed, onToggle }) {
         {NAV_SECTIONS.map((section, si) => {
           // Filtrar secciones y ítems por rol
           if (section.roles && !section.roles.includes(userRol)) return null
+          if (section.club && !canSeeClub({ rol: userRol })) return null
           const visibleItems = section.items.filter(item => !item.roles || item.roles.includes(userRol))
           if (!visibleItems.length) return null
 

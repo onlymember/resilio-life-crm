@@ -13,6 +13,7 @@ import { personName } from '../utils/people.js'
 import { redGetLeads, redApproveLead, redRejectLead, redCreateInvitation, redGetEmailRequests, redDecideEmailChange } from '../../lib/red.js'
 import { DIRECTION_ROLES } from '../routes.js'
 import { Sheet, ErrorLine, LinkShare, btn, inputStyle, labelStyle, card } from '../red/ui.jsx'
+import ClubAccessToggle from '../components/ClubAccessToggle.jsx'
 
 const STATUS_TABS = ['pending', 'approved', 'rejected', 'all']
 
@@ -295,6 +296,9 @@ export default function LeadsPage({ currentUser }) {
         </div>
         <button onClick={() => setInvite(true)} style={btn.primary}><UserPlus size={14}/>{t('red.invite.button')}</button>
       </div>
+
+      {/* Prender / apagar el Club para los scouters (solo super_admin, admin, network_direction) */}
+      <ClubAccessToggle currentUser={currentUser}/>
 
       <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
         {STATUS_TABS.map(id => (

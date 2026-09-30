@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react'
 // Roles que tienen acceso al Command Center (vista de Dirección)
 export const COMMAND_ROLES = [
   'super_admin',
@@ -16,6 +17,21 @@ export const DIRECTION_ROLES = ['super_admin', 'network_direction']
 // Ofertas del Club (047): las gestionan super_admin, admin y
 // network_direction. Coincide con app_can_manage_offers() de la base.
 export const OFFERS_ROLES = ['super_admin', 'admin', 'network_direction']
+
+// Club (red de influencers) para los scouters: lo prenden o apagan
+// super_admin, admin o network_direction con el interruptor de la sección
+// Club (app_settings.club_for_scouters, migración 051). Apagado, el Club
+// (menú, Leads y la sección en la ficha) solo lo ven esos tres roles.
+let clubOpen = false
+const clubSubs = new Set()
+export const setClubForScouters = (v) => { clubOpen = !!v; clubSubs.forEach(f => f()) }
+export const isClubForScouters = () => clubOpen
+export const canSeeClub = (user) => clubOpen || OFFERS_ROLES.includes(user?.rol)
+export const clubRoles = () => (clubOpen ? null : OFFERS_ROLES)
+export const useClubForScouters = () => useSyncExternalStore(
+  (cb) => { clubSubs.add(cb); return () => clubSubs.delete(cb) },
+  () => clubOpen,
+)
 
 export const canSeeCommand = (user) =>
   user && COMMAND_ROLES.includes(user.rol)
@@ -50,7 +66,7 @@ export const ROUTES = [
   { path: '/network/roadmap',               pageKey: 'roadmap',            soon: true,  roles: null },
   { path: '/network/rewards',               pageKey: 'rewards',            soon: false, roles: null },
   { path: '/network/offers',                pageKey: 'offers',             soon: false, roles: OFFERS_ROLES },
-  { path: '/network/leads',                 pageKey: 'leads',              soon: false, roles: null },
+  { path: '/network/leads',                 pageKey: 'leads',              soon: false, roles: null, club: true },
   { path: '/network/approvals',             pageKey: 'approvals',          soon: false, roles: DIRECTION_ROLES },
   { path: '/network/manual',               pageKey: 'manual',             soon: false, roles: null },
 ]

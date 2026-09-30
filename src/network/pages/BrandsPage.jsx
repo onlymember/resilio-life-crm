@@ -254,7 +254,7 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
           <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{total > 0 ? `${total} registros` : t('pages.brands.subtitle')}</p>
         </div>
         <div style={{ display:'flex', gap:8 }}>
-          {currentUser?.rol === 'super_admin' && (
+          {DIRECTION_ROLES.includes(currentUser?.rol) && (
             <button onClick={() => setImportOpen(true)} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:10, background:'rgba(139,92,246,0.08)', border:'1px solid var(--border-violet)', color:'var(--text-secondary)', cursor:'pointer', fontSize:12 }}>
               <Upload size={14}/>{t('import.button')}
             </button>

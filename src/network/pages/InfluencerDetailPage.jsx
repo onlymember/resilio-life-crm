@@ -13,7 +13,7 @@ import HandoffCard from '../components/HandoffCard.jsx'
 import DuplicateHint from '../components/DuplicateHint.jsx'
 import RelationshipHistory from '../components/RelationshipHistory.jsx'
 import InfluencerRedSection from '../red/InfluencerRedSection.jsx'
-import { DIRECTION_ROLES } from '../routes.js'
+import { DIRECTION_ROLES, canSeeClub, useClubForScouters } from '../routes.js'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { isoToDatetimeLocal, datetimeLocalToIso } from '../utils/date.js'
@@ -91,6 +91,7 @@ const SelectField = ({ label, value, onChange, children }) => (
 )
 
 export default function InfluencerDetailPage({ currentUser }) {
+  useClubForScouters()
   const { id } = useParams()
   const navigate = useNavigate()
   const tz = useTz()
@@ -346,8 +347,10 @@ export default function InfluencerDetailPage({ currentUser }) {
         </div>
 
         {/* CLUB: acceso a la app e intereses (red de influencers, 047) */}
-        <InfluencerRedSection influencerId={entity.id} sectionStyle={sectionStyle}
-          isDirection={DIRECTION_ROLES.includes(currentUser?.rol)} ownerId={entity.ownerScouterId}/>
+        {canSeeClub(currentUser) && (
+          <InfluencerRedSection influencerId={entity.id} sectionStyle={sectionStyle}
+            isDirection={DIRECTION_ROLES.includes(currentUser?.rol)} ownerId={entity.ownerScouterId}/>
+        )}
 
         {/* HISTORIAL DE RELACIÓN */}
         <div style={sectionStyle}>

@@ -78,7 +78,7 @@ export default function AgendaItem({ item, onComplete, onReschedule, onNote, onN
       </div>
 
       {/* Quick actions */}
-      {item.kind === 'next_action' && (
+      {(item.kind === 'next_action' || (item.kind === 'task' && (item.whatsapp || item.instagram || item.phone))) && (
         <QuickActions
           whatsapp={item.whatsapp}
           instagram={item.instagram}

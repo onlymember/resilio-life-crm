@@ -112,7 +112,7 @@ export default function Join() {
         </Field>
         <label className="club-check">
           <input type="checkbox" checked={f.consent} onChange={set('consent')}/>
-          <span>{t('join.consent')}</span>
+          <span>{t('join.consent')} <a className="club-link" href="/privacidad" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>{t('join.privacyLink')}</a></span>
         </label>
         <ErrorBox>{error}</ErrorBox>
         <button className="club-btn" disabled={busy || !f.consent}>{busy ? t('common.saving') : t('join.submit')}</button>

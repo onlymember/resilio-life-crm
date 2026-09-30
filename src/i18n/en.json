@@ -1543,5 +1543,21 @@
       "proposed": "Suggested another date: {fecha} {hora}",
       "declined": "Said she can't go"
     }
+  },
+  "clubConv": {
+    "title": "Club · From \"Interested\" to collaboration",
+    "days": "{n} days",
+    "rate": "Conversion",
+    "interested": "\"Interested\" received",
+    "withCollab": "With a collaboration",
+    "hint": "\"Interested\" votes in the last {n} days and how many already have a linked collaboration. The change compares with the previous period."
+  },
+  "clubAccess": {
+    "title": "Club visible to scouters",
+    "off": "Off: the Club (menu, Leads and the record section) is only visible to super_admin, admin and Direction.",
+    "on": "On: scouters see the Club, their Leads and the Club section in each record.",
+    "confirmOn": "Show the Club to all scouters?",
+    "nowOn": "The Club is now visible to scouters",
+    "nowOff": "The Club is now hidden from scouters"
   }
 }

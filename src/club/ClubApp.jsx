@@ -1,5 +1,5 @@
 // Resilio Club — app de influencers (club.resilio.company).
-// Rutas públicas: /sumate, /activar, /entrar, /olvide, /nueva-clave, /confirmar.
+// Rutas públicas: /sumate, /activar, /entrar, /olvide, /nueva-clave, /confirmar, /privacidad.
 // Rutas con sesión: / (ofertas), /intereses, /invitar, /perfil.
 import React, { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom'
@@ -19,6 +19,7 @@ import Interests from './pages/Interests.jsx'
 import Invite from './pages/Invite.jsx'
 import Profile from './pages/Profile.jsx'
 import Confirm from './pages/Confirm.jsx'
+import Privacy from './pages/Privacy.jsx'
 
 function Shell({ children }) {
   return (
@@ -90,6 +91,7 @@ export default function ClubApp() {
             <Route path="/olvide"      element={<Forgot/>}/>
             <Route path="/nueva-clave" element={<ResetPassword/>}/>
             <Route path="/confirmar"   element={<Confirm/>}/>
+            <Route path="/privacidad"  element={<Privacy/>}/>
             <Route path="/"            element={<Private><Feed/></Private>}/>
             <Route path="/intereses"   element={<Private><Interests/></Private>}/>
             <Route path="/invitar"     element={<Private><Invite/></Private>}/>

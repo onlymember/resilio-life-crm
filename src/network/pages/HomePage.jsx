@@ -12,7 +12,7 @@ import { DIRECTION_ROLES } from '../routes.js'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { getMyAgenda, getMyNetworkStats, getMyMissions, getNetworkPulse, getMyRecentActivity } from '../../lib/metrics.js'
-import { dbSetNextAction, dbCompleteTask, dbGetTaskById, dbRescheduleOverdue } from '../../lib/database.js'
+import { dbSetNextAction, dbCompleteTask, dbGetTaskById, dbRescheduleOverdue, dbEnrichAgendaContacts } from '../../lib/database.js'
 
 const AGENDA_PREVIEW = 5
 
@@ -50,6 +50,14 @@ export default function HomePage({ currentUser, onOpenCreate }) {
         getMyRecentActivity(6).catch(() => []),
       ])
       setAgenda(ag)
+      // WhatsApp en las tareas vinculadas a una ficha (llega un instante después).
+      dbEnrichAgendaContacts(ag).then(en => {
+        const byKey = new Map(en.map(e => [`${e.kind}:${e.entityId}`, e]))
+        setAgenda(prev => prev.map(p => {
+          const e = byKey.get(`${p.kind}:${p.entityId}`)
+          return e && p.kind === 'task' ? { ...p, whatsapp: e.whatsapp, instagram: e.instagram, phone: e.phone } : p
+        }))
+      }).catch(() => {})
       setStats(st)
       setMissions(ms)
       setPulse(pu)

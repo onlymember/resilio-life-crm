@@ -1539,5 +1539,21 @@
       "proposed": "Propuso otra fecha: {fecha} {hora}",
       "declined": "Avisó que no puede ir"
     }
+  },
+  "clubConv": {
+    "title": "Club · De \"Me interesa\" a colaboración",
+    "days": "{n} días",
+    "rate": "Conversión",
+    "interested": "\"Me interesa\" recibidos",
+    "withCollab": "Con colaboración creada",
+    "hint": "\"Me interesa\" de los últimos {n} días y cuántos ya tienen una colaboración vinculada. La variación compara con el período anterior."
+  },
+  "clubAccess": {
+    "title": "Club visible para los scouters",
+    "off": "Apagado: el Club (menú, Leads y la sección en la ficha) solo lo ven super_admin, admin y Dirección.",
+    "on": "Prendido: los scouters ven el Club, sus Leads y la sección del Club en cada ficha.",
+    "confirmOn": "¿Mostrar el Club a todos los scouters?",
+    "nowOn": "El Club ya es visible para los scouters",
+    "nowOff": "El Club quedó oculto para los scouters"
   }
 }
