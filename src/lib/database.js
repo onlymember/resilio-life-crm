@@ -842,6 +842,7 @@ export const dbPatchCollaboration = async (id, patch) => {
     activationTypeId:    'activation_type_id',
     status:              'status',
     startDate:           'start_date',
+    startTime:           'start_time',
     endDate:             'end_date',
     deliverables:        'deliverables',
     contentStatus:       'content_status',
@@ -2755,4 +2756,39 @@ export const dbGetStageFunnel = async (days = 90) => {
     entityType: r.entity_type, step: r.step, entered: Number(r.entered), advanced: Number(r.advanced),
     pct: r.pct == null ? null : Number(r.pct), avgDays: r.avg_days == null ? null : Number(r.avg_days),
   }))
+}
+
+// ═══════════════════════════════════════════════════════════
+// FASE 3 (migración 050)
+// ═══════════════════════════════════════════════════════════
+
+// Link de confirmación para la influencer (se abre en el Club, sin cuenta).
+export const dbCreateCollabConfirmation = async (collabId) => {
+  const { data, error } = await supabase.rpc('create_collab_confirmation', { p_collab: collabId })
+  if (error) throw friendly(error)
+  return { token: data.token, expiresAt: data.expires_at }
+}
+
+// Último link de la colaboración y lo que respondió.
+export const dbGetLastCollabConfirmation = async (collabId) => {
+  const { data, error } = await supabase.from('collab_confirmations')
+    .select('token, created_at, expires_at, responded_at, response, proposed_date, proposed_time, note')
+    .eq('collaboration_id', collabId).order('created_at', { ascending: false }).limit(1)
+  if (error || !data?.length) return null
+  const r = data[0]
+  return { token: r.token, createdAt: r.created_at, expiresAt: r.expires_at, respondedAt: r.responded_at,
+    response: r.response, proposedDate: r.proposed_date, proposedTime: r.proposed_time?.slice(0, 5) || null, note: r.note }
+}
+
+// Fusionar fichas (Dirección). take = columnas que se toman de la que se borra.
+export const dbMergeEntities = async (type, keepId, removeId, take = []) => {
+  const { data, error } = await supabase.rpc('merge_entities', { p_type: type, p_keep: keepId, p_remove: removeId, p_take: take })
+  if (error) throw friendly(error)
+  return data
+}
+
+export const dbGetEntityRaw = async (type, id) => {
+  const { data, error } = await supabase.from(type === 'brand' ? 'brands' : 'influencers').select('*').eq('id', id).maybeSingle()
+  if (error) throw friendly(error)
+  return data
 }

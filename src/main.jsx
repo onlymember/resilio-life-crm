@@ -25,3 +25,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </Suspense>
   </React.StrictMode>
 )
+
+// App instalable (fase 3): el service worker no guarda caché, solo
+// permite "Agregar a inicio". Solo en producción, para no molestar al
+// desarrollar.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}) })
+}

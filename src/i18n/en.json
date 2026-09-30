@@ -1485,5 +1485,63 @@
     "noTime": "No data yet",
     "needsSql": "Run migration 049 to see this report.",
     "hint": "Records created in the period. Stage changes are logged since migration 049."
+  },
+  "autosave": {
+    "pending": "Unsaved…",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "error": "Not saved · retry"
+  },
+  "merge": {
+    "button": "Merge",
+    "title": "Merge duplicate records",
+    "hint": "\"{name}\" is the one that stays. Find the duplicate: everything it has moves here and then it is deleted.",
+    "pick": "Search for the duplicate…",
+    "same": "The data is the same: only its links move to this record.",
+    "keeps": "Stays (this one)",
+    "goes": "Gets deleted",
+    "warning": "\"{other}\" will be deleted. Its collaborations, tasks, activity, interests and Club access move to \"{keep}\". This can't be undone.",
+    "sure": "I understand, merge.",
+    "confirm": "Merge",
+    "done": "Records merged",
+    "field": {
+      "name": "Name",
+      "username": "Username",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "email": "Email",
+      "phone": "Phone",
+      "tiktok": "TikTok",
+      "followers": "Followers",
+      "category": "Category",
+      "category_id": "Category",
+      "tier": "Tier",
+      "city_id": "City",
+      "relationship_status": "Stage",
+      "owner_scouter_id": "Scouter in charge",
+      "notes": "Notes",
+      "website": "Website",
+      "potential_value": "Potential value"
+    }
+  },
+  "confirmLink": {
+    "title": "Influencer confirmation",
+    "create": "Ask for confirmation by link",
+    "again": "Send a new link",
+    "needDate": "Set the collaboration date to send the link.",
+    "pending": "Link sent, expires {fecha}. No answer yet.",
+    "sendWa": "Send on WhatsApp",
+    "shareWa": "Share on WhatsApp",
+    "copy": "Copy",
+    "copied": "Copied",
+    "message": "Hi! Here's the link to confirm your visit to {marca} on {fecha}:",
+    "time": "Time",
+    "accept": "Accept that date",
+    "applied": "Date updated and collaboration confirmed",
+    "response": {
+      "confirmed": "Confirmed she's going",
+      "proposed": "Suggested another date: {fecha} {hora}",
+      "declined": "Said she can't go"
+    }
   }
 }

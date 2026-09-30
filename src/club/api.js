@@ -89,3 +89,8 @@ export const offerImageUrl = (path) =>
   path ? supabase.storage.from('offers').getPublicUrl(path).data.publicUrl : null
 
 export const joinLink = (token) => `${window.location.origin}/sumate?inv=${token}`
+
+// ── Confirmación de visita (sin sesión, migración 050) ──────
+export const getCollabConfirmation     = (token) => call('get_collab_confirmation', { p_token: token })
+export const respondCollabConfirmation = (token, response, { date = null, time = null, note = null } = {}) =>
+  call('respond_collab_confirmation', { p_token: token, p_response: response, p_date: date, p_time: time, p_note: note })

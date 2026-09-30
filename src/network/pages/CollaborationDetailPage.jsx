@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, CheckCircle, Plus, Trash2, ExternalLink, Check, Copy } from 'lucide-react'
+import AutosaveBadge from '../components/AutosaveBadge.jsx'
+import { useAutosave } from '../utils/useAutosave.js'
 import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import AssignModal from '../components/AssignModal.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import DuplicateCollabSheet from '../components/DuplicateCollabSheet.jsx'
 import CollabChecklist, { checklistDone, CHECK_STEPS } from '../components/CollabChecklist.jsx'
+import ConfirmLinkCard from '../components/ConfirmLinkCard.jsx'
 import { t } from '../../i18n/index.js'
 import { COMMAND_ROLES } from '../routes.js'
 import {
@@ -22,7 +25,7 @@ const PAYMENT_STATUSES  = ['pending','invoiced','paid']
 
 async function fetchCollab(id) {
   const { data, error } = await supabase.from('collaborations')
-    .select('*, influencers(id, name, username), brands(id, name), campaigns(id, name)')
+    .select('*, influencers(id, name, username, whatsapp, phone), brands(id, name), campaigns(id, name)')
     .eq('id', id).maybeSingle()
   if (error) throw error
   if (!data) return null
@@ -30,6 +33,7 @@ async function fetchCollab(id) {
     id:                  data.id,
     influencerId:        data.influencer_id,
     influencerName:      data.influencers?.name || data.influencers?.username || null,
+    influencerWa:        data.influencers?.whatsapp || data.influencers?.phone || null,
     brandId:             data.brand_id,
     brandName:           data.brands?.name || null,
     campaignId:          data.campaign_id,
@@ -38,6 +42,7 @@ async function fetchCollab(id) {
     activationTypeId:    data.activation_type_id,
     status:              data.status,
     startDate:           data.start_date,
+    startTime:           data.start_time ? data.start_time.slice(0, 5) : null,
     endDate:             data.end_date,
     deliverables:        data.deliverables || [],
     checklist:           data.checklist || {},
@@ -147,25 +152,34 @@ export default function CollaborationDetailPage({ currentUser }) {
     return () => window.removeEventListener('beforeunload', h)
   }, [isDirty])
 
-  const handleBack = () => {
-    if (isDirty && !window.confirm(t('collab.unsavedWarning'))) return
+  const handleBack = async () => {
+    if (isDirty && !(await handleSave()) && !window.confirm(t('collab.unsavedWarning'))) return
     navigate('/network/collaborations')
   }
 
+  // Guarda lo cambiado. Si mientras tanto se siguió escribiendo, eso
+  // queda pendiente y se guarda en la próxima vuelta.
   const handleSave = async () => {
-    if (!isDirty || saving) return
+    const snap = { ...dirty }
+    if (Object.keys(snap).length === 0) return true
     setSaving(true); setSaveError(null)
     try {
-      const patch = { ...dirty }
+      const patch = { ...snap }
       if ('results' in patch) {
         try { patch.results = JSON.parse(patch.results) } catch { patch.results = { raw: patch.results } }
       }
       await dbPatchCollaboration(entity.id, patch)
-      setEntity(prev => ({ ...prev, ...dirty }))
-      setDirty({})
-    } catch(e) { setSaveError(e.message) }
+      setEntity(prev => ({ ...prev, ...snap }))
+      setDirty(prev => { const n = { ...prev }; for (const k in snap) if (n[k] === snap[k]) delete n[k]; return n })
+      return true
+    } catch(e) { setSaveError(e.message); return false }
     finally { setSaving(false) }
   }
+
+  // Guardado automático (fase 3). En colaboraciones, el JSON de resultados
+  // mal escrito no se guarda solo: queda el botón Guardar.
+  const autosave = useAutosave({ dirty, save: handleSave, enabled: !('results' in dirty && (() => { try { JSON.parse(dirty.results); return false } catch { return true } })()) })
+
 
   const handleCompleteNextAction = async () => {
     if (completingNext) return
@@ -227,6 +241,7 @@ export default function CollaborationDetailPage({ currentUser }) {
             <div style={{ fontSize:11, color: actType.color || 'var(--text-secondary)', fontWeight:600 }}>{actType.name}</div>
           )}
         </div>
+        <AutosaveBadge state={autosave} onRetry={handleSave}/>
         <button onClick={() => setDupOpen(true)} title={t('duplicate.title')} style={{ display:'flex', alignItems:'center', gap:4, fontSize:11, fontWeight:600, color:'var(--text-secondary)', background:'rgba(139,92,246,0.06)', border:'1px solid var(--border-violet)', borderRadius:8, padding:'5px 10px', cursor:'pointer', flexShrink:0 }}>
           <Copy size={12}/>{t('duplicate.button')}
         </button>
@@ -235,7 +250,7 @@ export default function CollaborationDetailPage({ currentUser }) {
             {t('network.assign')}
           </button>
         )}
-        {isDirty && (
+        {isDirty && (autosave === 'error' || 'results' in dirty) && (
           <button onClick={handleSave} disabled={saving} style={{ padding:'7px 16px', borderRadius:9, background:'var(--primary-violet)', color:'white', border:'none', cursor:'pointer', fontSize:12, fontWeight:700, flexShrink:0 }}>
             {saving ? t('brand.saving') : t('brand.save')}
           </button>
@@ -256,6 +271,13 @@ export default function CollaborationDetailPage({ currentUser }) {
         <div style={SH}>
           <SectionHeader label={`${t('checklist.title')} · ${checklistDone(entity.checklist)}/${CHECK_STEPS.length}`} fields={[]} dirty={dirty}/>
           <CollabChecklist collabId={entity.id} value={entity.checklist || {}} onChange={(c) => setEntity(prev => ({ ...prev, checklist: c }))}/>
+        </div>
+
+        {/* CONFIRMACIÓN DE LA INFLUENCER (link sin cuenta) */}
+        <div style={SH}>
+          <SectionHeader label={t('confirmLink.title')} fields={[]} dirty={dirty}/>
+          <ConfirmLinkCard collab={{ ...entity, startDate: get('startDate') }} influencerWa={entity.influencerWa}
+            onApplied={(patch) => setEntity(prev => ({ ...prev, ...patch }))}/>
         </div>
 
         {/* DATOS */}
@@ -329,11 +351,15 @@ export default function CollaborationDetailPage({ currentUser }) {
 
         {/* FECHAS */}
         <div style={SH}>
-          <SectionHeader label={t('collab.sections.dates')} fields={['startDate','endDate']} dirty={dirty}/>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+          <SectionHeader label={t('collab.sections.dates')} fields={['startDate','startTime','endDate']} dirty={dirty}/>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(130px, 1fr))', gap:10 }}>
             <div>
               <Label>{t('collab.fields.startDate')}</Label>
               <input type="date" value={get('startDate') || ''} onChange={e => set('startDate', e.target.value || null)} style={inputStyle}/>
+            </div>
+            <div>
+              <Label>{t('confirmLink.time')}</Label>
+              <input type="time" value={get('startTime') || ''} onChange={e => set('startTime', e.target.value || null)} style={inputStyle}/>
             </div>
             <div>
               <Label>{t('collab.fields.endDate')}</Label>

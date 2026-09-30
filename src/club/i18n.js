@@ -91,6 +91,17 @@ const es = {
     title: 'Tu acceso no está activo',
     body: 'Si creés que es un error, escribile a quien te invitó.',
   },
+  confirm: {
+    title: 'Confirmá tu visita', hi: 'Hola {name}!', intro: 'Te esperan en {brand} para la colaboración:',
+    at: 'a las {time}', yes: 'Confirmo, voy', other: 'Proponer otra fecha', no: 'No puedo ir',
+    newDate: 'Fecha', newTime: 'Hora (opcional)', note: 'Mensaje (opcional)', send: 'Enviar',
+    doneConfirmed: '¡Listo! Te esperamos. Si algo cambia, escribile a tu contacto de Resilio.',
+    doneProposed: 'Listo, le avisamos a Resilio la fecha que propusiste. Te confirman por WhatsApp.',
+    doneDeclined: 'Listo, le avisamos a Resilio. ¡Gracias por avisar!',
+    answered: 'Esta colaboración ya fue respondida. Si necesitás cambiar algo, escribile a tu contacto de Resilio.',
+    expired: 'Este link venció. Pedile uno nuevo a tu contacto de Resilio.',
+    invalid: 'Este link no es válido.',
+  },
   errors: {
     generic: 'Algo salió mal. Probá de nuevo.',
     link_invalid: 'Este link ya no es válido. Pedile uno nuevo a quien te invitó.',
@@ -117,6 +128,7 @@ const es = {
     over_email_send_rate_limit: 'Demasiados intentos. Esperá unos minutos.',
     password_short: 'La contraseña tiene que tener al menos 8 caracteres.',
     email_same: 'Es el mismo mail que ya tenés.',
+    bad_date: 'Elegí una fecha desde hoy.', already: 'Esta colaboración ya fue respondida.', expired: 'Este link venció.',
     email_requires_approval: 'El cambio de mail lo autoriza Resilio.',
   },
 }
@@ -209,6 +221,17 @@ const en = {
     title: 'Your access is not active',
     body: 'If you think this is a mistake, contact the person who invited you.',
   },
+  confirm: {
+    title: 'Confirm your visit', hi: 'Hi {name}!', intro: '{brand} is expecting you for the collaboration:',
+    at: 'at {time}', yes: "I confirm, I'll be there", other: 'Suggest another date', no: "I can't make it",
+    newDate: 'Date', newTime: 'Time (optional)', note: 'Message (optional)', send: 'Send',
+    doneConfirmed: "Done! See you there. If anything changes, message your Resilio contact.",
+    doneProposed: 'Done, we let Resilio know the date you suggested. They will confirm on WhatsApp.',
+    doneDeclined: 'Done, we let Resilio know. Thanks for telling us!',
+    answered: 'This collaboration was already answered. If you need to change something, message your Resilio contact.',
+    expired: 'This link has expired. Ask your Resilio contact for a new one.',
+    invalid: 'This link is not valid.',
+  },
   errors: {
     generic: 'Something went wrong. Please try again.',
     link_invalid: 'This link is no longer valid. Ask the person who invited you for a new one.',
@@ -235,6 +258,7 @@ const en = {
     over_email_send_rate_limit: 'Too many attempts. Wait a few minutes.',
     password_short: 'The password must be at least 8 characters.',
     email_same: 'That is already your email.',
+    bad_date: 'Pick a date from today on.', already: 'This collaboration was already answered.', expired: 'This link has expired.',
     email_requires_approval: 'Resilio has to approve email changes.',
   },
 }

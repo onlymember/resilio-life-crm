@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, Building2, ExternalLink, MessageSquare } from 'lucide-react'
+import AutosaveBadge from '../components/AutosaveBadge.jsx'
+import MergeSheet from '../components/MergeSheet.jsx'
+import { toast } from '../components/Toaster.jsx'
+import { useAutosave } from '../utils/useAutosave.js'
 import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import AssignModal from '../components/AssignModal.jsx'
 import EmptyState from '../components/EmptyState.jsx'
@@ -18,7 +22,7 @@ import {
   dbGetGeography, dbGetPeopleNames,
 } from '../../lib/database.js'
 import { supabase } from '../../lib/supabase.js'
-import { COMMAND_ROLES } from '../routes.js'
+import { COMMAND_ROLES, DIRECTION_ROLES } from '../routes.js'
 
 const REL_STATUSES = ['cold','warm','strong','inactive']
 const relColors = { cold: '#9CA3AF', warm: '#FBBF24', strong: '#34D399', inactive: '#6B7280' }
@@ -153,21 +157,31 @@ export default function BrandDetailPage({ currentUser }) {
     return () => window.removeEventListener('beforeunload', h)
   }, [isDirty])
 
-  const handleBack = () => {
-    if (isDirty && !window.confirm(t('brand.unsavedWarning'))) return
+  const handleBack = async () => {
+    if (isDirty && !(await handleSave()) && !window.confirm(t('brand.unsavedWarning'))) return
     navigate('/network/brands')
   }
 
+  // Guarda lo cambiado. Si mientras tanto se siguió escribiendo, eso
+  // queda pendiente y se guarda en la próxima vuelta.
   const handleSave = async () => {
-    if (!isDirty || saving) return
+    const snap = { ...dirty }
+    if (Object.keys(snap).length === 0) return true
     setSaving(true); setSaveError(null)
     try {
-      await dbPatchBrand(entity.id, dirty)
-      setEntity(prev => ({ ...prev, ...dirty }))
-      setDirty({})
-    } catch(e) { setSaveError(e.message) }
+      await dbPatchBrand(entity.id, snap)
+      setEntity(prev => ({ ...prev, ...snap }))
+      setDirty(prev => { const n = { ...prev }; for (const k in snap) if (n[k] === snap[k]) delete n[k]; return n })
+      return true
+    } catch(e) { setSaveError(e.message); return false }
     finally { setSaving(false) }
   }
+
+  // Guardado automático (fase 3). En colaboraciones, el JSON de resultados
+  // mal escrito no se guarda solo: queda el botón Guardar.
+  const [mergeOpen, setMergeOpen] = useState(false)
+  const autosave = useAutosave({ dirty, save: handleSave, enabled: true })
+
 
   const handleAssigned = (entityId, scouter) => {
     setEntity(prev => ({ ...prev, ownerScouterId: scouter.userId }))
@@ -195,7 +209,7 @@ export default function BrandDetailPage({ currentUser }) {
   }
 
   return (
-    <div style={{ maxWidth: 680, paddingBottom: isDirty ? 20 : 0 }}>
+    <div style={{ maxWidth: 680, paddingBottom: isDirty && autosave === 'error' ? 20 : 0 }}>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--border-violet)', position: 'sticky', top: 0, background: 'var(--bg-primary)', zIndex: 10 }}>
@@ -209,6 +223,12 @@ export default function BrandDetailPage({ currentUser }) {
           <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entity.name}</div>
           {cityName && <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{cityName}</div>}
         </div>
+        <AutosaveBadge state={autosave} onRetry={handleSave}/>
+        {DIRECTION_ROLES.includes(currentUser?.rol) && (
+          <button onClick={() => setMergeOpen(true)} title={t('merge.title')} style={{ display:'flex', alignItems:'center', gap:4, fontSize:11, fontWeight:600, color:'var(--text-secondary)', background:'rgba(139,92,246,0.06)', border:'1px solid var(--border-violet)', borderRadius:8, padding:'5px 10px', cursor:'pointer', flexShrink:0 }}>
+            {t('merge.button')}
+          </button>
+        )}
         {/* Los mensajes se abren desde acá: es el momento en que la
             Scouter ya tiene la ficha delante y va a escribir. */}
         <button
@@ -436,8 +456,14 @@ export default function BrandDetailPage({ currentUser }) {
 
       </div>
 
-      {/* Sticky save bar */}
-      {isDirty && (
+      {mergeOpen && (
+        <MergeSheet type="brand" keepId={entity.id} cityMap={Object.fromEntries((geo.cities || []).map(c => [c.id, c.name]))}
+          onClose={() => setMergeOpen(false)}
+          onMerged={() => { setMergeOpen(false); toast(t('merge.done')); setTimeout(() => window.location.reload(), 600) }}/>
+      )}
+
+      {/* Solo si el guardado automático falló: reintentar a mano. */}
+      {isDirty && autosave === 'error' && (
         <div className="nw-save-bar">
           {saveError && (
             <div style={{ fontSize: 11, color: '#F87171', marginBottom: 8 }}>{saveError}</div>

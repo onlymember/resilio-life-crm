@@ -1481,5 +1481,63 @@
     "noTime": "Sin datos todavía",
     "needsSql": "Falta correr la migración 049 para ver este reporte.",
     "hint": "Fichas creadas en el período. Los cambios de etapa se registran desde que se instaló la 049."
+  },
+  "autosave": {
+    "pending": "Sin guardar…",
+    "saving": "Guardando…",
+    "saved": "Guardado",
+    "error": "No se guardó · reintentar"
+  },
+  "merge": {
+    "button": "Fusionar",
+    "title": "Fusionar fichas duplicadas",
+    "hint": "\"{name}\" es la que queda. Buscá la ficha duplicada: todo lo suyo pasa a esta y después se borra.",
+    "pick": "Buscar la ficha duplicada…",
+    "same": "Los datos son iguales: solo se pasan sus vínculos a esta ficha.",
+    "keeps": "Queda (esta)",
+    "goes": "Se borra",
+    "warning": "\"{other}\" se va a borrar. Sus colaboraciones, tareas, actividad, intereses y acceso al Club pasan a \"{keep}\". No se puede deshacer.",
+    "sure": "Entiendo, fusionar.",
+    "confirm": "Fusionar",
+    "done": "Fichas fusionadas",
+    "field": {
+      "name": "Nombre",
+      "username": "Usuario",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "email": "Mail",
+      "phone": "Teléfono",
+      "tiktok": "TikTok",
+      "followers": "Seguidores",
+      "category": "Categoría",
+      "category_id": "Categoría",
+      "tier": "Tier",
+      "city_id": "Ciudad",
+      "relationship_status": "Etapa",
+      "owner_scouter_id": "Scouter a cargo",
+      "notes": "Notas",
+      "website": "Sitio web",
+      "potential_value": "Valor potencial"
+    }
+  },
+  "confirmLink": {
+    "title": "Confirmación de la influencer",
+    "create": "Pedir confirmación por link",
+    "again": "Mandar un link nuevo",
+    "needDate": "Poné la fecha de la colaboración para poder mandar el link.",
+    "pending": "Link enviado, vence el {fecha}. Todavía no respondió.",
+    "sendWa": "Mandar por WhatsApp",
+    "shareWa": "Compartir por WhatsApp",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "message": "¡Hola! Te paso el link para confirmar tu visita a {marca} el {fecha}:",
+    "time": "Hora",
+    "accept": "Aceptar esa fecha",
+    "applied": "Fecha actualizada y colaboración confirmada",
+    "response": {
+      "confirmed": "Confirmó que va",
+      "proposed": "Propuso otra fecha: {fecha} {hora}",
+      "declined": "Avisó que no puede ir"
+    }
   }
 }
