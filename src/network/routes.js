@@ -51,5 +51,6 @@ export const ROUTES = [
   { path: '/network/rewards',               pageKey: 'rewards',            soon: false, roles: null },
   { path: '/network/offers',                pageKey: 'offers',             soon: false, roles: OFFERS_ROLES },
   { path: '/network/leads',                 pageKey: 'leads',              soon: false, roles: null },
+  { path: '/network/approvals',             pageKey: 'approvals',          soon: false, roles: DIRECTION_ROLES },
   { path: '/network/manual',               pageKey: 'manual',             soon: false, roles: null },
 ]

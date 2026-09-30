@@ -1,13 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Users, Search, SlidersHorizontal, ChevronDown, Upload, X } from 'lucide-react'
+import { Users, Search, SlidersHorizontal, ChevronDown, Upload, X, MessageCircle } from 'lucide-react'
 import NetworkCard from '../components/NetworkCard.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import FilterSheet from '../components/FilterSheet.jsx'
 import AssignModal from '../components/AssignModal.jsx'
 import BulkBar from '../components/BulkBar.jsx'
 import ImportSheet from '../components/ImportSheet.jsx'
+import SwipeStage from '../components/SwipeStage.jsx'
+import ViewToggle from '../components/ViewToggle.jsx'
+import StageBoard from '../components/StageBoard.jsx'
+import QuickFill from '../components/QuickFill.jsx'
+import LoadMore from '../components/LoadMore.jsx'
+import BatchMessageSheet from '../components/BatchMessageSheet.jsx'
+import { toast } from '../components/Toaster.jsx'
+import { saveList, readList, clearList, restoreScroll } from '../utils/listMemory.js'
 import { t } from '../../i18n/index.js'
-import { dbGetInfluencers, dbGetGeography, dbLogContact, dbGetActiveScouters, dbGetPeopleNames } from '../../lib/database.js'
+import { dbGetInfluencers, dbGetGeography, dbLogContact, dbGetActiveScouters, dbGetPeopleNames, dbPatchInfluencer } from '../../lib/database.js'
 import { personName } from '../utils/people.js'
 import { ADDED_PRESETS, addedRange, rangeToFilters, toDateInput } from '../utils/addedRanges.js'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -23,7 +31,8 @@ const useIsDesktop = () => {
   return desktop
 }
 
-const PAGE_SIZE = 30
+const PAGE_SIZE = 50
+const MEM_KEY = 'influencers'
 
 const ORDER_OPTIONS = [
   { value: 'created_at',    dir: 'desc', label: 'Recientes' },
@@ -40,6 +49,8 @@ const QUICK_CHIPS = [
   { id: 'noowner', labelKey: 'chips.noOwner',  filters: { noOwner: true } },
   { id: 'nocity',  labelKey: 'chips.noCity',   filters: { noCity: true } },
   { id: 'nonext',  labelKey: 'chips.noNextAction', filters: { noNextAction: true } },
+  { id: 'nowa',    labelKey: 'chips.noWhatsapp', filters: { noWhatsapp: true }, fill: 'whatsapp' },
+  { id: 'nocat',   labelKey: 'chips.noCategory', filters: { noCategory: true }, fill: 'category' },
 ]
 
 // El Command Center enlaza con ?noOwner=1 / ?noCity=1 / ?overdue=1.
@@ -61,6 +72,7 @@ const extraFromParams = (sp) => {
   if (sp.get('createdBy')) ex.createdBy   = sp.get('createdBy')
   if (sp.get('from'))      ex.createdFrom = sp.get('from')
   if (sp.get('to'))        ex.createdTo   = sp.get('to')
+  if (sp.get('city'))      ex.cityId      = sp.get('city')   // desde el buscador global
   return ex
 }
 
@@ -78,32 +90,42 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
   const canReassign = COMMAND_ROLES.includes(currentUser?.rol)
   const isDirection = DIRECTION_ROLES.includes(currentUser?.rol)
 
+  const [searchParams] = useSearchParams()
+  // Al volver de una ficha se recupera la lista tal como estaba (salvo
+  // que la URL traiga un filtro propio, por ejemplo desde el Command).
+  const [mem] = useState(() => (searchParams.toString() ? null : readList(MEM_KEY)))
+
   const [rows,         setRows]         = useState([])
   const [total,        setTotal]        = useState(0)
   const [page,         setPage]         = useState(0)
   const [loading,      setLoading]      = useState(true)
-  const [search,       setSearch]       = useState('')
-  const [filters,      setFilters]      = useState({})   // lo fija el efecto de arranque si vino un parametro
+  const [search,       setSearch]       = useState(mem?.search || '')
+  const [filters,      setFilters]      = useState(mem?.filters || {})   // lo fija el efecto de arranque si vino un parametro
   const [filterOpen,   setFilterOpen]   = useState(false)
   const [cities,       setCities]       = useState([])
   const [cityMap,      setCityMap]      = useState({})
-  const [orderBy,      setOrderBy]      = useState(ORDER_OPTIONS[0])
-  const [searchParams] = useSearchParams()
+  const [orderBy,      setOrderBy]      = useState(ORDER_OPTIONS.find(o => o.value === mem?.orderBy) || ORDER_OPTIONS[0])
   const initialChip = chipFromParams(searchParams)
-  const [chipId,       setChipId]       = useState(initialChip?.id ?? 'all')
+  const [chipId,       setChipId]       = useState(initialChip?.id ?? mem?.chipId ?? 'all')
   const [assignTarget, setAssignTarget] = useState(null)
   const [selected,     setSelected]     = useState(new Set())
   const [importOpen,   setImportOpen]   = useState(false)
   const [selectingAll, setSelectingAll] = useState(false)
-  const initialExtra = extraFromParams(searchParams)
+  const initialExtra = mem?.extra || extraFromParams(searchParams)
   const [extra,        setExtra]        = useState(initialExtra)
-  const [addedPreset,  setAddedPreset]  = useState(initialExtra.createdFrom || initialExtra.createdTo ? 'custom' : 'any')
-  const [customRange,  setCustomRange]  = useState({
+  const [addedPreset,  setAddedPreset]  = useState(mem?.addedPreset || (initialExtra.createdFrom || initialExtra.createdTo ? 'custom' : 'any'))
+  const [customRange,  setCustomRange]  = useState(mem?.customRange || {
     from: initialExtra.createdFrom ? toDateInput(initialExtra.createdFrom) : '',
     to:   initialExtra.createdTo ? toDateInput(new Date(new Date(initialExtra.createdTo).getTime() - 1)) : '',
   })
   const [scouters,     setScouters]     = useState([])
   const [createdByName, setCreatedByName] = useState('')
+  const [view,         setView]         = useState(mem?.view || 'list')      // 'list' | 'board'
+  const [batchMode,    setBatchMode]    = useState(false)
+  const [batchSel,     setBatchSel]     = useState(new Set())
+  const [batchOpen,    setBatchOpen]    = useState(false)
+  const [boardKey,     setBoardKey]     = useState(0)
+  const fillField = QUICK_CHIPS.find(c => c.id === chipId)?.fill || null
 
   const toggleSelect = (id) => setSelected(prev => {
     const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next
@@ -129,18 +151,20 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
     }).catch(() => {})
   }, [])
 
-  const load = useCallback(async (pg = 0, s = search, f = filters, ord = orderBy, ex = extra) => {
+  const load = useCallback(async (pg = 0, s = search, f = filters, ord = orderBy, ex = extra, size = PAGE_SIZE) => {
     setLoading(true)
+    setBoardKey(k => k + 1)
     try {
       const res = await dbGetInfluencers({
-        page: pg, pageSize: PAGE_SIZE,
+        page: pg, pageSize: size,
         search: s || undefined,
         orderBy: ord.value, orderDir: ord.dir,
         ...f,
         ...ex,
       })
       if (pg === 0) setRows(res.rows); else setRows(p => [...p, ...res.rows])
-      setTotal(res.total); setPage(pg)
+      setTotal(res.total); setPage(size > PAGE_SIZE ? size / PAGE_SIZE - 1 : pg)
+      return res
     } catch(e) { console.error('InfluencersPage load:', e.message) }
     finally { setLoading(false) }
   }, [search, filters, orderBy, extra])
@@ -150,8 +174,20 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
   useEffect(() => {
     const chip = chipFromParams(searchParams)
     if (chip) { setFilters(chip.filters); load(0, '', chip.filters, orderBy) }
+    else if (mem) {
+      // Se trae de una vez lo que ya estaba cargado y se vuelve al mismo scroll.
+      const size = Math.min(500, Math.max(PAGE_SIZE, Math.ceil((mem.count || 0) / PAGE_SIZE) * PAGE_SIZE))
+      load(0, mem.search || '', mem.filters || {}, orderBy, initialExtra, size).then(() => restoreScroll(mem.scrollY))
+    }
     else      { load(0) }
+    clearList(MEM_KEY)
   }, [])
+
+  // Al abrir una ficha se guarda el estado de la lista para volver igual.
+  const openEntity = (id) => {
+    saveList(MEM_KEY, { search, filters, chipId, orderBy: orderBy.value, extra, addedPreset, customRange, view, count: rows.length })
+    navigate(`/network/influencers/${id}`)
+  }
 
   // Scouters para el filtro de Dirección, y el nombre de "cargadas por"
   // cuando se llega desde el reporte de altas.
@@ -211,6 +247,32 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
     setRows(prev => prev.map(r => r.id === entityId ? { ...r, ownerScouterId: scouter.userId } : r))
   }
 
+  const patchRow = (id, patch) => setRows(prev => prev.map(r => r.id === id ? { ...r, ...patch } : r))
+
+  // Cambio de etapa (deslizando o en el Kanban), con "Deshacer".
+  const changeStage = async (ent, to, silent = false) => {
+    const from = ent.relationshipStatus || 'cold'
+    patchRow(ent.id, { relationshipStatus: to })
+    try {
+      await dbPatchInfluencer(ent.id, { relationshipStatus: to })
+      if (!silent) toast(t('stage.moved', { name: ent.name || ent.username || '', stage: t(`relationship.${to}`) }),
+        { label: t('stage.undo'), run: () => { changeStage({ ...ent, relationshipStatus: to }, from, true); setBoardKey(k => k + 1) } })
+      return true
+    } catch (e) {
+      patchRow(ent.id, { relationshipStatus: from })
+      toast(e.message)
+      return false
+    }
+  }
+
+  const fetchBoard = useCallback((stage, pg, size) => dbGetInfluencers({
+    page: pg, pageSize: size, search: search || undefined, orderBy: orderBy.value, orderDir: orderBy.dir,
+    ...filters, ...extra, relationshipStatus: stage,
+  }), [search, filters, extra, orderBy])
+
+  const toggleBatch = (id) => setBatchSel(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const exitBatch = () => { setBatchMode(false); setBatchSel(new Set()); setBatchOpen(false) }
+
   return (
     <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
       {/* Header */}
@@ -225,8 +287,13 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
               <Upload size={14}/>{t('import.button')}
             </button>
           )}
+          <ViewToggle view={view} onChange={setView}/>
+          <button onClick={() => (batchMode ? exitBatch() : setBatchMode(true))} aria-pressed={batchMode} title={t('batch.button')} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 12px', borderRadius:10, cursor:'pointer', fontSize:12,
+            background: batchMode ? 'rgba(37,211,102,0.15)' : 'rgba(139,92,246,0.08)', border: batchMode ? '1px solid rgba(37,211,102,0.4)' : '1px solid var(--border-violet)', color: batchMode ? '#25D366' : 'var(--text-secondary)' }}>
+            <MessageCircle size={14}/>{isDesktop && t('batch.button')}
+          </button>
           <button onClick={() => setFilterOpen(true)} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:10, background:'rgba(139,92,246,0.08)', border:'1px solid var(--border-violet)', color:'var(--text-secondary)', cursor:'pointer', fontSize:12 }}>
-            <SlidersHorizontal size={14}/>{t('filter.title')}
+            <SlidersHorizontal size={14}/>{isDesktop && t('filter.title')}
           </button>
         </div>
       </div>
@@ -280,6 +347,11 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
             </Select>
           </>
         )}
+        {extra.cityId && (
+          <button onClick={() => { const { cityId, ...rest } = extra; applyExtra(rest) }} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: 'rgba(139,92,246,0.25)', color: 'var(--primary-violet-light)', border: '1px solid rgba(139,92,246,0.5)', cursor: 'pointer' }}>
+            {cityMap[extra.cityId] || '…'}<X size={11}/>
+          </button>
+        )}
         {extra.createdBy && (
           <button onClick={clearCreatedBy} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: 'rgba(139,92,246,0.25)', color: 'var(--primary-violet-light)', border: '1px solid rgba(139,92,246,0.5)', cursor: 'pointer' }}>
             {t('intake.filter.addedBy', { name: createdByName || '…' })}<X size={11}/>
@@ -318,8 +390,17 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
         </div>
       </div>
 
-      {/* List */}
-      {loading && rows.length === 0 ? (
+      {/* Kanban por etapa */}
+      {view === 'board' ? (
+        <StageBoard
+          fetchPage={fetchBoard}
+          reloadKey={boardKey}
+          isDesktop={isDesktop}
+          cityMap={cityMap}
+          onOpen={(e) => openEntity(e.id)}
+          onMove={(e, to) => changeStage(e, to)}
+        />
+      ) : loading && rows.length === 0 ? (
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
           {[0,1,2,3].map(i=>(
             <div key={i} style={{ height:80, borderRadius:14, background:'rgba(139,92,246,0.06)', border:'1px solid var(--border-violet)', animation:'pulse 1.5s ease-in-out infinite' }}/>
@@ -329,9 +410,11 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
         <EmptyState icon={Users} title={search ? t('empty.noResults') : t('empty.noInfluencers')} actionLabel={`+ ${t('create.influencer.label')}`} onAction={() => onOpenCreate('influencer')}/>
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-          {rows.map((inf, i) => (
+          {rows.map((inf, i) => {
+            const showBulk = isDesktop && canReassign && !batchMode
+            return (
             <div key={inf.id} style={{ position:'relative', animation: `cardIn var(--dur-base) var(--ease-emphasized) ${Math.min(i, 9) * 40}ms both` }}>
-              {isDesktop && canReassign && (
+              {showBulk && (
                 <input
                   type="checkbox"
                   checked={selected.has(inf.id)}
@@ -340,25 +423,58 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
                   style={{ position:'absolute', left:14, top:18, zIndex:2, cursor:'pointer', accentColor:'var(--primary-violet)', width:14, height:14 }}
                 />
               )}
-              <div style={isDesktop && canReassign ? { paddingLeft:34 } : {}}>
-                <NetworkCard
-                  entity={inf}
-                  entityType="influencer"
-                  cityName={cityMap[inf.cityId]}
-                  onClick={() => navigate(`/network/influencers/${inf.id}`)}
-                  onContact={handleContact}
-                  canReassign={canReassign}
-                  onReassign={setAssignTarget}
+              {batchMode && (
+                <input
+                  type="checkbox"
+                  aria-label={inf.name}
+                  checked={batchSel.has(inf.id)}
+                  onChange={() => toggleBatch(inf.id)}
+                  onClick={e => e.stopPropagation()}
+                  style={{ position:'absolute', left:10, top:18, zIndex:2, cursor:'pointer', accentColor:'#25D366', width:18, height:18 }}
                 />
+              )}
+              <div style={showBulk || batchMode ? { paddingLeft:34 } : {}}>
+                <SwipeStage stage={inf.relationshipStatus} onChange={(to) => changeStage(inf, to)} disabled={batchMode}>
+                  <NetworkCard
+                    entity={inf}
+                    entityType="influencer"
+                    cityName={cityMap[inf.cityId]}
+                    onClick={() => (batchMode ? toggleBatch(inf.id) : openEntity(inf.id))}
+                    onContact={handleContact}
+                    canReassign={canReassign}
+                    onReassign={setAssignTarget}
+                    onQuickReplied={batchMode ? undefined : (patch) => patchRow(inf.id, patch)}
+                    footer={fillField && !batchMode ? (
+                      <QuickFill entityType="influencer" entity={inf} field={fillField} categories={t('categories') || []}
+                        onDone={() => { setRows(prev => prev.filter(r => r.id !== inf.id)); setTotal(n => n - 1); toast(t('quickFill.saved', { name: inf.name || '' })) }}/>
+                    ) : null}
+                  />
+                </SwipeStage>
               </div>
             </div>
-          ))}
-          {rows.length < total && (
-            <button onClick={() => load(page+1)} disabled={loading} style={{ padding:'12px', borderRadius:10, background:'rgba(139,92,246,0.08)', border:'1px solid var(--border-violet)', color:'var(--text-secondary)', cursor:'pointer', fontSize:13 }}>
-              {loading ? t('loading.generic') : t('label.loadMore', { n: total - rows.length })}
-            </button>
-          )}
+          )})}
+          <LoadMore remaining={total - rows.length} loading={loading} onMore={() => load(page + 1)}/>
         </div>
+      )}
+
+      {/* Mensajes en tanda: barra de selección */}
+      {batchMode && (
+        <div style={{ position:'sticky', bottom: isDesktop ? 12 : 'calc(100px + env(safe-area-inset-bottom, 0px))', zIndex:20, display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', padding:'10px 12px', borderRadius:14, background:'var(--bg-secondary, #16131f)', border:'1px solid rgba(37,211,102,0.4)', boxShadow:'0 8px 30px rgba(0,0,0,0.35)' }}>
+          <span style={{ fontSize:12, fontWeight:700, color:'var(--text-primary)', flex:1 }}>{t('batch.selected', { n: batchSel.size })}</span>
+          <button onClick={() => setBatchSel(new Set(rows.map(r => r.id)))} style={{ fontSize:11, fontWeight:600, padding:'6px 10px', borderRadius:8, cursor:'pointer', background:'rgba(139,92,246,0.08)', border:'1px solid var(--border-violet)', color:'var(--text-secondary)' }}>{t('batch.all', { n: rows.length })}</button>
+          <button onClick={exitBatch} style={{ fontSize:11, fontWeight:600, padding:'6px 10px', borderRadius:8, cursor:'pointer', background:'none', border:'1px solid var(--border-violet)', color:'var(--text-secondary)' }}>{t('batch.cancel')}</button>
+          <button onClick={() => setBatchOpen(true)} disabled={batchSel.size === 0} style={{ fontSize:12, fontWeight:800, padding:'7px 14px', borderRadius:8, cursor: batchSel.size ? 'pointer' : 'default', background: batchSel.size ? '#25D366' : 'rgba(37,211,102,0.25)', border:'none', color:'#062b14' }}>{t('batch.start')}</button>
+        </div>
+      )}
+      {batchOpen && (
+        <BatchMessageSheet
+          entities={rows.filter(r => batchSel.has(r.id))}
+          entityType="influencer"
+          cityMap={cityMap}
+          me={currentUser?.nombre?.split(' ')[0] || ''}
+          onContacted={(id) => patchRow(id, { lastContactAt: new Date().toISOString() })}
+          onClose={exitBatch}
+        />
       )}
 
       <FilterSheet

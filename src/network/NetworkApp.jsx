@@ -26,7 +26,10 @@ import NotesPage from './pages/NotesPage.jsx'
 import RewardsPage from './pages/RewardsPage.jsx'
 import OffersPage from './pages/OffersPage.jsx'
 import LeadsPage from './pages/LeadsPage.jsx'
+import ApprovalsPage from './pages/ApprovalsPage.jsx'
 import CreateSheet from './components/CreateSheet.jsx'
+import Toaster from './components/Toaster.jsx'
+import GlobalSearch from './components/GlobalSearch.jsx'
 import EmptyState from './components/EmptyState.jsx'
 import { Shield } from 'lucide-react'
 import { getDefaultRoute, COMMAND_ROLES, DIRECTION_ROLES, OFFERS_ROLES } from './routes.js'
@@ -112,6 +115,8 @@ export default function NetworkApp({ currentUser }) {
           50%      { opacity:0.5; }
         }
       `}</style>
+      <Toaster/>
+      <GlobalSearch currentUser={currentUser}/>
 
       <Routes>
         {/* Standalone — no hereda sidebar/header del layout */}
@@ -177,6 +182,11 @@ export default function NetworkApp({ currentUser }) {
             </RoleGuard>
           }/>
           <Route path="leads"       element={<LeadsPage currentUser={currentUser}/>}/>
+          <Route path="approvals"   element={
+            <RoleGuard user={currentUser} allowedRoles={DIRECTION_ROLES}>
+              <ApprovalsPage currentUser={currentUser}/>
+            </RoleGuard>
+          }/>
           <Route path="calendar"    element={<CalendarPage currentUser={currentUser}/>}/>
           <Route path="follow-ups"  element={<FollowUpsPage currentUser={currentUser}/>}/>
           <Route path="notes"       element={<NotesPage    currentUser={currentUser}/>}/>

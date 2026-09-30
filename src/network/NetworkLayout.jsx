@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, LogOut, Bell, X, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, LogOut, Bell, X, Plus, Search } from 'lucide-react'
 import { SPEED_DIAL_ITEMS } from './createOptions.js'
 import { NAV_SECTIONS } from './nav.js'
 import { t } from '../i18n/index.js'
+import { openSearch } from './components/GlobalSearch.jsx'
 import { dbGetNotifications } from '../lib/database.js'
 import { signOut } from '../lib/auth.js'
 
@@ -339,6 +340,9 @@ export default function NetworkLayout({ currentUser, railContent, onOpenCreate }
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto' }}>
         {/* Topbar */}
         <div style={{ height: 44, borderBottom: '1px solid var(--border-violet)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 16px', background: 'var(--bg-secondary)', flexShrink: 0, position: 'sticky', top: 0, zIndex: 10 }}>
+          <button onClick={openSearch} aria-label={t('search.title')} style={{ display:'flex', alignItems:'center', gap:8, marginRight:'auto', padding:'5px 10px', borderRadius:8, cursor:'pointer', fontSize:12, color:'var(--text-secondary)', background:'rgba(139,92,246,0.06)', border:'1px solid var(--border-violet)', minWidth:220 }}>
+            <Search size={13}/>{t('search.placeholderShort')}<kbd style={{ marginLeft:'auto', fontSize:10, border:'1px solid var(--border-violet)', borderRadius:4, padding:'0 4px' }}>Ctrl K</kbd>
+          </button>
           <NotificationBell onNavigate={navigate}/>
         </div>
         <Outlet/>

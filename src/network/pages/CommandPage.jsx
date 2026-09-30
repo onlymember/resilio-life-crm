@@ -8,6 +8,8 @@ import ScouterModal from '../components/ScouterModal.jsx'
 import AssignModal from '../components/AssignModal.jsx'
 import PeriodFilter from '../components/PeriodFilter.jsx'
 import IntakeReport from '../components/IntakeReport.jsx'
+import WeeklySummary from '../components/WeeklySummary.jsx'
+import WeekGoalsEditor from '../components/WeekGoalsEditor.jsx'
 import { t } from '../../i18n/index.js'
 import { personName } from '../utils/people.js'
 import {
@@ -357,6 +359,9 @@ export default function CommandPage({ currentUser }) {
 
       {/* ── 2b. ALTAS DE INFLUENCERS ─────────────────────────── */}
       {/* Cuántas fichas se cargaron por día y por semana, y quién. */}
+      {/* Resumen de la semana y objetivos por scouter (Dirección). */}
+      {DIRECTION_ROLES.includes(currentUser?.rol) && <WeeklySummary SectionTitle={SectionTitle}/>}
+      {DIRECTION_ROLES.includes(currentUser?.rol) && <WeekGoalsEditor SectionTitle={SectionTitle}/>}
       {DIRECTION_ROLES.includes(currentUser?.rol) && <IntakeReport SectionTitle={SectionTitle}/>}
       {DIRECTION_ROLES.includes(currentUser?.rol) && <IntakeReport SectionTitle={SectionTitle} kind="brands"/>}
 

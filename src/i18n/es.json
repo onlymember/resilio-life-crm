@@ -142,7 +142,8 @@
       "intelligence": "INTELLIGENCE",
       "manual": "MANUAL",
       "club": "CLUB"
-    }
+    },
+    "approvals": "Aprobaciones"
   },
   "loading": {
     "generic": "Cargando…",
@@ -252,7 +253,9 @@
     "overdue": "Vencidos",
     "noOwner": "Sin dueño",
     "noCity": "Sin ciudad",
-    "noNextAction": "Sin próxima acción"
+    "noNextAction": "Sin próxima acción",
+    "noWhatsapp": "Sin WhatsApp",
+    "noCategory": "Sin categoría"
   },
   "filter": {
     "title": "Filtros",
@@ -1263,6 +1266,170 @@
       "empty": "No se agregaron marcas en este período.",
       "hint": "Por quién cargó la marca. Tocá un número para ver esas marcas. Los días se cuentan en tu horario.",
       "added": "Agregadas"
+    }
+  },
+  "stage": {
+    "moved": "{name} pasó a {stage}",
+    "undo": "Deshacer"
+  },
+  "board": {
+    "toggle": "Vista",
+    "list": "Lista",
+    "board": "Kanban por etapa",
+    "empty": "Nada en esta etapa"
+  },
+  "batch": {
+    "button": "Mensajes en tanda",
+    "title": "Mensajes en tanda",
+    "pick": "Elegí la plantilla",
+    "custom": "…o escribí un mensaje para todos",
+    "useText": "Usar este texto",
+    "noWhatsapp": "{n} sin WhatsApp quedan afuera.",
+    "progress": "{i} de {n}",
+    "change": "Cambiar mensaje",
+    "skip": "Saltar",
+    "send": "Enviar y seguir",
+    "finished": "Listo: {n} mensajes enviados",
+    "close": "Cerrar",
+    "selected": "{n} elegidas",
+    "all": "Todas ({n})",
+    "cancel": "Cancelar",
+    "start": "Empezar",
+    "placeholders": "Marcadores:",
+    "nobody": "Ninguna de las elegidas tiene WhatsApp cargado."
+  },
+  "quickFill": {
+    "whatsapp": "WhatsApp con código de país",
+    "category": "Elegí la categoría",
+    "save": "Guardar",
+    "saved": "Listo: {name}"
+  },
+  "quickReply": {
+    "answered": "Respondió",
+    "info": "Pidió info",
+    "not_interested": "No le interesa",
+    "infoNote": "Pidió más información",
+    "done": {
+      "answered": "Anotado: respondió",
+      "info": "Anotado: pidió info",
+      "not_interested": "Anotado: no le interesa"
+    }
+  },
+  "handoff": {
+    "fromName": "{name} te pasó esta ficha el {date}",
+    "from": "Te pasaron esta ficha el {date}",
+    "latest": "Lo último",
+    "dismiss": "Cerrar",
+    "reasonPlaceholder": "Contexto para quien la recibe (opcional): qué se habló, qué falta…"
+  },
+  "today": {
+    "approvals": "{n} para aprobar",
+    "approvalsDetail": "{leads} leads · {emails} cambios de mail",
+    "interests": "{n} \"Me interesa\" nuevos",
+    "tomorrow": "Visitas de mañana",
+    "notifyBrand": "Avisar a la marca",
+    "noBrandWa": "Marca sin WhatsApp",
+    "brandReminder": "¡Hola {marca}! Les confirmo que mañana, {fecha}, va {influencer} para la colaboración. Cualquier cosa me avisan. {yo} · Resilio"
+  },
+  "goals": {
+    "weekTitle": "Objetivos de la semana",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "save": "Guardar objetivos",
+    "saved": "Objetivos guardados",
+    "empty": "Todavía no hay objetivos para esta semana.",
+    "summary": "{n} scouters con objetivos esta semana.",
+    "copyLast": "Usar los de la semana pasada",
+    "done": "van {n}",
+    "metric": {
+      "influencers_added": "Influencers",
+      "brands_added": "Marcas",
+      "contacts": "Contactos",
+      "collaborations": "Colaboraciones"
+    }
+  },
+  "weekly": {
+    "title": "Resumen de la semana",
+    "topAdders": "Quién cargó más influencers",
+    "weakCities": "Ciudades sin movimiento",
+    "noWeak": "Todas las ciudades con scouters tuvieron altas o colaboraciones.",
+    "none": "Sin altas esta semana.",
+    "hint": "Últimos 7 días comparados con los 7 anteriores. Respuestas = seguimientos marcados como \"Respondió\".",
+    "metric": {
+      "influencers": "Influencers agregadas",
+      "brands": "Marcas agregadas",
+      "contacts": "Contactos",
+      "answers": "Respuestas",
+      "collabs": "Colaboraciones creadas",
+      "completed": "Colaboraciones completadas"
+    }
+  },
+  "approvals": {
+    "title": "Aprobaciones",
+    "subtitle": "Leads del Club, cambios de mail y \"Me interesa\" en un solo lugar.",
+    "tabPending": "Leads y mails",
+    "tabInterests": "Me interesa",
+    "noLeads": "Nada pendiente",
+    "noLeadsHint": "No hay leads ni cambios de mail para aprobar.",
+    "noInterests": "No hay \"Me interesa\" en esta vista.",
+    "interestFilter": {
+      "open": "Abiertos",
+      "new": "Nuevos",
+      "matched": "Con colaboración",
+      "discarded": "Descartados",
+      "all": "Todos"
+    }
+  },
+  "interestToCollab": {
+    "create": "Crear colaboración",
+    "view": "Ver colaboración",
+    "created": "Colaboración creada",
+    "open": "Abrir"
+  },
+  "brandCollabs": {
+    "title": "Colaboraciones",
+    "none": "Todavía no hay colaboraciones con esta marca.",
+    "total": "en total",
+    "completed": "completadas",
+    "reach": "de alcance",
+    "emv": "de valor estimado",
+    "reachShort": "alcance",
+    "emvShort": "valor"
+  },
+  "duplicate": {
+    "button": "Duplicar",
+    "title": "Duplicar colaboración",
+    "hint": "Misma marca ({brand}), tipo, entregables y monto. Elegí la influencer y la fecha.",
+    "date": "Fecha",
+    "create": "Crear copia",
+    "done": "Colaboración duplicada"
+  },
+  "quickTask": {
+    "placeholder": "Ej: llamar a Sofi el jueves 11hs",
+    "hint": "Escribí la tarea como la dirías: se detectan fecha, hora y a quién va.",
+    "date": "Fecha",
+    "time": "Hora",
+    "save": "Crear tarea",
+    "saved": "Tarea creada",
+    "type": {
+      "influencer": "influencer",
+      "brand": "marca"
+    }
+  },
+  "search": {
+    "title": "Buscar",
+    "placeholder": "Buscar influencer, marca, oferta o ciudad…",
+    "placeholderShort": "Buscar…",
+    "hint": "Escribí al menos 2 letras. Atajo: Ctrl+K (⌘K en Mac).",
+    "none": "Sin resultados.",
+    "cityHint": "Ver influencers de esta ciudad",
+    "type": {
+      "influencer": "Influencer",
+      "brand": "Marca",
+      "opportunity": "Oportunidad",
+      "offer": "Oferta",
+      "city": "Ciudad",
+      "campaign": "Campaña"
     }
   }
 }

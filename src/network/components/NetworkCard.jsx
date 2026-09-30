@@ -2,6 +2,7 @@ import React from 'react'
 import { MapPin, Clock, MoreVertical, UserCheck } from 'lucide-react'
 import RelationshipBadge from './RelationshipBadge.jsx'
 import QuickActions from './QuickActions.jsx'
+import QuickReply from './QuickReply.jsx'
 import { t } from '../../i18n/index.js'
 
 const timeAgo = (iso) => {
@@ -33,6 +34,9 @@ const _lastContact = new Map()
 export default function NetworkCard({
   entity, entityType = 'influencer', cityName, onClick,
   onContact, canReassign = false, onReassign, ownerName,
+  // Respuesta rápida (respondió / pidió info / no le interesa) y un pie
+  // opcional (por ejemplo el campo para completar datos que faltan).
+  onQuickReplied, footer = null,
 }) {
   const name      = entity.name || entity.username || '—'
   const username  = entityType === 'influencer' ? entity.username : null
@@ -182,16 +186,22 @@ export default function NetworkCard({
       </button>
 
       {/* QuickActions — outside <button>, so <a> tags are valid HTML */}
-      {hasQuickActions && (
-        <div style={{ paddingLeft: 72, paddingRight: 16, paddingBottom: 12 }}>
-          <QuickActions
-            whatsapp={entity.whatsapp}
-            instagram={entity.instagram}
-            phone={entity.phone}
-            onContact={onContact ? handleContact : undefined}
-          />
+      {(hasQuickActions || onQuickReplied) && (
+        <div style={{ paddingLeft: 72, paddingRight: 16, paddingBottom: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {hasQuickActions && (
+            <QuickActions
+              whatsapp={entity.whatsapp}
+              instagram={entity.instagram}
+              phone={entity.phone}
+              onContact={onContact ? handleContact : undefined}
+            />
+          )}
+          {onQuickReplied && (
+            <QuickReply entityType={entityType} entityId={entity.id} onDone={onQuickReplied} compact/>
+          )}
         </div>
       )}
+      {footer}
     </div>
   )
 }

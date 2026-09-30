@@ -7,6 +7,7 @@ import { Smartphone, Heart } from 'lucide-react'
 import { t } from '../../i18n/index.js'
 import { redGetAppAccess, redCreateInvitation, redGetInfluencerInterests, redUpdateInterest, redGetInfluencerTopics } from '../../lib/red.js'
 import { LinkShare, ErrorLine, btn, inputStyle } from './ui.jsx'
+import InterestToCollab from './InterestToCollab.jsx'
 
 const INTERNAL = ['new', 'reviewed', 'contacted', 'discarded', 'matched']
 
@@ -62,7 +63,7 @@ function AppAccess({ influencerId }) {
   )
 }
 
-function Interests({ influencerId }) {
+function Interests({ influencerId, isDirection, ownerId }) {
   const [rows,  setRows]  = useState(null)
   const [error, setError] = useState(null)
 
@@ -84,7 +85,7 @@ function Interests({ influencerId }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {rows?.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{t('red.interests.none')}</div>}
       {rows?.map(r => (
-        <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 10, background: 'rgba(139,92,246,0.05)', border: '1px solid var(--border-violet)' }}>
+        <div key={r.id} style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10, padding: '8px 10px', borderRadius: 10, background: 'rgba(139,92,246,0.05)', border: '1px solid var(--border-violet)' }}>
           <Heart size={13} color="var(--primary-violet-light)" style={{ flexShrink: 0 }}/>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.offerTitle}</div>
@@ -92,6 +93,10 @@ function Interests({ influencerId }) {
               {[r.brandName, r.cityName, new Date(r.votedAt).toLocaleDateString(), r.offerStatus === 'inactive' ? t('red.offers.inactive') : null].filter(Boolean).join(' · ')}
             </div>
           </div>
+          {isDirection && (
+            <InterestToCollab interest={{ ...r, influencerOwnerId: ownerId }}
+              onCreated={(c) => setRows(prev => prev.map(x => x.id === r.id ? { ...x, collaborationId: c.id, internalStatus: 'matched' } : x))}/>
+          )}
           <select value={r.internalStatus} onChange={e => change(r, e.target.value)} aria-label={t('red.interests.status')}
             style={{ ...inputStyle, width: 'auto', padding: '6px 8px', fontSize: 12 }}>
             {INTERNAL.map(s => <option key={s} value={s}>{t(`red.interests.internal.${s}`)}</option>)}
@@ -115,7 +120,7 @@ function Topics({ influencerId }) {
   )
 }
 
-export default function InfluencerRedSection({ influencerId, sectionStyle }) {
+export default function InfluencerRedSection({ influencerId, sectionStyle, isDirection = false, ownerId = null }) {
   const title = { fontSize: 11, fontWeight: 700, letterSpacing: 0.6, textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 10 }
   return (
     <div style={sectionStyle}>
@@ -124,7 +129,7 @@ export default function InfluencerRedSection({ influencerId, sectionStyle }) {
       <div style={{ ...title, marginTop: 18 }}>{t('red.topics')}</div>
       <Topics influencerId={influencerId}/>
       <div style={{ ...title, marginTop: 18 }}>{t('red.interests.title')}</div>
-      <Interests influencerId={influencerId}/>
+      <Interests influencerId={influencerId} isDirection={isDirection} ownerId={ownerId}/>
     </div>
   )
 }

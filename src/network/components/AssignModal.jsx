@@ -19,10 +19,11 @@ export default function AssignModal({ isOpen, onClose, entity, entityType, onAss
   const [assigning,   setAssigning]   = useState(false)
   const [error,       setError]       = useState(null)
   const [loading,     setLoading]     = useState(false)
+  const [reason,      setReason]      = useState('')   // contexto para quien la recibe
 
   useEffect(() => {
     if (!isOpen || !entity) return
-    setSearch(''); setSelected(null); setError(null); setShowAll(false)
+    setSearch(''); setSelected(null); setError(null); setShowAll(false); setReason('')
     setLoading(true)
     dbGetActiveScouters(showAll ? null : entity.cityId)
       .then(setScouters)
@@ -50,7 +51,7 @@ export default function AssignModal({ isOpen, onClose, entity, entityType, onAss
     setAssigning(true)
     setError(null)
     try {
-      await dbAssignEntity(entityType, entity.id, selected.userId)
+      await dbAssignEntity(entityType, entity.id, selected.userId, reason.trim() || null)
       if (onAssigned) onAssigned(entity.id, selected)
       onClose()
     } catch (e) {
@@ -173,6 +174,13 @@ export default function AssignModal({ isOpen, onClose, entity, entityType, onAss
         {/* Error */}
         {error && (
           <div style={{ fontSize: 11, color: '#F87171', marginBottom: 8, flexShrink: 0 }}>{error}</div>
+        )}
+
+        {/* Contexto para quien la recibe: lo ve arriba de la ficha. */}
+        {selected && (
+          <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2} maxLength={500}
+            placeholder={t('handoff.reasonPlaceholder')} aria-label={t('handoff.reasonPlaceholder')}
+            style={{ flexShrink: 0, marginBottom: 10, padding: '9px 12px', borderRadius: 10, background: 'rgba(139,92,246,0.07)', border: '1px solid var(--border-violet)', color: 'var(--text-primary)', fontSize: 14, fontFamily: 'inherit', resize: 'none' }}/>
         )}
 
         {/* Confirm */}

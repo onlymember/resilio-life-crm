@@ -1,13 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Building2, Search, SlidersHorizontal, Upload, ChevronDown, X } from 'lucide-react'
+import { Building2, Search, SlidersHorizontal, Upload, ChevronDown, X, MessageCircle } from 'lucide-react'
 import NetworkCard from '../components/NetworkCard.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import FilterSheet from '../components/FilterSheet.jsx'
 import AssignModal from '../components/AssignModal.jsx'
 import BulkBar from '../components/BulkBar.jsx'
 import ImportSheet from '../components/ImportSheet.jsx'
+import SwipeStage from '../components/SwipeStage.jsx'
+import StageBoard from '../components/StageBoard.jsx'
+import QuickFill from '../components/QuickFill.jsx'
+import LoadMore from '../components/LoadMore.jsx'
+import BatchMessageSheet from '../components/BatchMessageSheet.jsx'
+import { toast } from '../components/Toaster.jsx'
+import ViewToggle from '../components/ViewToggle.jsx'
+import { saveList, readList, clearList, restoreScroll } from '../utils/listMemory.js'
 import { t } from '../../i18n/index.js'
-import { dbGetBrands, dbGetGeography, dbGetBrandCategories, dbLogContact, dbGetActiveScouters, dbGetPeopleNames } from '../../lib/database.js'
+import { dbGetBrands, dbGetGeography, dbGetBrandCategories, dbLogContact, dbGetActiveScouters, dbGetPeopleNames, dbPatchBrand } from '../../lib/database.js'
 import { personName } from '../utils/people.js'
 import { ADDED_PRESETS, addedRange, rangeToFilters, toDateInput } from '../utils/addedRanges.js'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -23,7 +31,8 @@ const useIsDesktop = () => {
   return desktop
 }
 
-const PAGE_SIZE = 30
+const PAGE_SIZE = 50
+const MEM_KEY = 'brands'
 
 const QUICK_CHIPS = [
   { id: 'all',     labelKey: 'chips.allF',     filters: {} },
@@ -32,6 +41,8 @@ const QUICK_CHIPS = [
   { id: 'nocity',  labelKey: 'chips.noCity',   filters: { noCity: true } },
   { id: 'overdue', labelKey: 'chips.overdue',  filters: { overdueFollowup: true } },
   { id: 'nonext',  labelKey: 'chips.noNextAction', filters: { noNextAction: true } },
+  { id: 'nowa',    labelKey: 'chips.noWhatsapp', filters: { noWhatsapp: true }, fill: 'whatsapp' },
+  { id: 'nocat',   labelKey: 'chips.noCategory', filters: { noCategory: true }, fill: 'category' },
 ]
 
 // El Command Center enlaza con ?noOwner=1 / ?noCity=1. Sin leerlos,
@@ -73,27 +84,35 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
   const [total,          setTotal]          = useState(0)
   const [page,           setPage]           = useState(0)
   const [loading,        setLoading]        = useState(true)
-  const [search,         setSearch]         = useState('')
-  const [filters,        setFilters]        = useState({})
+  const [searchParams] = useSearchParams()
+  // Al volver de una ficha se recupera la lista tal como estaba.
+  const [mem] = useState(() => (searchParams.toString() ? null : readList(MEM_KEY)))
+  const [search,         setSearch]         = useState(mem?.search || '')
+  const [filters,        setFilters]        = useState(mem?.filters || {})
   const [filterOpen,     setFilterOpen]     = useState(false)
   const [cities,         setCities]         = useState([])
   const [cityMap,        setCityMap]        = useState({})
   const [brandCats,      setBrandCats]      = useState([])
-  const [searchParams] = useSearchParams()
-  const [chipId,         setChipId]         = useState(chipFromParams(searchParams)?.id ?? 'all')
+  const [chipId,         setChipId]         = useState(chipFromParams(searchParams)?.id ?? mem?.chipId ?? 'all')
   const [assignTarget,   setAssignTarget]   = useState(null)
   const [selected,       setSelected]       = useState(new Set())
   const [selectingAll,   setSelectingAll]   = useState(false)
   const [importOpen,     setImportOpen]     = useState(false)
-  const initialExtra = extraFromParams(searchParams)
+  const initialExtra = mem?.extra || extraFromParams(searchParams)
   const [extra,          setExtra]          = useState(initialExtra)
-  const [addedPreset,    setAddedPreset]    = useState(initialExtra.createdFrom || initialExtra.createdTo ? 'custom' : 'any')
-  const [customRange,    setCustomRange]    = useState({
+  const [addedPreset,    setAddedPreset]    = useState(mem?.addedPreset || (initialExtra.createdFrom || initialExtra.createdTo ? 'custom' : 'any'))
+  const [customRange,    setCustomRange]    = useState(mem?.customRange || {
     from: initialExtra.createdFrom ? toDateInput(initialExtra.createdFrom) : '',
     to:   initialExtra.createdTo ? toDateInput(new Date(new Date(initialExtra.createdTo).getTime() - 1)) : '',
   })
   const [scouters,       setScouters]       = useState([])
   const [names,          setNames]          = useState({})   // userId → nombre (a cargo / cargó)
+  const [view,           setView]           = useState(mem?.view || 'list')
+  const [batchMode,      setBatchMode]      = useState(false)
+  const [batchSel,       setBatchSel]       = useState(new Set())
+  const [batchOpen,      setBatchOpen]      = useState(false)
+  const [boardKey,       setBoardKey]       = useState(0)
+  const fillField = QUICK_CHIPS.find(c => c.id === chipId)?.fill || null
 
   const toggleSelect = (id) => setSelected(prev => {
     const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next
@@ -121,12 +140,14 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
       }).catch(() => {})
   }, [])
 
-  const load = useCallback(async (pg = 0, s = search, f = filters, ex = extra) => {
+  const load = useCallback(async (pg = 0, s = search, f = filters, ex = extra, size = PAGE_SIZE) => {
     setLoading(true)
+    setBoardKey(k => k + 1)
     try {
-      const res = await dbGetBrands({ page: pg, pageSize: PAGE_SIZE, search: s || undefined, ...f, ...ex })
+      const res = await dbGetBrands({ page: pg, pageSize: size, search: s || undefined, ...f, ...ex })
       if (pg === 0) setRows(res.rows); else setRows(p => [...p, ...res.rows])
-      setTotal(res.total); setPage(pg)
+      setTotal(res.total); setPage(size > PAGE_SIZE ? size / PAGE_SIZE - 1 : pg)
+      return res
     } catch(e) { console.error('BrandsPage load:', e.message) }
     finally { setLoading(false) }
   }, [search, filters, extra])
@@ -134,8 +155,18 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
   useEffect(() => {
     const chip = chipFromParams(searchParams)
     if (chip) { setFilters(chip.filters); load(0, '', chip.filters) }
+    else if (mem) {
+      const size = Math.min(500, Math.max(PAGE_SIZE, Math.ceil((mem.count || 0) / PAGE_SIZE) * PAGE_SIZE))
+      load(0, mem.search || '', mem.filters || {}, initialExtra, size).then(() => restoreScroll(mem.scrollY))
+    }
     else      { load(0) }
+    clearList(MEM_KEY)
   }, [])
+
+  const openEntity = (id) => {
+    saveList(MEM_KEY, { search, filters, chipId, extra, addedPreset, customRange, view, count: rows.length })
+    navigate(`/network/brands/${id}`)
+  }
 
   // Scouters para el filtro de Dirección y nombres de quién tiene cada marca.
   useEffect(() => {
@@ -191,6 +222,30 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
     setRows(prev => prev.map(r => r.id === entityId ? { ...r, ownerScouterId: scouter.userId } : r))
   }
 
+  const patchRow = (id, patch) => setRows(prev => prev.map(r => r.id === id ? { ...r, ...patch } : r))
+
+  const changeStage = async (ent, to, silent = false) => {
+    const from = ent.relationshipStatus || 'cold'
+    patchRow(ent.id, { relationshipStatus: to })
+    try {
+      await dbPatchBrand(ent.id, { relationshipStatus: to })
+      if (!silent) toast(t('stage.moved', { name: ent.name || '', stage: t(`relationship.${to}`) }),
+        { label: t('stage.undo'), run: () => { changeStage({ ...ent, relationshipStatus: to }, from, true); setBoardKey(k => k + 1) } })
+      return true
+    } catch (e) {
+      patchRow(ent.id, { relationshipStatus: from })
+      toast(e.message)
+      return false
+    }
+  }
+
+  const fetchBoard = useCallback((stage, pg, size) => dbGetBrands({
+    page: pg, pageSize: size, search: search || undefined, ...filters, ...extra, relationshipStatus: stage,
+  }), [search, filters, extra])
+
+  const toggleBatch = (id) => setBatchSel(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const exitBatch = () => { setBatchMode(false); setBatchSel(new Set()); setBatchOpen(false) }
+
   return (
     <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
@@ -204,8 +259,13 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
               <Upload size={14}/>{t('import.button')}
             </button>
           )}
+          <ViewToggle view={view} onChange={setView}/>
+          <button onClick={() => (batchMode ? exitBatch() : setBatchMode(true))} aria-pressed={batchMode} title={t('batch.button')} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 12px', borderRadius:10, cursor:'pointer', fontSize:12,
+            background: batchMode ? 'rgba(37,211,102,0.15)' : 'rgba(139,92,246,0.08)', border: batchMode ? '1px solid rgba(37,211,102,0.4)' : '1px solid var(--border-violet)', color: batchMode ? '#25D366' : 'var(--text-secondary)' }}>
+            <MessageCircle size={14}/>{isDesktop && t('batch.button')}
+          </button>
           <button onClick={() => setFilterOpen(true)} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:10, background:'rgba(139,92,246,0.08)', border:'1px solid var(--border-violet)', color:'var(--text-secondary)', cursor:'pointer', fontSize:12 }}>
-            <SlidersHorizontal size={14}/>{t('filter.title')}
+            <SlidersHorizontal size={14}/>{isDesktop && t('filter.title')}
           </button>
         </div>
       </div>
@@ -277,7 +337,16 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
         </button>
       )}
 
-      {loading && rows.length === 0 ? (
+      {view === 'board' ? (
+        <StageBoard
+          fetchPage={fetchBoard}
+          reloadKey={boardKey}
+          isDesktop={isDesktop}
+          cityMap={cityMap}
+          onOpen={(e) => openEntity(e.id)}
+          onMove={(e, to) => changeStage(e, to)}
+        />
+      ) : loading && rows.length === 0 ? (
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
           {[0,1,2].map(i=><div key={i} style={{ height:80, borderRadius:14, background:'rgba(139,92,246,0.06)', border:'1px solid var(--border-violet)' }}/>)}
         </div>
@@ -285,9 +354,11 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
         <EmptyState icon={Building2} title={search ? t('empty.noResults') : t('empty.noBrands')} actionLabel={`+ ${t('create.brand.label')}`} onAction={() => onOpenCreate('brand')}/>
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-          {rows.map((b, i) => (
+          {rows.map((b, i) => {
+            const showBulk = isDesktop && canReassign && !batchMode
+            return (
             <div key={b.id} style={{ position:'relative', animation: `cardIn var(--dur-base) var(--ease-emphasized) ${Math.min(i, 9) * 40}ms both` }}>
-              {isDesktop && canReassign && (
+              {showBulk && (
                 <input
                   type="checkbox"
                   checked={selected.has(b.id)}
@@ -296,26 +367,58 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
                   style={{ position:'absolute', left:14, top:18, zIndex:2, cursor:'pointer', accentColor:'var(--primary-violet)', width:14, height:14 }}
                 />
               )}
-              <div style={isDesktop && canReassign ? { paddingLeft:34 } : {}}>
-                <NetworkCard
-                  entity={b}
-                  entityType="brand"
-                  cityName={cityMap[b.cityId]}
-                  ownerName={isDirection ? (b.ownerScouterId ? names[b.ownerScouterId] : t('brand.owner.none')) : undefined}
-                  onClick={() => navigate(`/network/brands/${b.id}`)}
-                  onContact={handleContact}
-                  canReassign={canReassign}
-                  onReassign={setAssignTarget}
+              {batchMode && (
+                <input
+                  type="checkbox"
+                  aria-label={b.name}
+                  checked={batchSel.has(b.id)}
+                  onChange={() => toggleBatch(b.id)}
+                  onClick={e => e.stopPropagation()}
+                  style={{ position:'absolute', left:10, top:18, zIndex:2, cursor:'pointer', accentColor:'#25D366', width:18, height:18 }}
                 />
+              )}
+              <div style={showBulk || batchMode ? { paddingLeft:34 } : {}}>
+                <SwipeStage stage={b.relationshipStatus} onChange={(to) => changeStage(b, to)} disabled={batchMode}>
+                  <NetworkCard
+                    entity={b}
+                    entityType="brand"
+                    cityName={cityMap[b.cityId]}
+                    ownerName={isDirection ? (b.ownerScouterId ? names[b.ownerScouterId] : t('brand.owner.none')) : undefined}
+                    onClick={() => (batchMode ? toggleBatch(b.id) : openEntity(b.id))}
+                    onContact={handleContact}
+                    canReassign={canReassign}
+                    onReassign={setAssignTarget}
+                    onQuickReplied={batchMode ? undefined : (patch) => patchRow(b.id, patch)}
+                    footer={fillField && !batchMode ? (
+                      <QuickFill entityType="brand" entity={b} field={fillField} categories={brandCats}
+                        onDone={() => { setRows(prev => prev.filter(r => r.id !== b.id)); setTotal(n => n - 1); toast(t('quickFill.saved', { name: b.name || '' })) }}/>
+                    ) : null}
+                  />
+                </SwipeStage>
               </div>
             </div>
-          ))}
-          {rows.length < total && (
-            <button onClick={() => load(page+1)} disabled={loading} style={{ padding:'12px', borderRadius:10, background:'rgba(139,92,246,0.08)', border:'1px solid var(--border-violet)', color:'var(--text-secondary)', cursor:'pointer', fontSize:13 }}>
-              {loading ? t('loading.generic') : t('label.loadMore', { n: total - rows.length })}
-            </button>
-          )}
+          )})}
+          <LoadMore remaining={total - rows.length} loading={loading} onMore={() => load(page + 1)}/>
         </div>
+      )}
+
+      {batchMode && (
+        <div style={{ position:'sticky', bottom: isDesktop ? 12 : 'calc(100px + env(safe-area-inset-bottom, 0px))', zIndex:20, display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', padding:'10px 12px', borderRadius:14, background:'var(--bg-secondary, #16131f)', border:'1px solid rgba(37,211,102,0.4)', boxShadow:'0 8px 30px rgba(0,0,0,0.35)' }}>
+          <span style={{ fontSize:12, fontWeight:700, color:'var(--text-primary)', flex:1 }}>{t('batch.selected', { n: batchSel.size })}</span>
+          <button onClick={() => setBatchSel(new Set(rows.map(r => r.id)))} style={{ fontSize:11, fontWeight:600, padding:'6px 10px', borderRadius:8, cursor:'pointer', background:'rgba(139,92,246,0.08)', border:'1px solid var(--border-violet)', color:'var(--text-secondary)' }}>{t('batch.all', { n: rows.length })}</button>
+          <button onClick={exitBatch} style={{ fontSize:11, fontWeight:600, padding:'6px 10px', borderRadius:8, cursor:'pointer', background:'none', border:'1px solid var(--border-violet)', color:'var(--text-secondary)' }}>{t('batch.cancel')}</button>
+          <button onClick={() => setBatchOpen(true)} disabled={batchSel.size === 0} style={{ fontSize:12, fontWeight:800, padding:'7px 14px', borderRadius:8, cursor: batchSel.size ? 'pointer' : 'default', background: batchSel.size ? '#25D366' : 'rgba(37,211,102,0.25)', border:'none', color:'#062b14' }}>{t('batch.start')}</button>
+        </div>
+      )}
+      {batchOpen && (
+        <BatchMessageSheet
+          entities={rows.filter(r => batchSel.has(r.id))}
+          entityType="brand"
+          cityMap={cityMap}
+          me={currentUser?.nombre?.split(' ')[0] || ''}
+          onContacted={(id) => patchRow(id, { lastContactAt: new Date().toISOString() })}
+          onClose={exitBatch}
+        />
       )}
 
       <FilterSheet

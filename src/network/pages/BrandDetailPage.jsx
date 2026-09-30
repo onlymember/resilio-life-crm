@@ -5,6 +5,9 @@ import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import AssignModal from '../components/AssignModal.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import MessageSheet from '../components/MessageSheet.jsx'
+import QuickReply from '../components/QuickReply.jsx'
+import HandoffCard from '../components/HandoffCard.jsx'
+import BrandCollabs from '../components/BrandCollabs.jsx'
 import RelationshipHistory from '../components/RelationshipHistory.jsx'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
@@ -235,6 +238,9 @@ export default function BrandDetailPage({ currentUser }) {
 
       <div style={{ padding: '16px 20px' }}>
 
+        {/* Si te la reasignaron: quién, por qué y lo último que pasó. */}
+        <HandoffCard entityType="brand" entityId={entity.id} activities={timeline}/>
+
         {/* City warning */}
         {!get('cityId') && (
           <div style={{ fontSize: 11, color: '#FBBF24', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: 8, padding: '8px 12px', marginBottom: 12 }}>
@@ -288,6 +294,14 @@ export default function BrandDetailPage({ currentUser }) {
         {/* RELACIÓN */}
         <div style={sectionStyle}>
           <SectionHeader label={t('brand.sections.relationship')} fields={['relationshipStatus','nextAction','nextActionAt','potentialValue','notes']} dirty={dirty}/>
+          {/* Respuesta rápida: mueve la etapa, deja la nota y agenda lo siguiente. */}
+          <div style={{ marginBottom: 12 }}>
+            <QuickReply entityType="brand" entityId={entity.id} onDone={(patch) => {
+              setEntity(prev => ({ ...prev, ...patch }))
+              setDirty(prev => { const n = { ...prev }; delete n.relationshipStatus; delete n.nextAction; delete n.nextActionAt; return n })
+              dbGetEntityTimeline('brand', entity.id).then(setTimeline).catch(() => {})
+            }}/>
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
             {/* Relationship status badge buttons */}
@@ -395,6 +409,12 @@ export default function BrandDetailPage({ currentUser }) {
               </button>
             )}
           </div>
+        </div>
+
+        {/* COLABORACIONES: todas, con estado y resultados */}
+        <div style={sectionStyle}>
+          <SectionHeader label={t('brandCollabs.title')} fields={[]} dirty={dirty}/>
+          <BrandCollabs brandId={entity.id}/>
         </div>
 
         {/* HISTORIAL DE RELACIÓN */}

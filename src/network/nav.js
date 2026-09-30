@@ -2,7 +2,7 @@ import {
   Home, Users, Building2, Briefcase, CheckCircle,
   CheckSquare, Calendar, ArrowRight, FileText,
   Target, Map, Award, BarChart3, BookOpen, Users2, Repeat, MessageSquare,
-  Gift, UserPlus,
+  Gift, UserPlus, Inbox,
 } from 'lucide-react'
 import { COMMAND_ROLES, DIRECTION_ROLES, OFFERS_ROLES } from './routes.js'
 
@@ -33,6 +33,7 @@ export const NAV_SECTIONS = [
     sectionKey: 'nav.sections.club',
     roles: null,
     items: [
+      { path: '/network/approvals', labelKey: 'nav.approvals', icon: Inbox, soon: false, roles: DIRECTION_ROLES },
       { path: '/network/leads',  labelKey: 'nav.leads',  icon: UserPlus, soon: false, roles: null },
       { path: '/network/offers', labelKey: 'nav.offers', icon: Gift,     soon: false, roles: OFFERS_ROLES },
     ],

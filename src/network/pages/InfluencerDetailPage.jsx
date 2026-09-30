@@ -4,8 +4,11 @@ import { ChevronLeft, Users, MessageSquare } from 'lucide-react'
 import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import MessageSheet from '../components/MessageSheet.jsx'
+import QuickReply from '../components/QuickReply.jsx'
+import HandoffCard from '../components/HandoffCard.jsx'
 import RelationshipHistory from '../components/RelationshipHistory.jsx'
 import InfluencerRedSection from '../red/InfluencerRedSection.jsx'
+import { DIRECTION_ROLES } from '../routes.js'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { isoToDatetimeLocal, datetimeLocalToIso } from '../utils/date.js'
@@ -200,6 +203,9 @@ export default function InfluencerDetailPage({ currentUser }) {
 
       <div style={{ padding: '16px 20px' }}>
 
+        {/* Si te la reasignaron: quién, por qué y lo último que pasó. */}
+        <HandoffCard entityType="influencer" entityId={entity.id} activities={activities}/>
+
         {/* City warning */}
         {!get('cityId') && (
           <div style={{ fontSize: 11, color: '#FBBF24', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: 8, padding: '8px 12px', marginBottom: 12 }}>
@@ -250,6 +256,14 @@ export default function InfluencerDetailPage({ currentUser }) {
         {/* RELACIÓN */}
         <div style={sectionStyle}>
           <SectionHeader label={t('influencer.sections.relationship')} fields={['relationshipStatus','nextAction','nextActionAt','notes']} dirty={dirty}/>
+          {/* Respuesta rápida: mueve la etapa, deja la nota y agenda lo siguiente. */}
+          <div style={{ marginBottom: 12 }}>
+            <QuickReply entityType="influencer" entityId={entity.id} onDone={(patch) => {
+              setEntity(prev => ({ ...prev, ...patch }))
+              setDirty(prev => { const n = { ...prev }; delete n.relationshipStatus; delete n.nextAction; delete n.nextActionAt; return n })
+              dbGetActivities('influencer', entity.id, 20).then(setActivities).catch(() => {})
+            }}/>
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
             {/* Relationship status badge buttons */}
@@ -311,7 +325,8 @@ export default function InfluencerDetailPage({ currentUser }) {
         </div>
 
         {/* CLUB: acceso a la app e intereses (red de influencers, 047) */}
-        <InfluencerRedSection influencerId={entity.id} sectionStyle={sectionStyle}/>
+        <InfluencerRedSection influencerId={entity.id} sectionStyle={sectionStyle}
+          isDirection={DIRECTION_ROLES.includes(currentUser?.rol)} ownerId={entity.ownerScouterId}/>
 
         {/* HISTORIAL DE RELACIÓN */}
         <div style={sectionStyle}>

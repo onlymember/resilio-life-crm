@@ -1,6 +1,6 @@
-import { Users, Building2, Briefcase, Handshake } from 'lucide-react'
+import { Users, Building2, Briefcase, Handshake, CheckSquare } from 'lucide-react'
 
-// Las cuatro entidades que se pueden crear desde el botón +.
+// Lo que se puede crear desde el botón + (fichas, colaboración y tarea).
 // Mismo orden que los TypeButtons de CreateSheet.
 //
 // Vive en su propio archivo porque lo consumen los dos layouts: el FAB
@@ -11,4 +11,5 @@ export const SPEED_DIAL_ITEMS = [
   { step: 'brand',         labelKey: 'create.brand.label',         Icon: Building2, color: '#22D3EE' },
   { step: 'opportunity',   labelKey: 'create.opportunity.label',   Icon: Briefcase, color: '#FBBF24' },
   { step: 'collaboration', labelKey: 'create.collaboration.label', Icon: Handshake, color: '#34D399' },
+  { step: 'task',          labelKey: 'create.task',          Icon: CheckSquare, color: '#F472B6' },
 ]

@@ -63,7 +63,7 @@ export function InviteSheet({ onClose }) {
   )
 }
 
-function ApproveSheet({ lead, onClose, onDone }) {
+export function ApproveSheet({ lead, onClose, onDone }) {
   const needsOwner = !lead.matchedInfluencerId && !lead.suggestedOwnerId
   const [scouters, setScouters] = useState([])
   const [allCities, setAllCities] = useState(false)
@@ -126,7 +126,7 @@ function ApproveSheet({ lead, onClose, onDone }) {
   )
 }
 
-function RejectSheet({ lead, onClose, onDone }) {
+export function RejectSheet({ lead, onClose, onDone }) {
   const [note,  setNote]  = useState('')
   const [busy,  setBusy]  = useState(false)
   const [error, setError] = useState(null)
@@ -155,7 +155,7 @@ function RejectSheet({ lead, onClose, onDone }) {
   )
 }
 
-function LeadCard({ lead, isDirection, ownerName, onApprove, onReject }) {
+export function LeadCard({ lead, isDirection, ownerName, onApprove, onReject }) {
   const navigate = useNavigate()
   const Row = ({ icon: Icon, children }) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)', minWidth: 0 }}>
@@ -227,7 +227,7 @@ function LeadCard({ lead, isDirection, ownerName, onApprove, onReject }) {
 }
 
 // Pedidos de cambio de email desde el Club: solo Dirección los autoriza.
-function EmailRequests() {
+export function EmailRequests() {
   const [items, setItems] = useState([])
   const [err, setErr] = useState(null)
   const load = () => redGetEmailRequests().then(setItems)

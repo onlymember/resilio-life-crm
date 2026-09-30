@@ -10,6 +10,7 @@
 // se chequea en pantalla es solo para no ofrecer botones inútiles.
 // ═══════════════════════════════════════════════════════════
 import { supabase } from './supabase.js'
+import { dbSaveCollaboration } from './database.js'
 
 // Dominio de la app de influencers. Se puede pisar con VITE_CLUB_URL
 // (por ejemplo, para probar en un deploy de preview).
@@ -213,7 +214,7 @@ export const redRejectLead = async (leadId, note) => {
 // ── Intereses de una ficha ──────────────────────────────────
 export const redGetInfluencerInterests = async (influencerId) => {
   const { data, error } = await supabase.from('offer_interests')
-    .select('id, vote, voted_at, internal_status, internal_note, collaboration_id, offers(id, title, status, cities(name), brands(name))')
+    .select('id, vote, voted_at, internal_status, internal_note, collaboration_id, offers(id, title, status, brand_id, city_id, cities(name), brands(name))')
     .eq('influencer_id', influencerId).eq('vote', 'interested')
     .order('voted_at', { ascending: false })
   if (error) throw fail(error)
@@ -228,6 +229,9 @@ export const redGetInfluencerInterests = async (influencerId) => {
     offerStatus:     r.offers?.status,
     cityName:        r.offers?.cities?.name ?? null,
     brandName:       r.offers?.brands?.name ?? null,
+    brandId:         r.offers?.brand_id ?? null,
+    cityId:          r.offers?.city_id ?? null,
+    influencerId,
   }))
 }
 
@@ -275,4 +279,56 @@ export const redGetInfluencerTopics = async (influencerId) => {
   const { data } = await supabase.from('influencer_preferences').select('categories')
     .eq('influencer_id', influencerId).maybeSingle()
   return data?.categories || []
+}
+
+// Pendientes para la bandeja de aprobaciones y el bloque "Hoy".
+// Si alguna tabla no está (o no hay permiso), cuenta 0.
+export const redGetPendingCounts = async () => {
+  const head = (table) => supabase.from(table).select('id', { count: 'exact', head: true })
+  const [leads, emails, interests] = await Promise.all([
+    head('influencer_leads').eq('status', 'pending'),
+    head('influencer_email_requests').eq('status', 'pending'),
+    head('offer_interests').eq('vote', 'interested').eq('internal_status', 'new'),
+  ])
+  return {
+    leads:     leads.error ? 0 : (leads.count || 0),
+    emails:    emails.error ? 0 : (emails.count || 0),
+    interests: interests.error ? 0 : (interests.count || 0),
+  }
+}
+
+// ── Bandeja de "Me interesa" (Dirección) ────────────────────
+export const redGetInterests = async ({ status = 'open' } = {}) => {
+  let q = supabase.from('offer_interests')
+    .select('id, vote, voted_at, internal_status, internal_note, collaboration_id, influencer_id, influencers(name, username, owner_scouter_id), offers(id, title, brand_id, city_id, cities(name), brands(name))')
+    .eq('vote', 'interested').order('voted_at', { ascending: false }).limit(300)
+  if (status === 'open') q = q.in('internal_status', ['new', 'reviewed', 'contacted'])
+  else if (status !== 'all') q = q.eq('internal_status', status)
+  const { data, error } = await q
+  if (error) throw fail(error)
+  return (data || []).map(r => ({
+    id: r.id, votedAt: r.voted_at, internalStatus: r.internal_status, internalNote: r.internal_note,
+    collaborationId: r.collaboration_id, influencerId: r.influencer_id,
+    influencerName: r.influencers?.name || r.influencers?.username || '—',
+    influencerOwnerId: r.influencers?.owner_scouter_id || null,
+    offerId: r.offers?.id, offerTitle: r.offers?.title,
+    brandId: r.offers?.brand_id || null, cityId: r.offers?.city_id || null,
+    brandName: r.offers?.brands?.name ?? null, cityName: r.offers?.cities?.name ?? null,
+  }))
+}
+
+// "Me interesa" → colaboración con marca, ciudad e influencer ya puestas.
+// Queda "propuesta" y a cargo de la scouter dueña de la influencer (o de
+// quien la crea si no tiene). El interés queda vinculado y en "matched".
+export const redCreateCollabFromInterest = async (it) => {
+  const collab = await dbSaveCollaboration({
+    influencerId: it.influencerId,
+    brandId: it.brandId,
+    cityId: it.cityId,
+    scouterId: it.influencerOwnerId || undefined,
+    status: 'proposed',
+    notes: it.offerTitle ? `Desde la oferta "${it.offerTitle}" (Me interesa en el Club)` : null,
+  })
+  await redUpdateInterest(it.id, { internalStatus: 'matched', collaborationId: collab.id })
+  return collab
 }

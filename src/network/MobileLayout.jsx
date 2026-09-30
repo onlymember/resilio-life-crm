@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Home, CheckSquare, Plus, Users, Menu, X, LogOut, Bell } from 'lucide-react'
+import { Home, CheckSquare, Plus, Users, Menu, X, LogOut, Bell, Search } from 'lucide-react'
 import CreateSheet from './components/CreateSheet.jsx'
 import { SPEED_DIAL_ITEMS } from './createOptions.js'
 import { NAV_SECTIONS } from './nav.js'
 import { t } from '../i18n/index.js'
+import { openSearch } from './components/GlobalSearch.jsx'
 import { dbGetNotifications } from '../lib/database.js'
 import { signOut } from '../lib/auth.js'
 
@@ -134,6 +135,9 @@ function MobileHeader({ currentUser, onOpenDrawer }) {
         Resilio
       </div>
 
+      <button onClick={openSearch} aria-label={t('search.title')} style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', flexShrink: 0, borderRadius: 8, marginRight: 4 }}>
+        <Search size={19}/>
+      </button>
       {currentUser && (
         <div style={{ position: 'relative' }}>
           <button onClick={() => setMenuOpen(p => !p)} style={{ width: 34, height: 34, borderRadius: '50%', background: avatarColor(currentUser.nombre||'U'), border: '2px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'white', cursor: 'pointer' }}>

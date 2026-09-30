@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, CheckCircle, Plus, Trash2, ExternalLink, Check } from 'lucide-react'
+import { ChevronLeft, CheckCircle, Plus, Trash2, ExternalLink, Check, Copy } from 'lucide-react'
 import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import AssignModal from '../components/AssignModal.jsx'
 import EmptyState from '../components/EmptyState.jsx'
+import DuplicateCollabSheet from '../components/DuplicateCollabSheet.jsx'
 import { t } from '../../i18n/index.js'
 import { COMMAND_ROLES } from '../routes.js'
 import {
@@ -109,6 +110,7 @@ export default function CollaborationDetailPage({ currentUser }) {
   const [legacyExpanded,  setLegacyExpanded]  = useState(false)
   const [assignOpen,      setAssignOpen]      = useState(false)
 
+  const [dupOpen, setDupOpen] = useState(false)
   const get = (f) => f in dirty ? dirty[f] : entity?.[f]
   const set = (f, v) => setDirty(prev => ({ ...prev, [f]: v }))
   const isDirty = Object.keys(dirty).length > 0
@@ -223,6 +225,9 @@ export default function CollaborationDetailPage({ currentUser }) {
             <div style={{ fontSize:11, color: actType.color || 'var(--text-secondary)', fontWeight:600 }}>{actType.name}</div>
           )}
         </div>
+        <button onClick={() => setDupOpen(true)} title={t('duplicate.title')} style={{ display:'flex', alignItems:'center', gap:4, fontSize:11, fontWeight:600, color:'var(--text-secondary)', background:'rgba(139,92,246,0.06)', border:'1px solid var(--border-violet)', borderRadius:8, padding:'5px 10px', cursor:'pointer', flexShrink:0 }}>
+          <Copy size={12}/>{t('duplicate.button')}
+        </button>
         {canReassign && (
           <button onClick={() => setAssignOpen(true)} style={{ fontSize:11, fontWeight:600, color:'var(--primary-violet-light)', background:'rgba(139,92,246,0.1)', border:'1px solid rgba(139,92,246,0.3)', borderRadius:8, padding:'5px 10px', cursor:'pointer', flexShrink:0 }}>
             {t('network.assign')}
@@ -234,6 +239,8 @@ export default function CollaborationDetailPage({ currentUser }) {
           </button>
         )}
       </div>
+
+      {dupOpen && <DuplicateCollabSheet collab={entity} onClose={() => setDupOpen(false)}/>}
 
       {saveError && (
         <div style={{ margin:'10px 20px', padding:'8px 12px', borderRadius:8, background:'rgba(248,113,113,0.08)', border:'1px solid rgba(248,113,113,0.25)', fontSize:12, color:'#F87171' }}>

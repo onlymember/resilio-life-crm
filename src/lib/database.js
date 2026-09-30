@@ -759,6 +759,7 @@ export const dbGetCollaborations = async (filters = {}) => {
   if (filters.status)           q = q.eq('status', filters.status)
   if (filters.activationTypeId) q = q.eq('activation_type_id', filters.activationTypeId)
   if (filters.influencerId)     q = q.eq('influencer_id', filters.influencerId)
+  if (filters.brandId)          q = q.eq('brand_id', filters.brandId)
   if (filters.cityId)           q = q.eq('city_id', filters.cityId)
   if (filters.scouterId)        q = q.eq('scouter_id', filters.scouterId)
 
@@ -1732,6 +1733,16 @@ const startOfTomorrow = () => {
   const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + 1); return d.toISOString()
 }
 
+// Varios grupos "A o B" que tienen que cumplirse a la vez (por ejemplo
+// sin WhatsApp Y búsqueda por nombre). PostgREST recibe un solo "or",
+// así que se anidan: or(and(or(g1),or(g2))).
+const orGroups = (q, groups) => {
+  const g = groups.filter(Boolean)
+  if (g.length === 0) return q
+  if (g.length === 1) return q.or(g[0])
+  return q.or(`and(${g.map(x => `or(${x})`).join(',')})`)
+}
+
 export const dbGetInfluencers = async ({
   page = 0, pageSize = 30,
   search, cityId, countryId, ownerId, status, relationshipStatus, category,
@@ -1739,6 +1750,8 @@ export const dbGetInfluencers = async ({
   noNextAction = false, idsOnly = false,
   // Fecha de alta (ISO, "to" excluyente) y quién la cargó.
   createdFrom, createdTo, createdBy,
+  // Fichas incompletas: sin WhatsApp / sin categoría.
+  noWhatsapp = false, noCategory = false,
   orderBy = 'created_at', orderDir = 'desc',
 } = {}) => {
   const nullsFirst = !INF_NULLS_LAST_COLS.has(orderBy)
@@ -1766,7 +1779,11 @@ export const dbGetInfluencers = async ({
   if (createdFrom)        q = q.gte('created_at', createdFrom)
   if (createdTo)          q = q.lt('created_at', createdTo)
   if (createdBy)          q = q.eq('created_by', createdBy)
-  if (search)             q = q.or(`name.ilike.%${safe(search)}%,username.ilike.%${safe(search)}%`)
+  q = orGroups(q, [
+    noWhatsapp && 'whatsapp.is.null,whatsapp.eq.',
+    noCategory && 'category.is.null,category.eq.',
+    search && `name.ilike.%${safe(search)}%,username.ilike.%${safe(search)}%`,
+  ])
   const { data, count, error } = await q
   if (error) throw friendly(error)
   if (idsOnly) return { ids: (data || []).map(r => r.id), total: count ?? 0 }
@@ -1962,6 +1979,7 @@ export const dbGetBrands = async ({
   idsOnly = false,
   // Fecha de alta (ISO, "to" excluyente) y quién la cargó.
   createdFrom, createdTo, createdBy,
+  noWhatsapp = false, noCategory = false,
   orderBy = 'created_at', orderDir = 'desc',
 } = {}) => {
   const nullsFirst = !BRAND_NULLS_LAST_COLS.has(orderBy)
@@ -1983,7 +2001,11 @@ export const dbGetBrands = async ({
   if (createdFrom)        q = q.gte('created_at', createdFrom)
   if (createdTo)          q = q.lt('created_at', createdTo)
   if (createdBy)          q = q.eq('created_by', createdBy)
-  if (search)             q = q.or(`name.ilike.%${safe(search)}%`)
+  if (noCategory)         q = q.is('category_id', null)
+  q = orGroups(q, [
+    noWhatsapp && 'whatsapp.is.null,whatsapp.eq.',
+    search && `name.ilike.%${safe(search)}%`,
+  ])
   const { data, count, error } = await q
   if (error) throw friendly(error)
   if (idsOnly) return { ids: (data || []).map(r => r.id), total: count ?? 0 }
@@ -2535,4 +2557,153 @@ export const dbCloseMonthlySnapshot = async (period = null) => {
   if (period) params.p_period = period
   const { error } = await supabase.rpc('close_monthly_snapshot', params)
   if (error) throw friendly(error)
+}
+
+// ═══════════════════════════════════════════════════════════
+// TRASPASO CON CONTEXTO
+// Último traspaso de una ficha hacia mí (quién me la pasó, cuándo y el
+// motivo que dejó al reasignar). RLS de assignments deja leer lo propio.
+// ═══════════════════════════════════════════════════════════
+export const dbGetLastHandoffToMe = async (entityType, entityId) => {
+  const uid = await myId()
+  if (!uid) return null
+  const { data, error } = await supabase.from('assignments')
+    .select('id, from_owner_id, reason, assigned_at')
+    .eq('entity_type', entityType).eq('entity_id', String(entityId)).eq('to_owner_id', uid)
+    .order('assigned_at', { ascending: false }).limit(1)
+  if (error || !data?.length) return null
+  const r = data[0]
+  return { id: r.id, fromOwnerId: r.from_owner_id, reason: r.reason, assignedAt: r.assigned_at }
+}
+
+// ═══════════════════════════════════════════════════════════
+// INICIO · "Hoy"
+// ═══════════════════════════════════════════════════════════
+
+// Fecha local YYYY-MM-DD (no UTC: a las 23hs de Buenos Aires ya es
+// "mañana" en UTC y la lista saldría corrida un día).
+export const localDate = (d = new Date()) => {
+  const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+  return z.toISOString().slice(0, 10)
+}
+export const weekStart = (d = new Date()) => {
+  const x = new Date(d); const day = (x.getDay() + 6) % 7   // lunes = 0
+  x.setDate(x.getDate() - day); x.setHours(0, 0, 0, 0)
+  return x
+}
+
+// Visitas de mañana que maneja uno (scouter a cargo o quien la cargó),
+// con el contacto de la marca para avisarle.
+export const dbGetTomorrowVisits = async () => {
+  const uid = await myId()
+  if (!uid) return []
+  const tm = new Date(); tm.setDate(tm.getDate() + 1)
+  const { data, error } = await supabase.from('collaborations')
+    .select('id, start_date, status, brand_id, influencer_id, influencers(name, username, whatsapp, phone), brands(name, whatsapp, phone)')
+    .eq('start_date', localDate(tm))
+    .in('status', ['proposed', 'confirmed', 'in_progress'])
+    .or(`scouter_id.eq.${uid},created_by.eq.${uid}`)
+    .order('created_at')
+  if (error) return []
+  return (data || []).map(r => ({
+    id: r.id, date: r.start_date, status: r.status,
+    influencerId: r.influencer_id, brandId: r.brand_id,
+    influencerName: r.influencers?.name || r.influencers?.username || '—',
+    influencerWa: r.influencers?.whatsapp || r.influencers?.phone || null,
+    brandName: r.brands?.name || '—',
+    brandWa: r.brands?.whatsapp || r.brands?.phone || null,
+  }))
+}
+
+// ═══════════════════════════════════════════════════════════
+// OBJETIVOS SEMANALES (tabla goals, progreso calculado en goals_view)
+// Una fila por scouter, métrica y semana (lunes a domingo).
+// ═══════════════════════════════════════════════════════════
+export const WEEKLY_METRICS = ['influencers_added', 'brands_added', 'contacts', 'collaborations']
+
+export const dbGetWeekGoals = async (start = weekStart(), assignedTo = null) => {
+  let q = supabase.from('goals_view').select('*')
+    .eq('period', 'weekly').eq('period_start', localDate(start)).in('metric', WEEKLY_METRICS)
+  if (assignedTo) q = q.eq('assigned_to', assignedTo)
+  const { data, error } = await q
+  if (error) throw friendly(error)
+  return (data || []).map(rowToGoal)
+}
+
+export const dbGetMyWeekGoals = async () => {
+  const uid = await myId()
+  if (!uid) return []
+  return dbGetWeekGoals(weekStart(), uid)
+}
+
+// rows: [{ assignedTo, metric, target }] para la semana `start`.
+// target 0 o vacío = sin objetivo (se borra si existía).
+export const dbSaveWeekGoals = async (rows, start = weekStart()) => {
+  const uid = await myId()
+  const ps = localDate(start)
+  const end = new Date(start); end.setDate(end.getDate() + 6)
+  const pe = localDate(end)
+  const current = await dbGetWeekGoals(start)
+  const key = (a, m) => `${a}|${m}`
+  const byKey = Object.fromEntries(current.map(g => [key(g.assignedTo, g.metric), g]))
+  for (const r of rows) {
+    const g = byKey[key(r.assignedTo, r.metric)]
+    const target = Number(r.target) || 0
+    if (g && target <= 0) {
+      const { error } = await supabase.from('goals').delete().eq('id', g.id)
+      if (error) throw friendly(error)
+    } else if (g && Number(g.target) !== target) {
+      const { error } = await supabase.from('goals').update({ target, updated_at: new Date().toISOString() }).eq('id', g.id)
+      if (error) throw friendly(error)
+    } else if (!g && target > 0) {
+      const { error } = await supabase.from('goals').insert([{
+        title: `Semana ${ps} · ${r.metric}`, metric: r.metric, target, period: 'weekly',
+        period_start: ps, period_end: pe, assigned_to: r.assignedTo, status: 'active', created_by: uid,
+      }])
+      if (error) throw friendly(error)
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// RESUMEN SEMANAL (Command Center, Dirección)
+// Últimos 7 días contra los 7 anteriores. Solo cuenta (head: true):
+// no trae filas, así que es barato aunque la red crezca.
+// ═══════════════════════════════════════════════════════════
+const countRows = async (table, build) => {
+  const { count, error } = await build(supabase.from(table).select('id', { count: 'exact', head: true }))
+  if (error) throw friendly(error)
+  return count || 0
+}
+
+export const dbGetWeeklySummary = async () => {
+  const now = new Date()
+  const d7  = new Date(now.getTime() - 7 * 86400000).toISOString()
+  const d14 = new Date(now.getTime() - 14 * 86400000).toISOString()
+  const nowIso = now.toISOString()
+  const range = (col, from, to) => (q) => q.gte(col, from).lt(col, to)
+  const CONTACT = ['dm', 'whatsapp', 'call', 'meeting', 'email']
+  const metric = async (fn) => ({ cur: await fn(d7, nowIso), prev: await fn(d14, d7) })
+
+  const [influencers, brands, contacts, answers, collabs, completed] = await Promise.all([
+    metric((a, b) => countRows('influencers', range('created_at', a, b))),
+    metric((a, b) => countRows('brands', range('created_at', a, b))),
+    metric((a, b) => countRows('activities', q => range('occurred_at', a, b)(q).in('type', CONTACT))),
+    metric((a, b) => countRows('activities', q => range('occurred_at', a, b)(q).eq('type', 'answered'))),
+    metric((a, b) => countRows('collaborations', range('created_at', a, b))),
+    metric((a, b) => countRows('collaborations', q => range('updated_at', a, b)(q).eq('status', 'completed'))),
+  ])
+
+  // Altas y contactos por ciudad en la semana, para marcar las flojas.
+  const [inf, act] = await Promise.all([
+    supabase.from('influencers').select('city_id, created_by').gte('created_at', d7).limit(5000),
+    supabase.from('collaborations').select('city_id').gte('created_at', d7).limit(5000),
+  ])
+  const byCity = {}
+  for (const r of inf.data || []) if (r.city_id) (byCity[r.city_id] ||= { adds: 0, collabs: 0 }).adds++
+  for (const r of act.data || []) if (r.city_id) (byCity[r.city_id] ||= { adds: 0, collabs: 0 }).collabs++
+  const byCreator = {}
+  for (const r of inf.data || []) if (r.created_by) byCreator[r.created_by] = (byCreator[r.created_by] || 0) + 1
+
+  return { influencers, brands, contacts, answers, collabs, completed, byCity, byCreator }
 }

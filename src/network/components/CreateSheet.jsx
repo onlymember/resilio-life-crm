@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { X, Users, Building2, Briefcase, Handshake, ChevronLeft, AlertCircle } from 'lucide-react'
+import { X, Users, Building2, Briefcase, Handshake, ChevronLeft, AlertCircle, CheckSquare } from 'lucide-react'
 import { t } from '../../i18n/index.js'
 import { dbGetGeography, dbSaveInfluencer, dbSaveBrand, dbSaveOpportunity, dbSaveCollaboration, dbGetActivationTypes } from '../../lib/database.js'
 import EntityPicker from './EntityPicker.jsx'
+import QuickTaskForm from './QuickTaskForm.jsx'
+import { toast } from './Toaster.jsx'
 
 const CATEGORIES = t('categories') // array desde es.json
 
@@ -344,6 +346,7 @@ export default function CreateSheet({ isOpen, onClose, currentUser, onCreated, i
     brand:         `+ ${t('create.brand.label')}`,
     opportunity:   `+ ${t('create.opportunity.label')}`,
     collaboration: `+ ${t('create.collaboration.label')}`,
+    task:          `+ ${t('create.task')}`,
   }
 
   return (
@@ -383,12 +386,14 @@ export default function CreateSheet({ isOpen, onClose, currentUser, onCreated, i
             <TypeButton icon={Building2}  label={t('create.brand.label')}        color="#22D3EE" onClick={() => setStep('brand')}/>
             <TypeButton icon={Briefcase}  label={t('create.opportunity.label')}  color="#FBBF24" onClick={() => setStep('opportunity')}/>
             <TypeButton icon={Handshake}  label={t('create.collaboration.label')} color="#34D399" onClick={() => setStep('collaboration')}/>
+            <TypeButton icon={CheckSquare} label={t('create.task')}         color="#F472B6" onClick={() => setStep('task')}/>
           </div>
         )}
 
         {step === 'influencer'    && <InfluencerForm    cities={cities}                        onSave={handleSaveInfluencer}    saving={saving} error={error}/>}
         {step === 'brand'         && <BrandForm          cities={cities}                        onSave={handleSaveBrand}          saving={saving} error={error}/>}
         {step === 'opportunity'   && <OpportunityForm                                           onSave={handleSaveOpportunity}    saving={saving} error={error}/>}
+        {step === 'task'          && <QuickTaskForm currentUser={currentUser} onDone={() => { onCreated?.('task', null); toast(t('quickTask.saved')); onClose() }}/>}
         {step === 'collaboration' && <CollaborationForm  activationTypes={activationTypes}      onSave={handleSaveCollaboration} saving={saving} error={error}/>}
       </div>
     </>

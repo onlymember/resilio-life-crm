@@ -142,7 +142,8 @@
       "intelligence": "INTELLIGENCE",
       "manual": "MANUAL",
       "club": "CLUB"
-    }
+    },
+    "approvals": "Approvals"
   },
   "loading": {
     "generic": "Cargando…",
@@ -256,7 +257,9 @@
     "overdue": "Overdue",
     "noOwner": "No owner",
     "noCity": "No city",
-    "noNextAction": "No next action"
+    "noNextAction": "No next action",
+    "noWhatsapp": "No WhatsApp",
+    "noCategory": "No category"
   },
   "filter": {
     "title": "Filtros",
@@ -1267,6 +1270,170 @@
       "empty": "No brands added in this period.",
       "hint": "By who added the brand. Tap a number to see those brands. Days use your time zone.",
       "added": "Added"
+    }
+  },
+  "stage": {
+    "moved": "{name} moved to {stage}",
+    "undo": "Undo"
+  },
+  "board": {
+    "toggle": "View",
+    "list": "List",
+    "board": "Stage board",
+    "empty": "Nothing in this stage"
+  },
+  "batch": {
+    "button": "Batch messages",
+    "title": "Batch messages",
+    "pick": "Pick a template",
+    "custom": "…or write one message for everyone",
+    "useText": "Use this text",
+    "noWhatsapp": "{n} without WhatsApp are skipped.",
+    "progress": "{i} of {n}",
+    "change": "Change message",
+    "skip": "Skip",
+    "send": "Send and next",
+    "finished": "Done: {n} messages sent",
+    "close": "Close",
+    "selected": "{n} selected",
+    "all": "All ({n})",
+    "cancel": "Cancel",
+    "start": "Start",
+    "placeholders": "Placeholders:",
+    "nobody": "None of the selected records has WhatsApp."
+  },
+  "quickFill": {
+    "whatsapp": "WhatsApp with country code",
+    "category": "Pick a category",
+    "save": "Save",
+    "saved": "Done: {name}"
+  },
+  "quickReply": {
+    "answered": "Replied",
+    "info": "Asked for info",
+    "not_interested": "Not interested",
+    "infoNote": "Asked for more information",
+    "done": {
+      "answered": "Logged: replied",
+      "info": "Logged: asked for info",
+      "not_interested": "Logged: not interested"
+    }
+  },
+  "handoff": {
+    "fromName": "{name} handed you this record on {date}",
+    "from": "This record was handed to you on {date}",
+    "latest": "Latest",
+    "dismiss": "Close",
+    "reasonPlaceholder": "Context for the new owner (optional): what was discussed, what's pending…"
+  },
+  "today": {
+    "approvals": "{n} to approve",
+    "approvalsDetail": "{leads} leads · {emails} email changes",
+    "interests": "{n} new \"Interested\"",
+    "tomorrow": "Tomorrow's visits",
+    "notifyBrand": "Notify brand",
+    "noBrandWa": "Brand has no WhatsApp",
+    "brandReminder": "Hi {marca}! Confirming that tomorrow, {fecha}, {influencer} is coming for the collaboration. Let me know if anything comes up. {yo} · Resilio"
+  },
+  "goals": {
+    "weekTitle": "This week's goals",
+    "edit": "Edit",
+    "close": "Close",
+    "save": "Save goals",
+    "saved": "Goals saved",
+    "empty": "No goals for this week yet.",
+    "summary": "{n} scouters with goals this week.",
+    "copyLast": "Use last week's goals",
+    "done": "{n} so far",
+    "metric": {
+      "influencers_added": "Influencers",
+      "brands_added": "Brands",
+      "contacts": "Contacts",
+      "collaborations": "Collaborations"
+    }
+  },
+  "weekly": {
+    "title": "Weekly summary",
+    "topAdders": "Who added the most influencers",
+    "weakCities": "Cities with no activity",
+    "noWeak": "Every city with scouters had new records or collaborations.",
+    "none": "No new records this week.",
+    "hint": "Last 7 days vs the previous 7. Replies = follow-ups marked as \"Replied\".",
+    "metric": {
+      "influencers": "Influencers added",
+      "brands": "Brands added",
+      "contacts": "Contacts",
+      "answers": "Replies",
+      "collabs": "Collaborations created",
+      "completed": "Collaborations completed"
+    }
+  },
+  "approvals": {
+    "title": "Approvals",
+    "subtitle": "Club leads, email changes and \"Interested\" in one place.",
+    "tabPending": "Leads & emails",
+    "tabInterests": "Interested",
+    "noLeads": "Nothing pending",
+    "noLeadsHint": "No leads or email changes to approve.",
+    "noInterests": "No \"Interested\" in this view.",
+    "interestFilter": {
+      "open": "Open",
+      "new": "New",
+      "matched": "With collaboration",
+      "discarded": "Discarded",
+      "all": "All"
+    }
+  },
+  "interestToCollab": {
+    "create": "Create collaboration",
+    "view": "View collaboration",
+    "created": "Collaboration created",
+    "open": "Open"
+  },
+  "brandCollabs": {
+    "title": "Collaborations",
+    "none": "No collaborations with this brand yet.",
+    "total": "total",
+    "completed": "completed",
+    "reach": "reach",
+    "emv": "estimated value",
+    "reachShort": "reach",
+    "emvShort": "value"
+  },
+  "duplicate": {
+    "button": "Duplicate",
+    "title": "Duplicate collaboration",
+    "hint": "Same brand ({brand}), type, deliverables and amount. Pick the influencer and date.",
+    "date": "Date",
+    "create": "Create copy",
+    "done": "Collaboration duplicated"
+  },
+  "quickTask": {
+    "placeholder": "e.g. call Sofi on Thursday 11am",
+    "hint": "Type the task the way you'd say it: date, time and who it's for are detected.",
+    "date": "Date",
+    "time": "Time",
+    "save": "Create task",
+    "saved": "Task created",
+    "type": {
+      "influencer": "influencer",
+      "brand": "brand"
+    }
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search influencer, brand, offer or city…",
+    "placeholderShort": "Search…",
+    "hint": "Type at least 2 letters. Shortcut: Ctrl+K (⌘K on Mac).",
+    "none": "No results.",
+    "cityHint": "See influencers in this city",
+    "type": {
+      "influencer": "Influencer",
+      "brand": "Brand",
+      "opportunity": "Opportunity",
+      "offer": "Offer",
+      "city": "City",
+      "campaign": "Campaign"
     }
   }
 }

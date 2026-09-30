@@ -7,6 +7,8 @@ import MissionProgress from '../components/MissionProgress.jsx'
 import ActivityTimeline from '../components/ActivityTimeline.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import FollowUpSheet from '../components/FollowUpSheet.jsx'
+import TodayPanel from '../components/TodayPanel.jsx'
+import { DIRECTION_ROLES } from '../routes.js'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { getMyAgenda, getMyNetworkStats, getMyMissions, getNetworkPulse, getMyRecentActivity } from '../../lib/metrics.js'
@@ -199,6 +201,9 @@ export default function HomePage({ currentUser, onOpenCreate }) {
             ))}
           </div>
         )}
+
+        {/* 1.2 · HOY: aprobaciones (Dirección), visitas de mañana y objetivos */}
+        <TodayPanel isDirection={DIRECTION_ROLES.includes(currentUser?.rol)} me={name}/>
 
         {/* 1.5 · COBERTURA — el numero que predice el mes */}
         {stats && (stats.coverage7d > 0 || stats.collaborations > 0) && (() => {
