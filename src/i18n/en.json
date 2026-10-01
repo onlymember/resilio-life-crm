@@ -1559,5 +1559,98 @@
     "confirmOn": "Show the Club to all scouters?",
     "nowOn": "The Club is now visible to scouters",
     "nowOff": "The Club is now hidden from scouters"
+  },
+  "homeX": {
+    "summary": {
+      "overdue": "{n} overdue",
+      "overdueOne": "1 overdue",
+      "today": "{n} for today",
+      "todayOne": "1 for today",
+      "week": "{n} this week",
+      "weekOne": "1 this week",
+      "noneOverdue": "nothing overdue",
+      "empty": "Clear agenda. Good time to add contacts."
+    },
+    "nextStep": "Your next step",
+    "startDay": "Start the day",
+    "startDayN": "Start the day · {n}",
+    "quick": {
+      "influencer": "Influencer",
+      "brand": "Brand",
+      "task": "Task",
+      "search": "Search"
+    },
+    "igPaste": {
+      "placeholder": "Instagram link or @username",
+      "add": "Add",
+      "creating": "Adding…",
+      "invalid": "I can't read that username. Try @username or the profile link.",
+      "existsMine": "You already have it: {name}.",
+      "existsOther": "Already loaded in {city}. No need to add it again.",
+      "created": "@{user} added. Fill in the details on the profile.",
+      "open": "Open"
+    },
+    "agenda": {
+      "title": "Agenda",
+      "overdue": "Overdue",
+      "today": "Today",
+      "upcoming": "Next days",
+      "empty": "Nothing here.",
+      "inHero": "It's up top, in your next step.",
+      "swipeHint": "Swipe → to complete · ← to move to tomorrow",
+      "movedTomorrow": "Moved to tomorrow 10:00",
+      "done": "Done"
+    },
+    "focus": {
+      "title": "Start the day",
+      "of": "{i} of {n}",
+      "complete": "Complete",
+      "tomorrow": "Tomorrow",
+      "skip": "Skip",
+      "open": "Open profile",
+      "close": "Exit",
+      "doneTitle": "Day started",
+      "doneText": "You went through everything pending. Skipped items stay in the agenda.",
+      "back": "Back to home",
+      "empty": "Nothing overdue or due today."
+    },
+    "daily": {
+      "title": "Your number for today",
+      "goal": "Contact {n} today",
+      "progress": "{c}/{n}",
+      "reached": "Goal reached. Everything else is extra.",
+      "left": "{n} to go",
+      "leftOne": "1 to go",
+      "edit": "Change goal",
+      "streak": "{n}-day streak",
+      "streakOne": "1-day streak",
+      "streakZero": "Hit today's goal to start a streak",
+      "streakKeep": "Hit it today to keep it",
+      "hint": "WhatsApp, DMs, calls and emails you log count."
+    },
+    "stalled": {
+      "title": "Stalled opportunities",
+      "days": "{n} days",
+      "hint": "{n}+ days in the same stage"
+    },
+    "mission": {
+      "paceDeadline": "{left} to go: {pace} a day to make it by {date}",
+      "pace": "At {pace} a day you finish on {date}",
+      "done": "Mission complete!",
+      "addOne": "Add one"
+    },
+    "week": {
+      "title": "This week",
+      "added": "You added {n}",
+      "contacts": "You contacted {n}",
+      "streak": "{n}-day streak",
+      "empty": "Nothing yet this week. Your first contact starts the streak."
+    },
+    "networkLine": {
+      "influencers": "Influencers",
+      "brands": "Brands",
+      "opportunities": "Opps",
+      "collaborations": "Collabs"
+    }
   }
 }

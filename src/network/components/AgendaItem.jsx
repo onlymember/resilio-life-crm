@@ -6,7 +6,7 @@ import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { fmtDateTime, fmtDateTimeOverdue, isoToDatetimeLocal, datetimeLocalToIso } from '../utils/date.js'
 
-export default function AgendaItem({ item, onComplete, onReschedule, onNote, onNavigate }) {
+export default function AgendaItem({ item, onComplete, onReschedule, onNote, onNavigate, onContact, hero = false, heroLabel }) {
   const tz = useTz()
   const [completing,   setCompleting]   = useState(false)
   const [rescheduling, setRescheduling] = useState(false)
@@ -22,7 +22,9 @@ export default function AgendaItem({ item, onComplete, onReschedule, onNote, onN
     setCompleting(true)
     setError(null)
     try {
-      await onComplete(item)
+      const ok = await onComplete(item)
+      // false = se cerró el panel de seguimiento sin resolver: el botón vuelve.
+      if (ok === false) setCompleting(false)
     } catch(e) {
       setError(e.message)
       setCompleting(false)
@@ -43,16 +45,22 @@ export default function AgendaItem({ item, onComplete, onReschedule, onNote, onN
   const dueLabel  = item.isOverdue
     ? fmtDateTimeOverdue(item.dueAt, tz)
     : fmtDateTime(item.dueAt, tz)
-  const borderCol = item.isOverdue ? 'rgba(239,68,68,0.3)' : 'var(--border-violet)'
-  const bgCol     = item.isOverdue ? 'rgba(239,68,68,0.06)' : 'var(--glass-bg)'
+  const borderCol = item.isOverdue ? 'rgba(239,68,68,0.3)' : hero ? 'rgba(139,92,246,0.45)' : 'var(--border-violet)'
+  const bgCol     = item.isOverdue ? 'rgba(239,68,68,0.06)' : hero ? 'rgba(139,92,246,0.08)' : 'var(--glass-bg)'
   const timeCol   = item.isOverdue ? '#F87171' : item.isToday ? '#FBBF24' : 'var(--text-secondary)'
 
   return (
     <div style={{
-      padding: '12px 14px', borderRadius: 12,
+      padding: hero ? '14px 16px' : '12px 14px', borderRadius: hero ? 14 : 12,
       background: bgCol, border: `1px solid ${borderCol}`,
+      boxShadow: hero ? '0 0 24px rgba(139,92,246,0.12)' : undefined,
       transition: 'all 0.2s',
     }}>
+      {hero && heroLabel && (
+        <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--primary-violet-light)', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 8 }}>
+          {heroLabel}
+        </div>
+      )}
       {/* Header row */}
       <div
         style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: onNavigate ? 'pointer' : 'default' }}
@@ -63,7 +71,7 @@ export default function AgendaItem({ item, onComplete, onReschedule, onNote, onN
           : <Clock       size={15} color="var(--primary-violet-light)" style={{ flexShrink: 0, marginTop: 2 }}/>
         }
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3 }}>
+          <div style={{ fontSize: hero ? 15 : 13, fontWeight: hero ? 700 : 600, color: 'var(--text-primary)', lineHeight: 1.3 }}>
             {item.title}
           </div>
           <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -84,6 +92,7 @@ export default function AgendaItem({ item, onComplete, onReschedule, onNote, onN
           instagram={item.instagram}
           phone={item.phone}
           onNote={onNote ? () => onNote(item) : null}
+          onContact={onContact ? (label) => onContact(item, label) : undefined}
         />
       )}
 

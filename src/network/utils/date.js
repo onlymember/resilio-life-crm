@@ -83,3 +83,14 @@ export function defaultDueLocal(tz = DEFAULT_TZ) {
   tomorrow.setDate(tomorrow.getDate() + 1)
   return `${inTzDate(tomorrow, tz)}T09:00`
 }
+
+// Mañana a las 10:00 en el huso de la Scouter (deslizar ← en la agenda).
+export function tomorrowAtIso(tz = DEFAULT_TZ, hour = 10) {
+  const day = inTzDate(new Date(Date.now() + 86400000), tz)
+  return datetimeLocalToIso(`${day}T${String(hour).padStart(2, '0')}:00`, tz)
+}
+
+// Fecha YYYY-MM-DD de hoy en el huso de la Scouter.
+export function todayInTz(tz = DEFAULT_TZ) {
+  return inTzDate(new Date(), tz)
+}

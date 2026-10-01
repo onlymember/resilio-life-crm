@@ -1042,6 +1042,13 @@ export default function App() {
       try {
         const user = await fetchUserById(userId)
         if (!alive) return
+        // Una cuenta pendiente, bloqueada o suspendida no entra aunque
+        // tenga sesión (antes bastaba con recargar la página).
+        if (user && user.estado !== 'aprobado') {
+          await supabase.auth.signOut().catch(() => {})
+          if (alive) setCurrentUser(null)
+          return
+        }
         setCurrentUser(user)
         if (isSignIn && user) {
           const view = defaultViewFor(user)

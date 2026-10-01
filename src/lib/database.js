@@ -289,7 +289,17 @@ export const dbApproveUser = async (userId, rol = 'viewer', opts = {}) => {
   return fetchUserById(userId)
 }
 
+// Bloquear tiene que cortar el acceso en la BASE, no solo en la pantalla:
+// los permisos salen de user_roles, que la base nunca cruza con
+// profiles.estado. Por eso se revocan los roles (como en dbDeleteUser).
+// Al desbloquear hay que volver a asignarle rol y ciudades.
 export const dbBlockUser = async (id, motivo = '') => {
+  const { error: revErr } = await supabase.from('user_roles')
+    .update({ revoked_at: new Date().toISOString() })
+    .eq('user_id', id)
+    .is('revoked_at', null)
+  if (revErr) throw revErr
+  await supabase.from('scouters').update({ status: 'inactive' }).eq('user_id', id)
   const cols = { estado: 'bloqueado' }
   if (motivo) cols.notas_admin = motivo
   return dbUpdateUser(id, cols)
@@ -2841,4 +2851,41 @@ export const dbSetSetting = async (key, value) => {
   const { error } = await supabase.from('app_settings')
     .upsert({ key, value, updated_by: uid, updated_at: new Date().toISOString() }, { onConflict: 'key' })
   if (error) throw friendly(error)
+}
+
+// ═══════════════════════════════════════════════════════════
+// INICIO NUEVO (migración 053)
+// ═══════════════════════════════════════════════════════════
+
+// Contactos y fichas cargadas por día, en el huso de la Scouter.
+// Sin la 053 devuelve null y el Inicio esconde la meta del día.
+export const dbGetDailyProgress = async (days = 60) => {
+  const { data, error } = await supabase.rpc('my_daily_progress', { p_days: days })
+  if (error) return null
+  return (data || []).map(r => ({ day: r.day, contacts: Number(r.contacts || 0), added: Number(r.added || 0) }))
+}
+
+// Oportunidades abiertas que llevan minDays+ en la misma etapa. La RLS
+// decide cuáles: la Scouter las suyas, Dirección toda la red.
+export const dbGetStalledOpportunities = async (minDays = 10, limit = 5) => {
+  const cutoff = new Date(Date.now() - minDays * 86400000).toISOString()
+  const { data, error } = await supabase.from('opportunities')
+    .select('id, title, status, status_changed_at')
+    .not('status', 'in', '(won,lost,on_hold)')
+    .lt('status_changed_at', cutoff)
+    .order('status_changed_at', { ascending: true })
+    .limit(limit)
+  if (error) return []
+  return (data || []).map(r => ({
+    id: r.id, title: r.title, status: r.status,
+    days: Math.floor((Date.now() - new Date(r.status_changed_at).getTime()) / 86400000),
+  }))
+}
+
+// Ciudad de la Scouter, para precargar las altas rápidas del Inicio.
+export const dbGetMyScouterCity = async () => {
+  const uid = await myId()
+  if (!uid) return null
+  const { data } = await supabase.from('scouters').select('city_id').eq('user_id', uid).maybeSingle()
+  return data?.city_id || null
 }

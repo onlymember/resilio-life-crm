@@ -52,6 +52,7 @@ export default function Confirm() {
 
   const day = info.date
     ? new Date(`${info.date}T12:00:00`).toLocaleDateString(getLang() === 'en' ? 'en' : 'es', { weekday: 'long', day: 'numeric', month: 'long' })
+        .replace(/^./, c => c.toUpperCase())   // "Jueves, 1 de octubre" (capitalize ponía "De Octubre")
     : ''
   const today = new Date(); const min = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().slice(0, 10)
 
@@ -61,7 +62,7 @@ export default function Confirm() {
       {info.influencer && <p style={{ textAlign: 'center', marginTop: 6 }}>{t('confirm.hi', { name: info.influencer })}</p>}
       <p className="muted" style={{ textAlign: 'center', marginTop: 4 }}>{t('confirm.intro', { brand: info.brand || 'Resilio' })}</p>
       <div className="club-panel" style={{ margin: '14px 0', textAlign: 'center' }}>
-        <div style={{ fontSize: 18, fontWeight: 800, textTransform: 'capitalize' }}>{day}</div>
+        <div style={{ fontSize: 18, fontWeight: 800 }}>{day}</div>
         {info.time && <div className="muted" style={{ marginTop: 2 }}>{t('confirm.at', { time: info.time })}</div>}
         {info.city && <div className="muted" style={{ marginTop: 2 }}>{info.city}</div>}
       </div>

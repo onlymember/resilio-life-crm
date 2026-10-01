@@ -1555,5 +1555,98 @@
     "confirmOn": "¿Mostrar el Club a todos los scouters?",
     "nowOn": "El Club ya es visible para los scouters",
     "nowOff": "El Club quedó oculto para los scouters"
+  },
+  "homeX": {
+    "summary": {
+      "overdue": "{n} vencidos",
+      "overdueOne": "1 vencido",
+      "today": "{n} para hoy",
+      "todayOne": "1 para hoy",
+      "week": "{n} esta semana",
+      "weekOne": "1 esta semana",
+      "noneOverdue": "nada vencido",
+      "empty": "Agenda libre. Buen momento para sumar contactos."
+    },
+    "nextStep": "Tu próximo paso",
+    "startDay": "Arrancar el día",
+    "startDayN": "Arrancar el día · {n}",
+    "quick": {
+      "influencer": "Influencer",
+      "brand": "Marca",
+      "task": "Tarea",
+      "search": "Buscar"
+    },
+    "igPaste": {
+      "placeholder": "Link o @usuario de Instagram",
+      "add": "Agregar",
+      "creating": "Agregando…",
+      "invalid": "No reconozco ese usuario. Probá con @usuario o el link del perfil.",
+      "existsMine": "Ya la tenés cargada: {name}.",
+      "existsOther": "Ya está cargada en {city}. No hace falta cargarla de nuevo.",
+      "created": "@{user} agregada. Completá los datos en la ficha.",
+      "open": "Abrir"
+    },
+    "agenda": {
+      "title": "Agenda",
+      "overdue": "Vencido",
+      "today": "Hoy",
+      "upcoming": "Próximos días",
+      "empty": "Nada en esta parte.",
+      "inHero": "Está arriba, en tu próximo paso.",
+      "swipeHint": "Deslizá → para completar · ← para pasar a mañana",
+      "movedTomorrow": "Pasado a mañana 10:00",
+      "done": "Hecho"
+    },
+    "focus": {
+      "title": "Arrancar el día",
+      "of": "{i} de {n}",
+      "complete": "Completar",
+      "tomorrow": "Mañana",
+      "skip": "Saltar",
+      "open": "Abrir ficha",
+      "close": "Salir",
+      "doneTitle": "Día arrancado",
+      "doneText": "Pasaste por todo lo pendiente. Lo que saltaste sigue en la agenda.",
+      "back": "Volver al inicio",
+      "empty": "No hay nada vencido ni para hoy."
+    },
+    "daily": {
+      "title": "Tu número del día",
+      "goal": "Contactá {n} hoy",
+      "progress": "{c}/{n}",
+      "reached": "Meta cumplida. Todo lo que sumes ahora es extra.",
+      "left": "Te faltan {n}",
+      "leftOne": "Te falta 1",
+      "edit": "Cambiar meta",
+      "streak": "Racha de {n} días",
+      "streakOne": "Racha de 1 día",
+      "streakZero": "Cumplí la meta hoy para arrancar una racha",
+      "streakKeep": "Cumplí hoy para no cortarla",
+      "hint": "Cuentan los WhatsApp, DM, llamadas y mails que registrás."
+    },
+    "stalled": {
+      "title": "Oportunidades trabadas",
+      "days": "{n} días",
+      "hint": "Llevan {n}+ días en la misma etapa"
+    },
+    "mission": {
+      "paceDeadline": "Te faltan {left}: {pace} por día para llegar al {date}",
+      "pace": "A {pace} por día la terminás el {date}",
+      "done": "¡Misión cumplida!",
+      "addOne": "Cargar uno"
+    },
+    "week": {
+      "title": "Esta semana",
+      "added": "Cargaste {n}",
+      "contacts": "Contactaste {n}",
+      "streak": "Racha de {n}",
+      "empty": "Todavía nada esta semana. El primer contacto arranca la racha."
+    },
+    "networkLine": {
+      "influencers": "Influencers",
+      "brands": "Marcas",
+      "opportunities": "Oport.",
+      "collaborations": "Colab."
+    }
   }
 }

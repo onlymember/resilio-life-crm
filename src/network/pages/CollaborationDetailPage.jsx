@@ -9,6 +9,10 @@ import EmptyState from '../components/EmptyState.jsx'
 import DuplicateCollabSheet from '../components/DuplicateCollabSheet.jsx'
 import CollabChecklist, { checklistDone, CHECK_STEPS } from '../components/CollabChecklist.jsx'
 import ConfirmLinkCard from '../components/ConfirmLinkCard.jsx'
+
+// El link de confirmación para la influencer queda apagado hasta que el
+// Club esté abierto para ellas. Volver a true para mostrarlo.
+const SHOW_CONFIRM_LINK = false
 import { t } from '../../i18n/index.js'
 import { COMMAND_ROLES } from '../routes.js'
 import {
@@ -273,12 +277,13 @@ export default function CollaborationDetailPage({ currentUser }) {
           <CollabChecklist collabId={entity.id} value={entity.checklist || {}} onChange={(c) => setEntity(prev => ({ ...prev, checklist: c }))}/>
         </div>
 
-        {/* CONFIRMACIÓN DE LA INFLUENCER (link sin cuenta) */}
-        <div style={SH}>
+        {/* CONFIRMACIÓN DE LA INFLUENCER (link sin cuenta).
+            Oculta hasta que las influencers usen el Club: SHOW_CONFIRM_LINK. */}
+        {SHOW_CONFIRM_LINK && <div style={SH}>
           <SectionHeader label={t('confirmLink.title')} fields={[]} dirty={dirty}/>
           <ConfirmLinkCard collab={{ ...entity, startDate: get('startDate') }} influencerWa={entity.influencerWa}
             onApplied={(patch) => setEntity(prev => ({ ...prev, ...patch }))}/>
-        </div>
+        </div>}
 
         {/* DATOS */}
         <div style={SH}>
