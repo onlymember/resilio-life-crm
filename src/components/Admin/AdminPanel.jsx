@@ -367,7 +367,7 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser, pendingActi
 
   const geoName = (kind, id) => {
     if (!id) return null
-    const list = kind === 'city' ? geography.cities : kind === 'country' ? geography.countries : geography.regions
+    const list = (kind === 'city' || kind === 'own') ? geography.cities : kind === 'country' ? geography.countries : geography.regions
     const found = list.find(x => x.id === id)
     return found ? found.name : '(ciudad no encontrada)'
   }
@@ -409,7 +409,7 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser, pendingActi
   const handleApprove = async () => {
     const geoKind = ROLE_GEO_KIND[approveRol]
     let scope = 'global', scopeIds = null
-    if (geoKind && !approveAllScope) {
+    if (geoKind && (!approveAllScope || approveRol === 'scouter')) {
       scope = geoKind
       scopeIds = approveGeoIds.length ? approveGeoIds : null
     }
@@ -586,8 +586,10 @@ const UsersSection = ({ users: initialUsers, onRefresh, currentUser, pendingActi
 
             {ROLE_GEO_KIND[approveRol] && (
               <div style={{ marginBottom:14 }}>
+                {approveRol !== 'scouter' && (
                 <Checkbox checked={approveAllScope} onChange={setApproveAllScope}
                   label={`Todas las ${GEO_KIND_LABEL[ROLE_GEO_KIND[approveRol]]}`}/>
+                )}
 
                 {!approveAllScope && (
                   <>

@@ -245,7 +245,7 @@ export default function OpportunitiesPage({ onOpenCreate, currentUser }) {
           {[0,1,2].map(i=><div key={i} style={{ height:72, borderRadius:12, background:'rgba(139,92,246,0.06)', animation:'pulse 1.5s ease-in-out infinite' }}/>)}
         </div>
       ) : rows.length === 0 ? (
-        <EmptyState icon={Briefcase} title={t('opportunities.empty')} actionLabel={`+ ${t('create.opportunity.label')}`} onAction={() => onOpenCreate('opportunity')}/>
+        <EmptyState icon={Briefcase} title={t('opportunities.empty')} actionLabel={t('create.opportunity.label')} onAction={() => onOpenCreate('opportunity')}/>
       ) : isDesktop ? (
         /* ── KANBAN (desktop) ── */
         <div style={{ overflowX:'auto', paddingBottom:20 }}>

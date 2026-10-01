@@ -220,7 +220,11 @@ export const dbSetUserEcosistemas = async (userId, ecosistemas) => {
 }
 
 export const dbApproveUser = async (userId, rol = 'viewer', opts = {}) => {
-  const { scope = 'global', scopeId = null, scopeIds = null, ecosistemas } = opts
+  const { scopeId = null, scopeIds = null, ecosistemas } = opts
+  // Una Scouter NUNCA lleva alcance 'city' ni 'global': eso le abre toda
+  // la ciudad (o la red). Va 'own' con la ciudad en scope_id, igual que
+  // upsert_scouter(). Ver supabase/052_scouters_privados.sql.
+  const scope = rol === 'scouter' ? 'own' : (opts.scope || 'global')
   const ecos = ecosistemas || getRolePermsDb(rol).ecosistemas
 
   // 1. Perfil: estado + rol

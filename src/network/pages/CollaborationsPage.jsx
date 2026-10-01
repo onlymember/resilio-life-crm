@@ -109,7 +109,7 @@ export default function CollaborationsPage({ onOpenCreate, currentUser }) {
           {[0,1,2].map(i => <div key={i} style={{ height: 76, borderRadius: 12, background: 'rgba(139,92,246,0.06)', animation: 'pulse 1.5s ease-in-out infinite' }}/>)}
         </div>
       ) : rows.length === 0 ? (
-        <EmptyState icon={CheckCircle} title={t('collab.empty')} actionLabel={`+ ${t('collab.new')}`} onAction={() => onOpenCreate('collaboration')}/>
+        <EmptyState icon={CheckCircle} title={t('collab.empty')} actionLabel={t('collab.new')} onAction={() => onOpenCreate('collaboration')}/>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {rows.map((collab, i) => (
