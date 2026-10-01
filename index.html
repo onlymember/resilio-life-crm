@@ -11,20 +11,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-  <!-- Instalable en el celular: el Club y el Network usan cada uno su manifiesto. -->
-  <script>
-    (function () {
-      var club = location.hostname.indexOf('club.') === 0
-      var l = document.createElement('link')
-      l.rel = 'manifest'
-      l.href = club ? '/club.webmanifest' : '/manifest.webmanifest'
-      document.head.appendChild(l)
-      var t = document.createElement('meta')
-      t.name = 'apple-mobile-web-app-title'
-      t.content = club ? 'Resilio Club' : 'Network'
-      document.head.appendChild(t)
-    })()
-  </script>
+  <!-- Instalable en el celular: ver public/manifest-switch.js -->
+  <script src="/manifest-switch.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">

@@ -2692,7 +2692,18 @@ const countRows = async (table, build) => {
   return count || 0
 }
 
+// Resumen semanal: una sola consulta en la base (migración 056). Antes
+// eran 12 conteos + dos lecturas de 5000 filas sumadas en el navegador,
+// y Supabase corta en 1000: con mucho volumen los números salían mal.
+// Sin la 056 usa el cálculo viejo.
 export const dbGetWeeklySummary = async () => {
+  const { data, error } = await supabase.rpc('weekly_summary')
+  if (!error && data && typeof data === 'object' && !Array.isArray(data) && data.byCity) return data
+  if (error && !['PGRST202', '42883'].includes(error.code)) throw friendly(error)
+  return dbGetWeeklySummaryLegacy()
+}
+
+const dbGetWeeklySummaryLegacy = async () => {
   const now = new Date()
   const d7  = new Date(now.getTime() - 7 * 86400000).toISOString()
   const d14 = new Date(now.getTime() - 14 * 86400000).toISOString()
@@ -2888,4 +2899,12 @@ export const dbGetMyScouterCity = async () => {
   if (!uid) return null
   const { data } = await supabase.from('scouters').select('city_id').eq('user_id', uid).maybeSingle()
   return data?.city_id || null
+}
+
+// Al cerrar sesión: que la próxima persona en esta pestaña no herede
+// datos de la anterior (geografía filtrada por su RLS, tipos, etc.).
+export const dbClearCaches = () => {
+  _actTypesCache = null
+  _geoCache = null
+  _brandCatsCache = null
 }

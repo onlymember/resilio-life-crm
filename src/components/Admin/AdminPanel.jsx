@@ -1189,7 +1189,7 @@ const ConfigSection = ({ currentUser }) => {
         </div>
         <div>
           <label style={{ fontSize:12, color:'var(--text-secondary)', display:'block', marginBottom:6 }}>Email del admin</label>
-          <input style={inpStyle} value={cfg.adminEmail} readOnly/>
+          <input style={inpStyle} value={cfg.adminEmail || currentUser?.email || ''} readOnly/>
         </div>
         <div>
           <label style={{ fontSize:12, color:'var(--text-secondary)', display:'block', marginBottom:6 }}>Versión del sistema</label>

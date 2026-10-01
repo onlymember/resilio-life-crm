@@ -23,7 +23,7 @@ const Btn = ({ href, onClick, icon: Icon, label, color }) => (
 )
 
 export default function QuickActions({ whatsapp, instagram, phone, onNote, onContact }) {
-  const wa = whatsapp?.replace(/[+\s\-()]/g, '')
+  const wa = (whatsapp || '').replace(/[^0-9]/g, '')
 
   const handleInstagram = (e) => {
     e.preventDefault()

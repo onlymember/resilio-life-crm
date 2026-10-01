@@ -1,32 +1,46 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, lazy } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import NetworkLayout from './NetworkLayout.jsx'
 import MobileLayout from './MobileLayout.jsx'
 import HomePage from './pages/HomePage.jsx'
-import InfluencersPage from './pages/InfluencersPage.jsx'
-import InfluencerDetailPage from './pages/InfluencerDetailPage.jsx'
-import BrandsPage from './pages/BrandsPage.jsx'
-import BrandDetailPage from './pages/BrandDetailPage.jsx'
-import OpportunitiesPage from './pages/OpportunitiesPage.jsx'
-import OpportunityDetailPage from './pages/OpportunityDetailPage.jsx'
-import CollaborationsPage from './pages/CollaborationsPage.jsx'
-import CollaborationDetailPage from './pages/CollaborationDetailPage.jsx'
-import ManualPage from './pages/ManualPage.jsx'
-import FollowUpsPage from './pages/FollowUpsPage.jsx'
-import TasksPage from './pages/TasksPage.jsx'
-import CommandPage from './pages/CommandPage.jsx'
-import ScoutersPage from './pages/ScoutersPage.jsx'
-import TaskTemplatesPage from './pages/TaskTemplatesPage.jsx'
-import MessageTemplatesPage from './pages/MessageTemplatesPage.jsx'
-import ScouterDetailPage from './pages/ScouterDetailPage.jsx'
-import ComingSoonPage from './pages/ComingSoonPage.jsx'
-import CalendarPage from './pages/CalendarPage.jsx'
-import MissionsPage from './pages/MissionsPage.jsx'
-import NotesPage from './pages/NotesPage.jsx'
-import RewardsPage from './pages/RewardsPage.jsx'
-import OffersPage from './pages/OffersPage.jsx'
-import LeadsPage from './pages/LeadsPage.jsx'
-import ApprovalsPage from './pages/ApprovalsPage.jsx'
+// Inicio carga junto con la app; el resto de las pantallas baja recién
+// cuando se abren (cada una en su archivo). El Suspense está en los layouts.
+// Si se publicó una versión nueva mientras la pestaña estaba abierta, los
+// archivos viejos ya no existen: se recarga una vez para tomar la nueva.
+const lazyPage = (load) => lazy(() => load().then((m) => {
+  try { sessionStorage.removeItem('nw.chunkReload') } catch { /* sin storage */ }
+  return m
+}).catch((err) => {
+  let reloaded = false
+  try { reloaded = sessionStorage.getItem('nw.chunkReload') === '1'; sessionStorage.setItem('nw.chunkReload', '1') } catch { /* sin storage */ }
+  if (!reloaded) { window.location.reload(); return new Promise(() => {}) }
+  throw err
+}))
+
+const InfluencersPage = lazyPage(() => import('./pages/InfluencersPage.jsx'))
+const InfluencerDetailPage = lazyPage(() => import('./pages/InfluencerDetailPage.jsx'))
+const BrandsPage = lazyPage(() => import('./pages/BrandsPage.jsx'))
+const BrandDetailPage = lazyPage(() => import('./pages/BrandDetailPage.jsx'))
+const OpportunitiesPage = lazyPage(() => import('./pages/OpportunitiesPage.jsx'))
+const OpportunityDetailPage = lazyPage(() => import('./pages/OpportunityDetailPage.jsx'))
+const CollaborationsPage = lazyPage(() => import('./pages/CollaborationsPage.jsx'))
+const CollaborationDetailPage = lazyPage(() => import('./pages/CollaborationDetailPage.jsx'))
+const ManualPage = lazyPage(() => import('./pages/ManualPage.jsx'))
+const FollowUpsPage = lazyPage(() => import('./pages/FollowUpsPage.jsx'))
+const TasksPage = lazyPage(() => import('./pages/TasksPage.jsx'))
+const CommandPage = lazyPage(() => import('./pages/CommandPage.jsx'))
+const ScoutersPage = lazyPage(() => import('./pages/ScoutersPage.jsx'))
+const TaskTemplatesPage = lazyPage(() => import('./pages/TaskTemplatesPage.jsx'))
+const MessageTemplatesPage = lazyPage(() => import('./pages/MessageTemplatesPage.jsx'))
+const ScouterDetailPage = lazyPage(() => import('./pages/ScouterDetailPage.jsx'))
+const ComingSoonPage = lazyPage(() => import('./pages/ComingSoonPage.jsx'))
+const CalendarPage = lazyPage(() => import('./pages/CalendarPage.jsx'))
+const MissionsPage = lazyPage(() => import('./pages/MissionsPage.jsx'))
+const NotesPage = lazyPage(() => import('./pages/NotesPage.jsx'))
+const RewardsPage = lazyPage(() => import('./pages/RewardsPage.jsx'))
+const OffersPage = lazyPage(() => import('./pages/OffersPage.jsx'))
+const LeadsPage = lazyPage(() => import('./pages/LeadsPage.jsx'))
+const ApprovalsPage = lazyPage(() => import('./pages/ApprovalsPage.jsx'))
 import CreateSheet from './components/CreateSheet.jsx'
 import Toaster from './components/Toaster.jsx'
 import GlobalSearch from './components/GlobalSearch.jsx'

@@ -47,6 +47,9 @@ const es = {
     checkEmailTitle: 'Revisá tu email',
     checkEmailBody: 'Te mandamos un link a {email}. Abrilo desde este dispositivo para terminar de activar tu acceso.',
     activating: 'Activando tu acceso…',
+    confirmBody: 'Vas a activar tu acceso con la cuenta {email}.',
+    confirm: 'Activar con esta cuenta',
+    otherAccount: 'Usar otra cuenta',
   },
   login: {
     title: 'Entrar', submit: 'Entrar', forgot: 'Olvidé mi contraseña',
@@ -178,6 +181,9 @@ const en = {
     checkEmailTitle: 'Check your email',
     checkEmailBody: 'We sent a link to {email}. Open it on this device to finish activating your access.',
     activating: 'Activating your access…',
+    confirmBody: 'You are about to activate your access with {email}.',
+    confirm: 'Activate with this account',
+    otherAccount: 'Use another account',
   },
   login: {
     title: 'Log in', submit: 'Log in', forgot: 'Forgot my password',

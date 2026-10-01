@@ -16,7 +16,12 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const url = event.notification.data?.url || '/'
+  // Solo rutas de este mismo sitio: un aviso no puede mandar a otra web.
+  let url = '/'
+  try {
+    const u = new URL(event.notification.data?.url || '/', self.location.origin)
+    if (u.origin === self.location.origin) url = u.pathname + u.search + u.hash
+  } catch { /* url inválida: queda la home */ }
   event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
     for (const c of list) if ('focus' in c) { c.navigate(url); return c.focus() }
     return self.clients.openWindow(url)

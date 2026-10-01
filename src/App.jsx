@@ -20,6 +20,9 @@ import {
 import LoginScreen from './components/Auth/LoginScreen.jsx'
 const AdminPanel = lazy(() => import('./components/Admin/AdminPanel.jsx'))
 import { supabase } from './lib/supabase.js'
+import { dbClearCaches } from './lib/database.js'
+import { redClearCaches } from './lib/red.js'
+import { resetTz } from './network/utils/tz.js'
 import {
   signOut, isAdmin,
   canAccessView, defaultViewFor, hasAnyAccess,
@@ -1083,6 +1086,7 @@ export default function App() {
       }
       if (event === 'TOKEN_REFRESHED') return   // misma sesión, no recargar
       if (!session?.user) {
+        dbClearCaches(); redClearCaches(); resetTz()
         setCurrentUser(null); setShowPortal(false); sessionBooted = true; setAuthReady(true); return
       }
       setTimeout(() => {
@@ -1165,9 +1169,16 @@ export default function App() {
 
   const [dataError, setDataError] = useState(null)
 
-  // Load shared CRM data whenever the authenticated user is available
+  // Load shared CRM data whenever the authenticated user is available.
+  // Solo para el CRM clásico: quien trabaja en Network no usa estas
+  // listas, y eran 7 consultas grandes en cada inicio de sesión. Se
+  // cargan la primera vez que se abre una vista clásica.
+  const legacyLoadedFor = useRef(null)
+  const inNetwork = currentView === 'network'
   useEffect(() => {
-    if (!currentUser) return
+    if (!currentUser || inNetwork) return
+    if (legacyLoadedFor.current === currentUser.id) return
+    legacyLoadedFor.current = currentUser.id
     setDataError(null)
     Promise.all([
       dbListAllBrands(),
@@ -1185,9 +1196,9 @@ export default function App() {
       setCollaborations(collabs)
       setActivationTypes(actTypes)
       setMissions(miss)
-    }).catch(e => setDataError(e?.message || 'Error al cargar datos. Revisá tu conexión.'))
+    }).catch(e => { legacyLoadedFor.current = null; setDataError(e?.message || 'Error al cargar datos. Revisá tu conexión.') })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser?.id])
+  }, [currentUser?.id, inNetwork])
 
   const isMobile = windowWidth < 640
   const isTablet = windowWidth >= 640 && windowWidth < 1024

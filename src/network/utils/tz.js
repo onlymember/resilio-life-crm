@@ -30,3 +30,5 @@ export function useTz() {
 
   return tz
 }
+
+export function resetTz() { _resolved = null; _pending = null }

@@ -56,7 +56,7 @@ export default function MessageSheet({ open, onClose, entity, entityType, cityNa
 
   if (!open) return null
 
-  const wa = (entity?.whatsapp || entity?.phone || '').replace(/[+\s\-()]/g, '')
+  const wa = (entity?.whatsapp || entity?.phone || '').replace(/[^0-9]/g, '')
 
   const handleCopy = async (tpl) => {
     const ok = await copyText(renderTemplate(tpl.body, { entity, cityName, me }))

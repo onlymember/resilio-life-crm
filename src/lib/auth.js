@@ -154,7 +154,7 @@ export const notifyNewUser = (nombre, email, userId) => {
 
 // ── System Config ───────────────────────────────────────────
 const K_CONFIG = 'system_config'
-const DEFAULT_CFG = { empresa:'Resilio Life', mensajeBienvenida:'Bienvenido al sistema Resilio Life', version:'6.0', adminEmail:'lucajcazzoli@gmail.com' }
+const DEFAULT_CFG = { empresa:'Resilio Life', mensajeBienvenida:'Bienvenido al sistema Resilio Life', version:'6.0', adminEmail:'' }
 export const getSystemConfig = () => {
   try { return { ...DEFAULT_CFG, ...JSON.parse(localStorage.getItem(K_CONFIG)||'null') } } catch { return DEFAULT_CFG }
 }

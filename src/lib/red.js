@@ -332,3 +332,5 @@ export const redCreateCollabFromInterest = async (it) => {
   await redUpdateInterest(it.id, { internalStatus: 'matched', collaborationId: collab.id })
   return collab
 }
+
+export const redClearCaches = () => { _typesCache = null }

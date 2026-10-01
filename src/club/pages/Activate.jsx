@@ -15,7 +15,7 @@ export default function Activate() {
   const navigate = useNavigate()
   const { session, refresh, logout } = useAuth()
 
-  const [stage, setStage] = useState('checking')   // checking | closed | auth | email | activating
+  const [stage, setStage] = useState('checking')   // checking | closed | auth | confirm | email | activating
   const [mode,  setMode]  = useState('new')
   const [f, setF] = useState({ name: '', email: '', password: '' })
   const [busy,  setBusy]  = useState(false)
@@ -39,8 +39,10 @@ export default function Activate() {
     if (session === undefined) return
     if (!token) { setStage('closed'); return }
     if (session) {
-      // Volvió del email de confirmación, o ya tenía sesión: activar directo.
-      if (!tried.current) { tried.current = true; activate() }
+      // Volvió del email de confirmación, o ya tenía sesión. No se activa
+      // solo: un link abierto con OTRA cuenta logueada la ataría a la
+      // ficha equivocada. Se muestra con qué cuenta y se confirma.
+      if (!tried.current) setStage('confirm')
       return
     }
     checkInvitation(token)
@@ -85,6 +87,18 @@ export default function Activate() {
         <p className="muted">{error || t('errors.link_invalid')}</p>
       </div>
       {session && <button className="club-btn ghost" onClick={logout}>{t('common.logout')}</button>}
+    </Centered>
+  )
+
+  if (stage === 'confirm') return (
+    <Centered top={top}>
+      <h1>{t('activate.title')}</h1>
+      <p className="muted" style={{ marginBottom: 20 }}>{t('activate.confirmBody', { email: session?.user?.email || '' })}</p>
+      <ErrorBox>{error}</ErrorBox>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <button className="club-btn" onClick={() => { tried.current = true; activate() }}>{t('activate.confirm')}</button>
+        <button className="club-btn ghost" onClick={async () => { await logout(); setStage('auth') }}>{t('activate.otherAccount')}</button>
+      </div>
     </Centered>
   )
 

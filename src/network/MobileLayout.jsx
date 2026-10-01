@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { Suspense, useState, useEffect, useRef } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
+import PageBoundary from './components/PageBoundary.jsx'
 import { Home, CheckSquare, Plus, Users, Menu, X, LogOut, Bell, Search } from 'lucide-react'
 import CreateSheet from './components/CreateSheet.jsx'
 import { SPEED_DIAL_ITEMS } from './createOptions.js'
@@ -316,7 +317,7 @@ export default function MobileLayout({ currentUser, onCreated, createOpen, creat
       {drawerOpen && <NavDrawer currentUser={currentUser} onClose={closeDrawer}/>}
 
       <main style={{ flex: 1 }}>
-        <Outlet/>
+        <PageBoundary><Suspense fallback={<div style={{ padding: 20 }}><div style={{ height: 28, width: 180, borderRadius: 8, background: 'rgba(139,92,246,0.08)' }}/></div>}><Outlet/></Suspense></PageBoundary>
       </main>
 
       {/* Speed-dial backdrop — below nav (z:100), above page */}

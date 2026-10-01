@@ -279,6 +279,9 @@
     "search": "Buscar..."
   },
   "errors": {
+    "pageCrashed": "This screen hit an error",
+    "pageCrashedHint": "Try again or go to another section. Everything else keeps working.",
+    "retry": "Try again",
     "notFound": "No encontrado o sin acceso",
     "notFoundAccess": "Verificá que tengas acceso a este registro.",
     "noAccess": "No tenés acceso a esta sección",
