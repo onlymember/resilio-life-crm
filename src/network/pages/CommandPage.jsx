@@ -19,11 +19,13 @@ import {
   getNetworkScouters, getUnassignedSummary,
   getScouterPerformance,
 } from '../../lib/metrics.js'
+import { DIRECTION_ROLES } from '../../lib/roles.js'
 import {
   dbGetGoals, dbGetGeography, dbGetMonthlySnapshots, dbCloseMonthlySnapshot,
   dbGetInfluencers, dbGetBrands, dbRunDailyMaintenance,
   dbGetCoverageRunway, dbGetCityComparison,
 } from '../../lib/database.js'
+import { quiet } from '../../lib/quiet.js'
 
 const SectionTitle = ({ children, action }) => (
   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
@@ -32,7 +34,6 @@ const SectionTitle = ({ children, action }) => (
   </div>
 )
 
-const DIRECTION_ROLES = ['super_admin', 'network_direction']
 
 const fmtMoney = (n) => {
   if (!n) return '—'
@@ -109,8 +110,8 @@ export default function CommandPage({ currentUser }) {
   const [allScouters,   setAllScouters]   = useState([])
 
   useEffect(() => {
-    dbGetGeography().then(setGeo).catch(() => {})
-    getNetworkScouters({}).then(setAllScouters).catch(() => {})
+    dbGetGeography().then(setGeo).catch(quiet('CommandPage'))
+    getNetworkScouters({}).then(setAllScouters).catch(quiet('CommandPage'))
 
     // pageSize 1 porque solo interesa el total: PostgREST devuelve el
     // count exacto sin traer las filas.
@@ -119,13 +120,13 @@ export default function CommandPage({ currentUser }) {
       dbGetBrands({      page: 0, pageSize: 1, noNextAction: true }),
     ])
       .then(([i, b]) => setDormant({ influencers: i.total, brands: b.total }))
-      .catch(() => {})
+      .catch(quiet('CommandPage'))
 
     // pg_cron no esta disponible en esta instancia, asi que el motor de
     // tareas recurrentes lo dispara quien abre el Command Center. La
     // funcion tiene un candado de 6 horas del lado de la base: llamarla
     // de mas no genera de mas, y si falla no rompe la pantalla.
-    dbRunDailyMaintenance().catch(() => {})
+    dbRunDailyMaintenance().catch(quiet('CommandPage'))
   }, [])
 
   const load = useCallback(async () => {

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase.js'
-import EmptyState from './EmptyState.jsx'
+
 import { t } from '../../i18n/index.js'
 import { dbGetBrandInfluencerHistory } from '../../lib/database.js'
-import { Users } from 'lucide-react'
+import { quiet } from '../../lib/quiet.js'
 
 const fmtMoney = (n) => {
   if (!n) return '—'
@@ -52,7 +52,7 @@ export default function RelationshipHistory({ brandId, influencerId }) {
           setNames(map)
         }
       })
-      .catch(() => {})
+      .catch(quiet('RelationshipHistory'))
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [brandId, influencerId])

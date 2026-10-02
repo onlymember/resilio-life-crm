@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useEffect, useRef } from 'react'
+import React, { Suspense, useState, useEffect } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import PageBoundary from './components/PageBoundary.jsx'
 import { Home, CheckSquare, Plus, Users, Menu, X, LogOut, Bell, Search } from 'lucide-react'
@@ -10,6 +10,7 @@ import { t } from '../i18n/index.js'
 import { openSearch } from './components/GlobalSearch.jsx'
 import { dbGetNotifications } from '../lib/database.js'
 import { signOut } from '../lib/auth.js'
+import { quiet } from '../lib/quiet.js'
 
 const PREFERS_REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -35,7 +36,7 @@ function BellNavBtn() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    dbGetNotifications(3).then(setNotifs).catch(() => {})
+    dbGetNotifications(3).then(setNotifs).catch(quiet('MobileLayout'))
   }, [])
 
   const unseen = notifs.filter(n => !seen.has(`${n.entityType}:${n.entityId}`)).length

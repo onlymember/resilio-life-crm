@@ -7,6 +7,7 @@ import { X, GitMerge, AlertTriangle } from 'lucide-react'
 import { t } from '../../i18n/index.js'
 import { dbGetEntityRaw, dbMergeEntities, dbGetPeopleNames } from '../../lib/database.js'
 import EntityPicker from './EntityPicker.jsx'
+import { quiet } from '../../lib/quiet.js'
 
 const FIELDS = {
   influencer: ['name', 'username', 'instagram', 'whatsapp', 'email', 'phone', 'tiktok', 'followers', 'category', 'tier', 'city_id', 'relationship_status', 'owner_scouter_id', 'notes'],
@@ -25,7 +26,7 @@ export default function MergeSheet({ type, keepId, cityMap = {}, onClose, onMerg
 
   useEffect(() => { dbGetEntityRaw(type, keepId).then(setA).catch(e => setErr(e.message)) }, [type, keepId])
   useEffect(() => {
-    if (a && b) dbGetPeopleNames([a.owner_scouter_id, b.owner_scouter_id]).then(setNames).catch(() => {})
+    if (a && b) dbGetPeopleNames([a.owner_scouter_id, b.owner_scouter_id]).then(setNames).catch(quiet('MergeSheet'))
   }, [a, b])
   useEffect(() => {
     setB(null); setTake({}); setSure(false)

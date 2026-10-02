@@ -1,9 +1,5 @@
 import React, { useState } from 'react'
-import {
-  Users, Plus, Edit3, Trash2, Search, Crown, Star, Copy, Check,
-  Instagram, Phone, Mail, TrendingUp, AlertCircle, Save, X, RefreshCw
-} from 'lucide-react'
-
+import { Users, Plus, Edit3, Trash2, Search, Crown, Star, Copy, Check, Instagram, TrendingUp, AlertCircle, Save, X, RefreshCw } from 'lucide-react'
 const generateId = () => `${Date.now()}_${Math.random().toString(36).slice(2,7)}`
 const F = ({ label, children, err: e }) => (
   <div>

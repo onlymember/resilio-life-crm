@@ -14,6 +14,7 @@ import HandoffCard from '../components/HandoffCard.jsx'
 import DuplicateHint from '../components/DuplicateHint.jsx'
 import BrandCollabs from '../components/BrandCollabs.jsx'
 import RelationshipHistory from '../components/RelationshipHistory.jsx'
+import ProposalCard from '../components/ProposalCard.jsx'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { isoToDatetimeLocal, datetimeLocalToIso } from '../utils/date.js'
@@ -23,6 +24,7 @@ import {
 } from '../../lib/database.js'
 import { supabase } from '../../lib/supabase.js'
 import { COMMAND_ROLES, DIRECTION_ROLES } from '../routes.js'
+import { quiet } from '../../lib/quiet.js'
 
 const REL_STATUSES = ['cold','warm','strong','inactive']
 const relColors = { cold: '#9CA3AF', warm: '#FBBF24', strong: '#34D399', inactive: '#6B7280' }
@@ -190,7 +192,7 @@ export default function BrandDetailPage({ currentUser }) {
   // Nombres de la scouter a cargo y de quién la cargó (se recarga al reasignar).
   useEffect(() => {
     if (!entity) return
-    dbGetPeopleNames([entity.ownerScouterId, entity.createdBy]).then(setPeople).catch(() => {})
+    dbGetPeopleNames([entity.ownerScouterId, entity.createdBy]).then(setPeople).catch(quiet('BrandDetailPage'))
   }, [entity?.ownerScouterId, entity?.createdBy])
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>{t('loading.generic')}</div>
@@ -324,7 +326,7 @@ export default function BrandDetailPage({ currentUser }) {
             <QuickReply entityType="brand" entityId={entity.id} onDone={(patch) => {
               setEntity(prev => ({ ...prev, ...patch }))
               setDirty(prev => { const n = { ...prev }; delete n.relationshipStatus; delete n.nextAction; delete n.nextActionAt; return n })
-              dbGetEntityTimeline('brand', entity.id).then(setTimeline).catch(() => {})
+              dbGetEntityTimeline('brand', entity.id).then(setTimeline).catch(quiet('BrandDetailPage'))
             }}/>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -387,6 +389,12 @@ export default function BrandDetailPage({ currentUser }) {
               />
             </div>
           </div>
+        </div>
+
+        {/* PROPUESTA — link privado en partners.resilio.company */}
+        <div style={sectionStyle}>
+          <SectionHeader label={t('proposal.title')} fields={[]} dirty={dirty}/>
+          <ProposalCard brand={entity}/>
         </div>
 
         {/* VÍNCULOS — oportunidades relacionadas */}

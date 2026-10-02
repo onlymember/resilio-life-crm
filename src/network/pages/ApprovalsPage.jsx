@@ -13,6 +13,7 @@ import { redGetLeads, redGetInterests, redUpdateInterest, redGetPendingCounts } 
 import { ErrorLine, inputStyle } from '../red/ui.jsx'
 import { LeadCard, ApproveSheet, RejectSheet, EmailRequests } from './LeadsPage.jsx'
 import InterestToCollab from '../red/InterestToCollab.jsx'
+import { quiet } from '../../lib/quiet.js'
 
 const INTERNAL = ['new', 'reviewed', 'contacted', 'matched', 'discarded']
 const INTEREST_FILTERS = ['open', 'new', 'matched', 'discarded', 'all']
@@ -38,7 +39,7 @@ function PendingTab({ onChanged }) {
   }, [onChanged])
   useEffect(() => { load() }, [])
   useEffect(() => {
-    dbGetActiveScouters(null).then(list => { const m = {}; list.forEach(s => { m[s.userId] = personName(s) }); setOwners(m) }).catch(() => {})
+    dbGetActiveScouters(null).then(list => { const m = {}; list.forEach(s => { m[s.userId] = personName(s) }); setOwners(m) }).catch(quiet('ApprovalsPage'))
   }, [])
 
   return (
@@ -110,7 +111,7 @@ export default function ApprovalsPage() {
   const [params, setParams] = useSearchParams()
   const tab = params.get('tab') === 'interests' ? 'interests' : 'pending'
   const [counts, setCounts] = useState(null)
-  const refreshCounts = useCallback(() => { redGetPendingCounts().then(setCounts).catch(() => {}) }, [])
+  const refreshCounts = useCallback(() => { redGetPendingCounts().then(setCounts).catch(quiet('ApprovalsPage')) }, [])
   useEffect(() => { refreshCounts() }, [refreshCounts])
 
   const pendingN = counts ? counts.leads + counts.emails : 0

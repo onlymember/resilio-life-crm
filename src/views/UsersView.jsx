@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
-import { Users, Search, MapPin, TrendingUp, User } from 'lucide-react'
-
+import { Users, Search, MapPin } from 'lucide-react'
 const fmtMoney = (n) => n>=1000000?`$${(n/1000000).toFixed(1)}M`:n>=1000?`$${(n/1000).toFixed(0)}K`:`$${n}`
 const fmtDate  = (d) => { if(!d) return '—'; const parts=d.split('-'); return `${parts[2]}/${parts[1]}/${parts[0].slice(2)}` }
 

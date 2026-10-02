@@ -1,6 +1,5 @@
-import React, { useState, useMemo } from 'react'
-import { Plus, Edit3, Trash2, X, Save, MapPin, DollarSign, Users, Star, TrendingUp, Building, Layers, Grid, List, Search, BarChart3, Calendar } from 'lucide-react'
-
+import React, { useState } from 'react'
+import { Plus, Edit3, Trash2, X, Save, MapPin, Grid, List, Search } from 'lucide-react'
 const fmtMoney = (n, cur='$') => n>=1000000?`${cur}${(n/1000000).toFixed(1)}M`:n>=1000?`${cur}${(n/1000).toFixed(0)}K`:`${cur}${n}`
 const fmtDate  = (d) => { if(!d) return '—'; const p=d.split('-'); return `${p[2]}/${p[1]}/${p[0].slice(2)}` }
 const generateId = () => `${Date.now()}_${Math.random().toString(36).slice(2,7)}`

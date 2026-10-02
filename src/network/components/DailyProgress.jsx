@@ -5,6 +5,9 @@
 import React, { useState } from 'react'
 import { Flame, Target, Pencil } from 'lucide-react'
 import { t } from '../../i18n/index.js'
+import { computeProgress } from '../utils/progress.js'
+
+export { computeProgress }
 
 const GOALS = [3, 5, 8, 10, 15]
 const DEFAULT_GOAL = 5
@@ -14,26 +17,6 @@ export const readGoal = (uid) => {
   try { const n = Number(localStorage.getItem(key(uid))); return GOALS.includes(n) ? n : DEFAULT_GOAL } catch { return DEFAULT_GOAL }
 }
 const saveGoal = (uid, n) => { try { localStorage.setItem(key(uid), String(n)) } catch { /* sin storage: queda en memoria */ } }
-
-// days: [{ day, contacts, added }] ordenado de más viejo a hoy.
-export function computeProgress(days, goal) {
-  if (!days || !days.length) return null
-  const today = days[days.length - 1]
-  const met = (d) => d.contacts >= goal
-  let streak = 0
-  let i = met(today) ? days.length - 1 : days.length - 2
-  for (; i >= 0 && met(days[i]); i--) streak++
-  const week = days.slice(-7)
-  return {
-    today: today.contacts,
-    reached: met(today),
-    streak,
-    week: {
-      contacts: week.reduce((s, d) => s + d.contacts, 0),
-      added:    week.reduce((s, d) => s + d.added, 0),
-    },
-  }
-}
 
 const label = { fontSize: 9, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: 1.2, textTransform: 'uppercase' }
 

@@ -1,9 +1,5 @@
-import React, { useState, useMemo } from 'react'
-import {
-  ResponsiveContainer, LineChart, Line, BarChart, Bar,
-  PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip,
-  Legend, AreaChart, Area
-} from 'recharts'
+import React, { useMemo } from 'react'
+import { ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, AreaChart, Area } from 'recharts'
 import { TrendingUp, DollarSign, BarChart3, Users, MapPin, Clock } from 'lucide-react'
 
 const fmtMoney = (n) => n >= 1000000 ? `$${(n/1000000).toFixed(1)}M` : n >= 1000 ? `$${(n/1000).toFixed(0)}K` : `$${n}`

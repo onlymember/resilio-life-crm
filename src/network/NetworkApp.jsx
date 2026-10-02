@@ -44,11 +44,12 @@ const ApprovalsPage = lazyPage(() => import('./pages/ApprovalsPage.jsx'))
 import CreateSheet from './components/CreateSheet.jsx'
 import Toaster from './components/Toaster.jsx'
 import GlobalSearch from './components/GlobalSearch.jsx'
-import EmptyState from './components/EmptyState.jsx'
+
 import { Shield } from 'lucide-react'
 import { getDefaultRoute, COMMAND_ROLES, DIRECTION_ROLES, OFFERS_ROLES, clubRoles, setClubForScouters, useClubForScouters } from './routes.js'
 import { dbGetSetting } from '../lib/database.js'
 import { t } from '../i18n/index.js'
+import { quiet } from '../lib/quiet.js'
 
 const useIsMobile = () => {
   const [mobile, setMobile] = useState(window.innerWidth < 640)
@@ -96,7 +97,7 @@ export default function NetworkApp({ currentUser }) {
   const isMobile = useIsMobile()
   useClubForScouters()
   // ¿El Club está abierto para los scouters? (interruptor en la sección Club)
-  useEffect(() => { dbGetSetting('club_for_scouters').then(v => setClubForScouters(v === true)).catch(() => {}) }, [])
+  useEffect(() => { dbGetSetting('club_for_scouters').then(v => setClubForScouters(v === true)).catch(quiet('NetworkApp')) }, [])
   const [createOpen, setCreateOpen] = useState(false)
   const [createStep, setCreateStep] = useState('select')
 

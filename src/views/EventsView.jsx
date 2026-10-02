@@ -1,10 +1,5 @@
-import React, { useState, useMemo } from 'react'
-import {
-  Calendar, MapPin, Users, DollarSign, Ticket, Plus, Edit3, Trash2,
-  X, Save, ChevronDown, Image, RefreshCw, Clock, TrendingUp,
-  Wrench, Tag, Film, Music, BarChart3
-} from 'lucide-react'
-
+import React, { useState } from 'react'
+import { Calendar, MapPin, Users, DollarSign, Plus, Edit3, Trash2, X, Save, RefreshCw, Clock } from 'lucide-react'
 const fmtMoney = (n) => n >= 1000000 ? `$${(n/1000000).toFixed(1)}M` : n >= 1000 ? `$${(n/1000).toFixed(0)}K` : `$${n}`
 const generateId = () => `${Date.now()}_${Math.random().toString(36).slice(2,7)}`
 const F = ({ label, children }) => (

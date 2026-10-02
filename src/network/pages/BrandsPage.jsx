@@ -20,6 +20,7 @@ import { personName } from '../utils/people.js'
 import { ADDED_PRESETS, addedRange, rangeToFilters, toDateInput } from '../utils/addedRanges.js'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { COMMAND_ROLES, DIRECTION_ROLES } from '../routes.js'
+import { quiet } from '../../lib/quiet.js'
 
 const useIsDesktop = () => {
   const [desktop, setDesktop] = useState(window.innerWidth >= 640)
@@ -137,7 +138,7 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
         setCities(g.cities || [])
         const m = {}; (g.cities||[]).forEach(c => { m[c.id] = c.name }); setCityMap(m)
         setBrandCats(cats)
-      }).catch(() => {})
+      }).catch(quiet('BrandsPage'))
   }, [])
 
   const load = useCallback(async (pg = 0, s = search, f = filters, ex = extra, size = PAGE_SIZE) => {
@@ -170,12 +171,12 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
 
   // Scouters para el filtro de Dirección y nombres de quién tiene cada marca.
   useEffect(() => {
-    if (isDirection) dbGetActiveScouters(null).then(setScouters).catch(() => {})
+    if (isDirection) dbGetActiveScouters(null).then(setScouters).catch(quiet('BrandsPage'))
   }, [])
   useEffect(() => {
     if (!isDirection) return
     const ids = [...rows.map(r => r.ownerScouterId), extra.createdBy].filter(id => id && !(id in names))
-    if (ids.length) dbGetPeopleNames(ids).then(m => setNames(p => ({ ...p, ...m }))).catch(() => {})
+    if (ids.length) dbGetPeopleNames(ids).then(m => setNames(p => ({ ...p, ...m }))).catch(quiet('BrandsPage'))
   }, [rows, extra.createdBy])
 
   const applyExtra = (ex) => { setExtra(ex); load(0, search, filters, ex) }

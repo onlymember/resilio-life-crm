@@ -5,6 +5,7 @@ import { getMyMissions, claimCompletedMissions } from '../../lib/metrics.js'
 import { dbSaveMission, dbGetGeography } from '../../lib/database.js'
 import { canSeeCommand } from '../routes.js'
 import MissionProgress from '../components/MissionProgress.jsx'
+import { quiet } from '../../lib/quiet.js'
 
 const INPUT_STYLE = {
   width: '100%', background: 'rgba(139,92,246,0.07)',
@@ -171,7 +172,7 @@ export default function MissionsPage({ currentUser }) {
 
   useEffect(() => {
     if (!formOpen || !canManage) return
-    dbGetGeography().then(g => setCities(g.cities)).catch(() => {})
+    dbGetGeography().then(g => setCities(g.cities)).catch(quiet('MissionsPage'))
   }, [formOpen, canManage])
 
   const handleSave = async (form) => {

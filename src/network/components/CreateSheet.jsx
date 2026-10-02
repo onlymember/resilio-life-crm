@@ -6,6 +6,7 @@ import EntityPicker from './EntityPicker.jsx'
 import QuickTaskForm from './QuickTaskForm.jsx'
 import DuplicateHint from './DuplicateHint.jsx'
 import { toast } from './Toaster.jsx'
+import { quiet } from '../../lib/quiet.js'
 
 const CATEGORIES = t('categories') // array desde es.json
 
@@ -278,8 +279,8 @@ export default function CreateSheet({ isOpen, onClose, currentUser, onCreated, i
   useEffect(() => {
     if (!isOpen) return
     setStep(initialStep || 'select'); setError(null)
-    dbGetGeography().then(g => setCities(g.cities || [])).catch(() => {})
-    dbGetActivationTypes().then(a => setActivationTypes(a)).catch(() => {})
+    dbGetGeography().then(g => setCities(g.cities || [])).catch(quiet('CreateSheet'))
+    dbGetActivationTypes().then(a => setActivationTypes(a)).catch(quiet('CreateSheet'))
   }, [isOpen])
 
   const handleSaveInfluencer = useCallback(async (form) => {

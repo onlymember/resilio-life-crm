@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import { FileText, Pin, Trash2, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { t } from '../../i18n/index.js'

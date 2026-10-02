@@ -9,16 +9,9 @@ import { t } from '../../i18n/index.js'
 import { COMMAND_ROLES } from '../routes.js'
 import { useTz } from '../utils/tz.js'
 import { isoToDatetimeLocal, datetimeLocalToIso } from '../utils/date.js'
-import {
-  dbPatchOpportunity, dbGetGeography, dbListAllBrands,
-  dbGetEntityTimeline, dbGetActivationTypes, dbGetInfluencers,
-  dbGetOpportunityInfluencers, dbAddOpportunityInfluencer,
-  dbUpdateOpportunityInfluencerStatus, dbDeleteOpportunityInfluencer,
-  dbGetOpportunityInfluencerItems, dbAddOpportunityInfluencerItem,
-  dbDeleteOpportunityInfluencerItem,
-  dbConvertOpportunityToCollaboration,
-} from '../../lib/database.js'
+import { dbPatchOpportunity, dbGetGeography, dbListAllBrands, dbGetEntityTimeline, dbGetActivationTypes, dbGetOpportunityInfluencers, dbAddOpportunityInfluencer, dbUpdateOpportunityInfluencerStatus, dbDeleteOpportunityInfluencer, dbGetOpportunityInfluencerItems, dbAddOpportunityInfluencerItem, dbDeleteOpportunityInfluencerItem, dbConvertOpportunityToCollaboration } from '../../lib/database.js'
 import { supabase } from '../../lib/supabase.js'
+import { quiet } from '../../lib/quiet.js'
 
 const STATUSES = ['new','qualifying','contacted','in_conversation','proposal','won','lost','on_hold']
 
@@ -343,12 +336,12 @@ export default function OpportunityDetailPage({ currentUser }) {
   }
 
   const handleCandidateStatusChange = async (candidateId, status) => {
-    await dbUpdateOpportunityInfluencerStatus(candidateId, status).catch(() => {})
+    await dbUpdateOpportunityInfluencerStatus(candidateId, status).catch(quiet('OpportunityDetailPage'))
     setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, status } : c))
   }
 
   const handleCandidateDelete = async (candidateId) => {
-    await dbDeleteOpportunityInfluencer(candidateId).catch(() => {})
+    await dbDeleteOpportunityInfluencer(candidateId).catch(quiet('OpportunityDetailPage'))
     setCandidates(prev => prev.filter(c => c.id !== candidateId))
   }
 

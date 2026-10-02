@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Eye, EyeOff, Clock } from 'lucide-react'
 import { login, register, notifyNewUser, requestPasswordReset, updatePassword } from '../../lib/auth.js'
 
 // ── Inline styles ──────────────────────────────────────────
@@ -33,7 +34,7 @@ const s = {
   err:    { background:'rgba(239,68,68,0.12)', border:'1px solid rgba(239,68,68,0.3)', borderRadius:8, padding:'10px 14px', fontSize:13, color:'#F87171', marginBottom:16, lineHeight:1.5 },
   ok:     { background:'rgba(16,185,129,0.12)', border:'1px solid rgba(16,185,129,0.3)', borderRadius:8, padding:'10px 14px', fontSize:13, color:'#34D399', marginBottom:16, lineHeight:1.5 },
   link:   { textAlign:'center', marginTop:16, fontSize:12, color:'var(--text-tertiary)', cursor:'pointer' },
-  eyeBtn: { position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text-tertiary)', fontSize:16, padding:0 },
+  eyeBtn: { position:'absolute', right:6, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text-tertiary)', padding:8, display:'flex', alignItems:'center' },
 }
 
 const kf = `
@@ -50,7 +51,7 @@ const PendingScreen = ({ onBack }) => (
     <div style={s.nebula1}/><div style={s.nebula2}/>
     <div style={{...s.card, textAlign:'center'}}>
       <div style={{padding:'48px 40px'}}>
-        <div style={{fontSize:56,marginBottom:20}}>⏳</div>
+        <Clock size={52} color="#A78BFA" style={{marginBottom:20}} aria-hidden="true"/>
         <h2 style={{fontSize:20,fontWeight:800,color:'#F9FAFB',marginBottom:12}}>Cuenta creada exitosamente</h2>
         <p style={{color:'var(--text-secondary)',fontSize:13,lineHeight:1.8,marginBottom:28}}>
           Un administrador debe aprobar tu acceso.<br/>
@@ -125,19 +126,19 @@ export default function LoginScreen({ onLogin, passwordResetMode = false }) {
             {error   && <div style={s.err}>{error}</div>}
             {success && <div style={s.ok}>{success}</div>}
             <div style={s.field}>
-              <label style={s.label}>🔒 Nueva contraseña</label>
+              <label style={s.label}>Nueva contraseña</label>
               <div style={s.inputWrap}>
                 <input style={{...s.input,paddingRight:42}} type={showPass?'text':'password'}
                   placeholder="Mínimo 6 caracteres" value={rpPass} onChange={e=>setRpPass(e.target.value)}/>
-                <button type="button" style={s.eyeBtn} onClick={()=>setShowPass(p=>!p)}>{showPass?'🙈':'👁️'}</button>
+                <button type="button" style={s.eyeBtn} onClick={()=>setShowPass(p=>!p)} aria-label={showPass?'Ocultar contraseña':'Mostrar contraseña'}>{showPass?<EyeOff size={18}/>:<Eye size={18}/>}</button>
               </div>
             </div>
             <div style={s.field}>
-              <label style={s.label}>🔒 Confirmar contraseña</label>
+              <label style={s.label}>Confirmar contraseña</label>
               <div style={s.inputWrap}>
                 <input style={{...s.input,paddingRight:42}} type={showPass2?'text':'password'}
                   placeholder="Repetí tu contraseña" value={rpPass2} onChange={e=>setRpPass2(e.target.value)}/>
-                <button type="button" style={s.eyeBtn} onClick={()=>setShowPass2(p=>!p)}>{showPass2?'🙈':'👁️'}</button>
+                <button type="button" style={s.eyeBtn} onClick={()=>setShowPass2(p=>!p)} aria-label={showPass2?'Ocultar contraseña':'Mostrar contraseña'}>{showPass2?<EyeOff size={18}/>:<Eye size={18}/>}</button>
               </div>
             </div>
             <button type="submit" className="auth-btn" style={{...s.btn,opacity:loading?0.7:1}} disabled={loading}>
@@ -216,7 +217,6 @@ export default function LoginScreen({ onLogin, passwordResetMode = false }) {
         <div style={s.logo}>
           <img src="/logoresilio.png" alt="Resilio Life" style={s.logoImg} onError={e=>{e.target.style.display='none'}}/>
           <div style={s.logoTitle}>RESILIO LIFE</div>
-          <div style={s.logoSub}>SISTEMA DE GESTIÓN</div>
         </div>
 
         {/* Tabs */}
@@ -233,18 +233,18 @@ export default function LoginScreen({ onLogin, passwordResetMode = false }) {
             {success && <div style={s.ok}>{success}</div>}
 
             <div style={s.field}>
-              <label style={s.label}>📧 Email</label>
+              <label style={s.label}>Email</label>
               <input style={s.input} type="email" placeholder="email@ejemplo.com"
                 value={lEmail} onChange={e=>setLEmail(e.target.value)} autoComplete="email"/>
             </div>
 
             <div style={s.field}>
-              <label style={s.label}>🔒 Contraseña</label>
+              <label style={s.label}>Contraseña</label>
               <div style={s.inputWrap}>
                 <input style={{...s.input,paddingRight:42}} type={showPass?'text':'password'}
                   placeholder="••••••••" value={lPass} onChange={e=>setLPass(e.target.value)} autoComplete="current-password"/>
-                <button type="button" style={s.eyeBtn} onClick={()=>setShowPass(p=>!p)}>
-                  {showPass ? '🙈' : '👁️'}
+                <button type="button" style={s.eyeBtn} onClick={()=>setShowPass(p=>!p)} aria-label={showPass?'Ocultar contraseña':'Mostrar contraseña'}>
+                  {showPass ? <EyeOff size={18}/> : <Eye size={18}/>}
                 </button>
               </div>
             </div>
@@ -266,35 +266,35 @@ export default function LoginScreen({ onLogin, passwordResetMode = false }) {
             {success && <div style={s.ok}>{success}</div>}
 
             <div style={s.field}>
-              <label style={s.label}>👤 Nombre completo</label>
+              <label style={s.label}>Nombre completo</label>
               <input style={s.input} type="text" placeholder="Juan Pérez"
                 value={rNombre} onChange={e=>setRNombre(e.target.value)}/>
             </div>
 
             <div style={s.field}>
-              <label style={s.label}>📧 Email</label>
+              <label style={s.label}>Email</label>
               <input style={s.input} type="email" placeholder="email@ejemplo.com"
                 value={rEmail} onChange={e=>setREmail(e.target.value)} autoComplete="email"/>
             </div>
 
             <div style={s.field}>
-              <label style={s.label}>🔒 Contraseña</label>
+              <label style={s.label}>Contraseña</label>
               <div style={s.inputWrap}>
                 <input style={{...s.input,paddingRight:42}} type={showPass?'text':'password'}
                   placeholder="Mínimo 6 caracteres" value={rPass} onChange={e=>setRPass(e.target.value)}/>
-                <button type="button" style={s.eyeBtn} onClick={()=>setShowPass(p=>!p)}>
-                  {showPass ? '🙈' : '👁️'}
+                <button type="button" style={s.eyeBtn} onClick={()=>setShowPass(p=>!p)} aria-label={showPass?'Ocultar contraseña':'Mostrar contraseña'}>
+                  {showPass ? <EyeOff size={18}/> : <Eye size={18}/>}
                 </button>
               </div>
             </div>
 
             <div style={s.field}>
-              <label style={s.label}>🔒 Confirmar contraseña</label>
+              <label style={s.label}>Confirmar contraseña</label>
               <div style={s.inputWrap}>
                 <input style={{...s.input,paddingRight:42}} type={showPass2?'text':'password'}
                   placeholder="Repetí tu contraseña" value={rPass2} onChange={e=>setRPass2(e.target.value)}/>
-                <button type="button" style={s.eyeBtn} onClick={()=>setShowPass2(p=>!p)}>
-                  {showPass2 ? '🙈' : '👁️'}
+                <button type="button" style={s.eyeBtn} onClick={()=>setShowPass2(p=>!p)} aria-label={showPass2?'Ocultar contraseña':'Mostrar contraseña'}>
+                  {showPass2 ? <EyeOff size={18}/> : <Eye size={18}/>}
                 </button>
               </div>
             </div>
@@ -316,7 +316,7 @@ export default function LoginScreen({ onLogin, passwordResetMode = false }) {
             </p>
 
             <div style={s.field}>
-              <label style={s.label}>📧 Email</label>
+              <label style={s.label}>Email</label>
               <input style={s.input} type="email" placeholder="email@ejemplo.com"
                 value={fpEmail} onChange={e=>setFpEmail(e.target.value)} autoComplete="email"/>
             </div>

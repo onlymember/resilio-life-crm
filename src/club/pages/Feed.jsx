@@ -2,12 +2,13 @@
 //   Arriba: buscador de ciudad + país, y una fila con Mis ciudades /
 //   Todas / cada ciudad. Abajo: una oferta a la vez, solo la imagen,
 //   con "No me interesa" / "Me interesa" encima. Al votar pasa a la otra.
-import React, { useEffect, useState, useCallback, useMemo } from 'react'
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { Sparkles, Heart, X, Search } from 'lucide-react'
 import { myFeed, feedCities, voteOffer, markFeedSeen, offerImageUrl, listCities } from '../api.js'
 import { t, errText, useLang } from '../i18n.js'
 import { Chips, Toast } from '../components/ui.jsx'
 import { useAuth } from '../components/chrome.jsx'
+import { quiet } from '../../lib/quiet.js'
 
 export default function Feed() {
   useLang()
@@ -21,6 +22,9 @@ export default function Feed() {
   const [offers,   setOffers]   = useState(null)
   const [leaving,  setLeaving]  = useState(false)
   const [toast,    setToast]    = useState(null)
+  const [dx,       setDx]       = useState(0)        // arrastre horizontal
+  const [mark,     setMark]     = useState(null)     // 'yes' | 'no' al votar
+  const drag = useRef(null)
 
   const load = useCallback(async (flt) => {
     setOffers(null)
@@ -31,16 +35,16 @@ export default function Feed() {
   }, [])
 
   useEffect(() => {
-    feedCities().then(setCities).catch(() => {})
+    feedCities().then(setCities).catch(quiet('Feed'))
     listCities().then(list => { const m = {}; list.forEach(c => { m[c.id] = c }); setCatalog(m) })
   }, [])
   useEffect(() => { load(filter) }, [filter, load])
 
   // "Visto" al salir: las "Nueva" de esta visita dejan de serlo la próxima.
   useEffect(() => {
-    const onHide = () => { if (document.visibilityState === 'hidden') markFeedSeen().catch(() => {}) }
+    const onHide = () => { if (document.visibilityState === 'hidden') markFeedSeen().catch(quiet('Feed')) }
     document.addEventListener('visibilitychange', onHide)
-    return () => { document.removeEventListener('visibilitychange', onHide); markFeedSeen().catch(() => {}) }
+    return () => { document.removeEventListener('visibilitychange', onHide); markFeedSeen().catch(quiet('Feed')) }
   }, [])
 
   const countries = useMemo(() => {
@@ -62,12 +66,27 @@ export default function Feed() {
   const offer = offers?.[0]
   const vote = async (v) => {
     if (!offer || leaving) return
-    setLeaving(true)
+    const yes = v === 'interested'
+    setLeaving(true); setMark(yes ? 'yes' : 'no'); setDx(yes ? 600 : -600)
     try {
       await voteOffer(offer.id, v)
-      setTimeout(() => { setOffers(prev => (prev || []).slice(1)); setLeaving(false) }, 350)
-    } catch (e) { setLeaving(false); setToast(errText(e)) }
+      setTimeout(() => { setOffers(prev => (prev || []).slice(1)); setLeaving(false); setMark(null); setDx(0) }, 380)
+    } catch (e) { setLeaving(false); setMark(null); setDx(0); setToast(errText(e)) }
   }
+
+  // Deslizar: derecha = Me interesa, izquierda = No me interesa.
+  const SWIPE = 90
+  const onDown = (e) => { if (leaving || e.target.closest('button')) return; drag.current = { x: e.clientX }; e.currentTarget.setPointerCapture?.(e.pointerId) }
+  const onMove = (e) => { if (drag.current) setDx(e.clientX - drag.current.x) }
+  const onUp = () => {
+    if (!drag.current) return
+    drag.current = null
+    if (dx > SWIPE) vote('interested')
+    else if (dx < -SWIPE) vote('not_interested')
+    else setDx(0)
+  }
+  const hint = mark || (dx > 30 ? 'yes' : dx < -30 ? 'no' : null)
+  const hintOp = mark ? 1 : Math.min(1, Math.abs(dx) / SWIPE)
 
   return (
     <div className="club-feed">
@@ -97,16 +116,19 @@ export default function Feed() {
             <p className="muted">{t('feed.emptyBody')}</p>
           </div>
         ) : (
-          <div key={offer.id} className={`club-feed-card${leaving ? ' leaving' : ''}`}>
-            <img src={offerImageUrl(offer.image_path)} alt={offer.title}/>
+          <div key={offer.id} className={`club-feed-card${drag.current ? ' dragging' : ''}${leaving ? ' leaving' : ''}`}
+            style={{ transform: `translateX(${dx}px) rotate(${dx / 25}deg)` }}
+            onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
+            <img src={offerImageUrl(offer.image_path)} alt={offer.title} draggable={false}/>
             {offer.is_new && <span className="club-badge new">{t('feed.new')}</span>}
+            {hint && (
+              <div className={`club-feed-mark ${hint}`} style={{ opacity: hintOp }} aria-hidden="true">
+                {hint === 'yes' ? <Heart size={64} fill="currentColor"/> : <X size={64}/>}
+              </div>
+            )}
             <div className="club-feed-actions">
-              <button className="club-btn ghost" onClick={() => vote('not_interested')} disabled={leaving} aria-label={t('feed.notInterested')}>
-                <X size={16}/>{t('feed.notInterested')}
-              </button>
-              <button className="club-btn" onClick={() => vote('interested')} disabled={leaving} aria-label={t('feed.interested')}>
-                <Heart size={16}/>{t('feed.interested')}
-              </button>
+              <button className="club-feed-act no" onClick={() => vote('not_interested')} disabled={leaving} aria-label={t('feed.notInterested')}><X size={24}/></button>
+              <button className="club-feed-act yes" onClick={() => vote('interested')} disabled={leaving} aria-label={t('feed.interested')}><Heart size={24}/></button>
             </div>
           </div>
         )}

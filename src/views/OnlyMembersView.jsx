@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
-import { Star, Users, Calendar, MapPin, TrendingUp, Filter, BarChart3 } from 'lucide-react'
-
+import { Calendar, MapPin } from 'lucide-react'
 const fmtMoney = (n) => n >= 1000000 ? `$${(n/1000000).toFixed(1)}M` : n >= 1000 ? `$${(n/1000).toFixed(0)}K` : `$${n}`
 
 const DEMO_VIP_EVENTS = [

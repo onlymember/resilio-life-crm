@@ -3,6 +3,7 @@ import { X, Search, UserCheck } from 'lucide-react'
 import { t } from '../../i18n/index.js'
 import { personName } from '../utils/people.js'
 import { dbGetActiveScouters, dbAssignBulk } from '../../lib/database.js'
+import { quiet } from '../../lib/quiet.js'
 
 const AVATAR_COLORS = ['#8B5CF6','#EC4899','#06B6D4','#10B981','#F59E0B','#EF4444','#6366F1']
 const avatarColor = (name = '') => AVATAR_COLORS[(name.charCodeAt(0)||0) % AVATAR_COLORS.length]
@@ -33,7 +34,7 @@ export default function BulkBar({ selected, rows, entityType, onClear, onRefresh
     setPhase('picking')
     dbGetActiveScouters(null)
       .then(setScouters)
-      .catch(() => {})
+      .catch(quiet('BulkBar'))
       .finally(() => setScouterLoading(false))
   }
 

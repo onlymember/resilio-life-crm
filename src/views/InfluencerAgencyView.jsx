@@ -1,13 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
-import {
-  Plus, Edit3, Trash2, X, Save, Search, Users, TrendingUp, DollarSign,
-  Star, Eye, Heart, CheckCircle, Clock, Award, Upload, Download,
-  Instagram, Globe, ChevronDown, BarChart3, Zap, Trophy, Shield, MapPin, Phone, Bell
-} from 'lucide-react'
-
+import { Plus, Edit3, Trash2, X, Save, Search, Users, DollarSign, Star, CheckCircle, Upload, Download, Instagram, BarChart3, Trophy, MapPin, Phone } from 'lucide-react'
 const fmtMoney = (n) => n >= 1000000 ? `$${(n/1000000).toFixed(1)}M` : n >= 1000 ? `$${(n/1000).toFixed(0)}K` : `$${n}`
 const fmtNum   = (n) => n >= 1000000 ? `${(n/1000000).toFixed(1)}M` : n >= 1000 ? `${(n/1000).toFixed(0)}K` : `${n}`
 const fmtDate  = (d) => { if (!d) return '—'; const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0].slice(2)}` }

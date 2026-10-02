@@ -1,10 +1,6 @@
 import React, { useState, useMemo } from 'react'
-import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, PieChart, Pie, Cell, LineChart, Line
-} from 'recharts'
-import { FileText, Download, BarChart3, MapPin, Users, Activity, Search, Filter } from 'lucide-react'
-
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, LineChart, Line } from 'recharts'
+import { Download, BarChart3, MapPin, Users, Activity, Filter } from 'lucide-react'
 const fmtMoney = (n) => n >= 1000000 ? `$${(n/1000000).toFixed(1)}M` : n >= 1000 ? `$${(n/1000).toFixed(0)}K` : `$${n}`
 const fmtDate  = (d) => { if (!d) return '—'; const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0].slice(2)}` }
 

@@ -8,6 +8,7 @@ import { t } from '../../i18n/index.js'
 import { personName } from '../utils/people.js'
 import { getNetworkScouters, getScouterPerformance } from '../../lib/metrics.js'
 import { dbGetGeography } from '../../lib/database.js'
+import { quiet } from '../../lib/quiet.js'
 
 const SORT_COLS = ['nombre','ciudad','level','influencers','brands','opportunities','coverage','tasksOverdue','daysInactive']
 
@@ -51,7 +52,7 @@ export default function ScoutersPage({ currentUser }) {
   const [period,      setPeriod]      = useState(null)
 
   useEffect(() => {
-    dbGetGeography().then(setGeo).catch(() => {})
+    dbGetGeography().then(setGeo).catch(quiet('ScoutersPage'))
   }, [])
 
   const load = useCallback(async () => {

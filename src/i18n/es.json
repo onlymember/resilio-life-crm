@@ -1651,5 +1651,40 @@
       "opportunities": "Oport.",
       "collaborations": "Colab."
     }
+  },
+  "proposal": {
+    "title": "Propuesta",
+    "hint": "Link privado a la propuesta de Resilio Life (sin precios). La marca elige plan y responde 5 preguntas; vence a los 30 días.",
+    "lang": "Idioma de la propuesta",
+    "create": "Crear link de propuesta",
+    "again": "Crear un link nuevo",
+    "created": "Link creado. Mandalo por WhatsApp o copialo.",
+    "sendWa": "Mandar por WhatsApp",
+    "shareWa": "Compartir por WhatsApp",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "open": "Ver",
+    "close": "Cerrar link",
+    "closeConfirm": "¿Cerrar este link? La marca ya no va a poder abrirlo.",
+    "extend": "Darle 30 días más",
+    "extended": "Link extendido 30 días",
+    "sentOn": "enviado el {date}",
+    "answeredOn": "respondió el {date}",
+    "expires": "vence el {date}",
+    "message": "¡Hola! Te comparto la propuesta de Resilio Life para {marca}. Elegí el plan que más te sirva y respondé 5 preguntas rápidas: {link}",
+    "status": {
+      "sent": "Enviada, todavía no la abrió",
+      "viewed": "La abrió ({n} veces), todavía no eligió",
+      "answered": "Eligió: {plan}",
+      "expired": "Venció sin respuesta",
+      "closed": "Link cerrado"
+    },
+    "q": {
+      "goal": "Objetivo",
+      "start": "Empezar",
+      "networks": "Redes",
+      "creators_per_week": "Creadores por semana",
+      "notes": "Nota"
+    }
   }
 }

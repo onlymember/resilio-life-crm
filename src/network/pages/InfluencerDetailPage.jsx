@@ -19,6 +19,7 @@ import { useTz } from '../utils/tz.js'
 import { isoToDatetimeLocal, datetimeLocalToIso } from '../utils/date.js'
 import { dbGetActivities, dbGetGeography, dbPatchInfluencer } from '../../lib/database.js'
 import { supabase } from '../../lib/supabase.js'
+import { quiet } from '../../lib/quiet.js'
 
 const CATEGORIES = t('categories') || []
 const TIERS = ['nano','micro','mid','macro','mega']
@@ -283,7 +284,7 @@ export default function InfluencerDetailPage({ currentUser }) {
             <QuickReply entityType="influencer" entityId={entity.id} onDone={(patch) => {
               setEntity(prev => ({ ...prev, ...patch }))
               setDirty(prev => { const n = { ...prev }; delete n.relationshipStatus; delete n.nextAction; delete n.nextActionAt; return n })
-              dbGetActivities('influencer', entity.id, 20).then(setActivities).catch(() => {})
+              dbGetActivities('influencer', entity.id, 20).then(setActivities).catch(quiet('InfluencerDetailPage'))
             }}/>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

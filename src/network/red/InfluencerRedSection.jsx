@@ -8,6 +8,7 @@ import { t } from '../../i18n/index.js'
 import { redGetAppAccess, redCreateInvitation, redGetInfluencerInterests, redUpdateInterest, redGetInfluencerTopics } from '../../lib/red.js'
 import { LinkShare, ErrorLine, btn, inputStyle } from './ui.jsx'
 import InterestToCollab from './InterestToCollab.jsx'
+import { quiet } from '../../lib/quiet.js'
 
 const INTERNAL = ['new', 'reviewed', 'contacted', 'discarded', 'matched']
 
@@ -110,7 +111,7 @@ function Interests({ influencerId, isDirection, ownerId }) {
 
 function Topics({ influencerId }) {
   const [list, setList] = useState([])
-  useEffect(() => { redGetInfluencerTopics(influencerId).then(setList).catch(() => {}) }, [influencerId])
+  useEffect(() => { redGetInfluencerTopics(influencerId).then(setList).catch(quiet('InfluencerRedSection')) }, [influencerId])
   if (!list.length) return null
   const label = (c) => { const k = `categories.${c}`; const v = t(k); return v && v !== k ? v : c }
   return (

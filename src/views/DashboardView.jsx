@@ -1,13 +1,6 @@
 import React, { useState, useMemo } from 'react'
-import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, FunnelChart, Funnel, LabelList, Cell
-} from 'recharts'
-import {
-  DollarSign, Users, TrendingUp, CheckSquare, Calendar, Building2,
-  ArrowUp, ArrowDown, Filter, BarChart3, Activity, Star, Globe
-} from 'lucide-react'
-
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { DollarSign, Users, TrendingUp, CheckSquare, Calendar, Building2, ArrowUp, ArrowDown } from 'lucide-react'
 const fmt = (n) => n >= 1000000 ? `$${(n/1000000).toFixed(1)}M` : n >= 1000 ? `$${(n/1000).toFixed(0)}K` : `$${n}`
 const fmtN = (n) => n >= 1000 ? `${(n/1000).toFixed(1)}K` : String(n)
 

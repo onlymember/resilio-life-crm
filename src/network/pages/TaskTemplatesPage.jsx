@@ -8,6 +8,7 @@ import {
   dbGetTaskTemplates, dbSaveTaskTemplate, dbDeleteTaskTemplate,
   dbRunDailyMaintenance, dbGetGeography,
 } from '../../lib/database.js'
+import { quiet } from '../../lib/quiet.js'
 
 // Lo que una plantilla puede repetir. 'one_time' queda fuera de la
 // lista a propósito: una plantilla que no se repite es una tarea, y
@@ -72,8 +73,8 @@ export default function TaskTemplatesPage() {
   useEffect(() => { load() }, [load])
 
   useEffect(() => {
-    dbGetGeography().then(g => setCities(g.cities || [])).catch(() => {})
-    getNetworkScouters({}).then(setScouters).catch(() => {})
+    dbGetGeography().then(g => setCities(g.cities || [])).catch(quiet('TaskTemplatesPage'))
+    getNetworkScouters({}).then(setScouters).catch(quiet('TaskTemplatesPage'))
   }, [])
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))

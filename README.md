@@ -1,38 +1,33 @@
-# 🌟 Resilio Life - Sistema Celestial v5.0
+# Resilio — CRM, Network y Club
 
-CRM Multi-Ecosystem para gestión integral de Resilio Holdings.
+Un solo repo y un solo deploy (Vercel) con tres apps:
 
-## 🚀 Stack Tecnológico
+- **Network** (`/network/*`): CRM de scouters. Entra por `src/network/NetworkRoot.jsx`, sin cargar el CRM clásico.
+- **CRM clásico** (`/`): `src/App.jsx` y `src/views/*`. También tiene el login.
+- **Resilio Club** (`club.resilio.company`): app de influencers, `src/club/*`.
 
-- **Frontend**: React 18.3.1 + Vite 5.4.10
-- **Iconos**: Lucide React
-- **Gráficos**: Recharts
-- **Persistencia**: localStorage (v1.0)
-- **Diseño**: Glassmorphism violeta futurista
+## Comandos
 
-## 🏢 Ecosistemas Integrados
-
-1. **Resilio Life** - Red de beneficios
-2. **Agencia Creativa** - Proyectos internacionales
-3. **Agencia Influencers** - Campañas y colaboraciones
-4. **Productora** - Eventos y RRPP
-5. **Elevare** - Luxury network
-6. **Gestión** - Misiones y team
-7. **Captación** - Pipeline y seguimiento
-
-## 📦 Instalación
-
-```bash
-npm install
-npm run dev
+```
+npm install        # una vez, o cuando cambie package.json
+npm run dev        # CRM + Network en local
+npm run dev:club   # Club en local
+npm run lint       # revisión automática (errores = cosas que rompen)
+npm test           # pruebas
+npm run check      # lint + pruebas + build: correr antes de cada push
 ```
 
-## 🌐 Deployment
+GitHub corre `lint`, `test` y `build` en cada push (`.github/workflows/ci.yml`).
 
-- **Frontend**: Vercel
-- **Base de datos**: Supabase (próximamente)
-- **URL Producción**: https://resiliolife.vercel.app
+## Estructura
 
-## 📝 Licencia
+- `src/lib/database.js` re-exporta la capa de datos, que vive en `src/lib/db/*.js` por tema.
+- `src/lib/roles.js` es la única fuente de las listas de roles (alineadas con las funciones de la base).
+- `supabase/` tiene las migraciones numeradas; ver `supabase/MIGRATIONS.md` para el estado y las reglas.
 
-© 2026 Resilio Holdings. Todos los derechos reservados.
+## Variables de entorno (`.env.local`, no se sube)
+
+```
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
+```

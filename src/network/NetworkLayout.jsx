@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useEffect, useCallback, useRef } from 'react'
+import React, { Suspense, useState, useEffect, useRef } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import PageBoundary from './components/PageBoundary.jsx'
 import { ChevronLeft, ChevronRight, LogOut, Bell, X, Plus, Search } from 'lucide-react'
@@ -9,6 +9,7 @@ import { t } from '../i18n/index.js'
 import { openSearch } from './components/GlobalSearch.jsx'
 import { dbGetNotifications } from '../lib/database.js'
 import { signOut } from '../lib/auth.js'
+import { quiet } from '../lib/quiet.js'
 
 const ENTITY_ROUTE = {
   influencer:    (id) => `/network/influencers/${id}`,
@@ -35,7 +36,7 @@ function NotificationBell({ onNavigate }) {
   const panelRef = useRef(null)
 
   useEffect(() => {
-    dbGetNotifications(3).then(setNotifs).catch(() => {})
+    dbGetNotifications(3).then(setNotifs).catch(quiet('NetworkLayout'))
   }, [])
 
   useEffect(() => {

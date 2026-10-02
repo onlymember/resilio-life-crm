@@ -19,6 +19,7 @@ import {
   dbSetNextAction, dbCompleteTask, dbGetTaskById, dbRescheduleOverdue, dbEnrichAgendaContacts,
   dbLogContact, dbGetDailyProgress, dbGetStalledOpportunities,
 } from '../../lib/database.js'
+import { quiet } from '../../lib/quiet.js'
 
 const AGENDA_PREVIEW = 5
 const STALLED_DAYS   = 10
@@ -74,7 +75,7 @@ export default function HomePage({ currentUser, onOpenCreate }) {
   // El modo foco espera a que se cierre el panel de seguimiento.
   const followWaiter = useRef(null)
 
-  const loadDaily = useCallback(() => dbGetDailyProgress(60).then(setDaily).catch(() => {}), [])
+  const loadDaily = useCallback(() => dbGetDailyProgress(60).then(setDaily).catch(quiet('HomePage')), [])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -93,7 +94,7 @@ export default function HomePage({ currentUser, onOpenCreate }) {
           const e = byKey.get(`${p.kind}:${p.entityId}`)
           return e && p.kind === 'task' ? { ...p, whatsapp: e.whatsapp, instagram: e.instagram, phone: e.phone } : p
         }))
-      }).catch(() => {})
+      }).catch(quiet('HomePage'))
       setStats(st)
       setMissions(ms)
       setPulse(pu)
@@ -104,7 +105,7 @@ export default function HomePage({ currentUser, onOpenCreate }) {
     }
     // Lo nuevo de la 053: si no está, estos bloques no aparecen.
     loadDaily()
-    dbGetStalledOpportunities(STALLED_DAYS, 5).then(setStalled).catch(() => {})
+    dbGetStalledOpportunities(STALLED_DAYS, 5).then(setStalled).catch(quiet('HomePage'))
   }, [loadDaily])
 
   useEffect(() => { load() }, [load])
@@ -180,7 +181,7 @@ export default function HomePage({ currentUser, onOpenCreate }) {
   // Cada WhatsApp / DM / llamada desde el Inicio cuenta para la meta.
   const handleContact = useCallback((item, labelTxt) => {
     if (item.kind !== 'next_action') return
-    dbLogContact(item.entityType, item.entityId, labelTxt).then(loadDaily).catch(() => {})
+    dbLogContact(item.entityType, item.entityId, labelTxt).then(loadDaily).catch(quiet('HomePage'))
   }, [loadDaily])
 
   // Solo seguimientos: una tarea vencida no se reagenda, se cancela

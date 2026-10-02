@@ -6,6 +6,7 @@ import { updateProfile, listCities, setNewPassword, requestEmailChange, myEmailR
 import { t, errText, useLang } from '../i18n.js'
 import { Field, ErrorBox, Chips, Toast, categoryOptions } from '../components/ui.jsx'
 import { useAuth, LangToggle } from '../components/chrome.jsx'
+import { quiet } from '../../lib/quiet.js'
 
 export default function Profile() {
   useLang()
@@ -26,7 +27,7 @@ export default function Profile() {
   const [pending, setPending] = useState(null)
   const [pErr,  setPErr]  = useState(null)
 
-  useEffect(() => { listCities().then(setCities); myEmailRequest().then(setPending).catch(() => {}) }, [])
+  useEffect(() => { listCities().then(setCities); myEmailRequest().then(setPending).catch(quiet('Profile')) }, [])
   const set = (k) => (e) => setF(p => ({ ...p, [k]: e.target.value }))
 
   const save = async (e) => {

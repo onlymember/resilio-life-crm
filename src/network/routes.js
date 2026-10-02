@@ -1,22 +1,8 @@
 import { useSyncExternalStore } from 'react'
-// Roles que tienen acceso al Command Center (vista de Dirección)
-export const COMMAND_ROLES = [
-  'super_admin',
-  'network_direction',
-  'regional_lead',
-  'country_lead',
-  'city_lead',
-]
-
-// Direccion estricta. Coincide con app_is_direction() de la base: los
-// tres roles de territorio ven el Command Center pero NO pueden escribir
-// plantillas, asi que mostrarles esa pantalla seria ofrecerles algo que
-// RLS les va a negar.
-export const DIRECTION_ROLES = ['super_admin', 'network_direction']
-
-// Ofertas del Club (047): las gestionan super_admin, admin y
-// network_direction. Coincide con app_can_manage_offers() de la base.
-export const OFFERS_ROLES = ['super_admin', 'admin', 'network_direction']
+// Las listas de roles viven en lib/roles.js (una sola fuente, alineada
+// con las funciones de la base). Se re-exportan para no cambiar imports.
+import { COMMAND_ROLES, DIRECTION_ROLES, OFFERS_ROLES } from '../lib/roles.js'
+export { COMMAND_ROLES, DIRECTION_ROLES, OFFERS_ROLES }
 
 // Club (red de influencers) para los scouters: lo prenden o apagan
 // super_admin, admin o network_direction con el interruptor de la sección

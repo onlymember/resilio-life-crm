@@ -2,6 +2,8 @@
 // manifiesto. Va en un archivo (no inline en index.html) para que la
 // Content-Security-Policy pueda prohibir scripts inline.
 (function () {
+  // La propuesta para marcas (partners.*) no se instala: sin manifiesto.
+  if (location.hostname.indexOf('partners.') === 0) return
   var club = location.hostname.indexOf('club.') === 0
   var l = document.createElement('link')
   l.rel = 'manifest'

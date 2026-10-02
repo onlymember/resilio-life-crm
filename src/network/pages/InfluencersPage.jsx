@@ -20,6 +20,7 @@ import { personName } from '../utils/people.js'
 import { ADDED_PRESETS, addedRange, rangeToFilters, toDateInput } from '../utils/addedRanges.js'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { COMMAND_ROLES, DIRECTION_ROLES } from '../routes.js'
+import { quiet } from '../../lib/quiet.js'
 
 const useIsDesktop = () => {
   const [desktop, setDesktop] = useState(window.innerWidth >= 640)
@@ -148,7 +149,7 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
     dbGetGeography().then(g => {
       setCities(g.cities || [])
       const m = {}; (g.cities||[]).forEach(c => { m[c.id] = c.name }); setCityMap(m)
-    }).catch(() => {})
+    }).catch(quiet('InfluencersPage'))
   }, [])
 
   const load = useCallback(async (pg = 0, s = search, f = filters, ord = orderBy, ex = extra, size = PAGE_SIZE) => {
@@ -192,8 +193,8 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
   // Scouters para el filtro de Dirección, y el nombre de "cargadas por"
   // cuando se llega desde el reporte de altas.
   useEffect(() => {
-    if (isDirection) dbGetActiveScouters(null).then(setScouters).catch(() => {})
-    if (initialExtra.createdBy) dbGetPeopleNames([initialExtra.createdBy]).then(m => setCreatedByName(m[initialExtra.createdBy] || '')).catch(() => {})
+    if (isDirection) dbGetActiveScouters(null).then(setScouters).catch(quiet('InfluencersPage'))
+    if (initialExtra.createdBy) dbGetPeopleNames([initialExtra.createdBy]).then(m => setCreatedByName(m[initialExtra.createdBy] || '')).catch(quiet('InfluencersPage'))
   }, [])
 
   const applyExtra = (ex) => { setExtra(ex); load(0, search, filters, orderBy, ex) }

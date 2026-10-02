@@ -1,11 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import {
-  Plus, Search, Filter, Copy, Check, ChevronDown, ChevronRight,
-  MapPin, Phone, Mail, Instagram, Globe, Tag, Clock, TrendingUp,
-  Users, Target, BarChart3, X, Save, Edit3, Trash2, Calendar,
-  AlertCircle, CheckCircle, ArrowRight, Star, Zap, Building2, Bell
-} from 'lucide-react'
-
+import { Plus, Search, Copy, Check, ChevronDown, ChevronRight, MapPin, X, Save, Edit3, Trash2, Bell } from 'lucide-react'
 const F = ({ label, children, err: e }) => (
   <div>
     <label style={{ fontSize:12, fontWeight:500, color:'var(--text-secondary)', display:'block', marginBottom:6 }}>{label}</label>

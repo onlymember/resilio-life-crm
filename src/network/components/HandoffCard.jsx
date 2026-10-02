@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react'
 import { ArrowRightLeft, X } from 'lucide-react'
 import { t } from '../../i18n/index.js'
 import { dbGetLastHandoffToMe, dbGetPeopleNames } from '../../lib/database.js'
+import { quiet } from '../../lib/quiet.js'
 
 const MAX_DAYS = 21
 const seenKey = (id) => `nw.handoff.${id}`
@@ -24,7 +25,7 @@ export default function HandoffCard({ entityType, entityId, activities = [] }) {
         const m = await dbGetPeopleNames([r.fromOwnerId]).catch(() => ({}))
         if (!off) setFrom(m[r.fromOwnerId] || '')
       }
-    }).catch(() => {})
+    }).catch(quiet('HandoffCard'))
     return () => { off = true }
   }, [entityType, entityId])
 

@@ -3,7 +3,6 @@ import { MapPin, Clock, MoreVertical, UserCheck } from 'lucide-react'
 import RelationshipBadge from './RelationshipBadge.jsx'
 import QuickActions from './QuickActions.jsx'
 import QuickReply from './QuickReply.jsx'
-import { t } from '../../i18n/index.js'
 
 const timeAgo = (iso) => {
   if (!iso) return null

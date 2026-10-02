@@ -1,9 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import {
-  getUsers, getActivityLog,
-  getSystemConfig, saveSystemConfig, approveUser, blockUser, unblockUser, updateUser,
-  deleteUser, getRolePerms, logActivity, timeAgo, genId, getGeography, setUserEcosistemas,
-} from '../../lib/auth.js'
+import { getUsers, getActivityLog, getSystemConfig, saveSystemConfig, approveUser, blockUser, unblockUser, updateUser, deleteUser, getRolePerms, logActivity, timeAgo, setUserEcosistemas } from '../../lib/auth.js'
 import { dbGetGeography, dbCreateCity, dbCreateCountry, dbUpdateCity, dbUpdateCountry } from '../../lib/database.js'
 // La sección Geografía lee las tablas sin el filtro de `active` (dbGetGeography
 // solo trae las activas), así que necesita el cliente directo.

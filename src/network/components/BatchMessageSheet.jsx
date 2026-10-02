@@ -6,6 +6,7 @@ import { X, MessageCircle, SkipForward, Check } from 'lucide-react'
 import { t } from '../../i18n/index.js'
 import { dbGetMessageTemplates, dbLogContact } from '../../lib/database.js'
 import { renderTemplate } from './MessageSheet.jsx'
+import { quiet } from '../../lib/quiet.js'
 
 const waNumber = (e) => (e?.whatsapp || e?.phone || '').replace(/[^0-9]/g, '')
 
@@ -33,7 +34,7 @@ export default function BatchMessageSheet({ entities, entityType, cityMap = {}, 
   const send = () => {
     if (!current || !body.trim()) return
     window.open(`https://wa.me/${waNumber(current)}?text=${encodeURIComponent(text)}`, '_blank', 'noopener')
-    dbLogContact(entityType, current.id, 'WhatsApp').catch(() => {})
+    dbLogContact(entityType, current.id, 'WhatsApp').catch(quiet('BatchMessageSheet'))
     onContacted?.(current.id)
     setSent(n => n + 1)
     setIdx(i => i + 1)

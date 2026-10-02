@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
-import { Palette, Plus, Edit3, Trash2, X, Save, Users, Clock, CheckCircle, Circle, AlertCircle, Search, Globe, Briefcase, Tag, Calendar, ChevronDown, BarChart3, Star } from 'lucide-react'
-
+import { Plus, Edit3, Trash2, X, Save, CheckCircle, Circle, AlertCircle, Search, Globe, Briefcase, Star } from 'lucide-react'
 // ── Equipo Demo ──────────────────────────────
 const DEMO_EQUIPO = [
   { id:'e1', nombre:'Lucía Fernández', rol:'Directora Creativa', pais:'Argentina', ciudad:'Buenos Aires', especialidad:'Branding & Identidad', portfolio:'luciadesign.com', contacto:'lucia@resilio.com', instagram:'@lucia_design', estado:'activo', proyectos:['Rebrand Elevare','Web Resilio'], descripcion:'Especialista en identidad visual y branding estratégico.', fechaIngreso:'2022-03-15', disponibilidad:'Disponible', nivelExperiencia:'Senior', habilidades:['Illustrator','Photoshop','Branding','Figma'], tarifa:120, proyectosActivos:3, capacidadSemanal:40, notas:'' },

@@ -3,45 +3,15 @@ import { THEME_CSS } from './styles/theme.js'
 
 // Persists across renders — prevents re-showing splash on internal navigation
 let sessionBooted = false
-import {
-  LayoutDashboard, Building2, MapPin, Users, Gift, QrCode,
-  BarChart3, ChevronDown, ChevronRight, Search,
-  Bell, Sun, Moon, Menu, X, Plus, Edit3, Trash2,
-  Phone, Mail, Globe, Calendar, Tag, CheckCircle,
-  Clock, Star, TrendingUp,
-  User, Shield, Layers,
-  AlertCircle, ChevronLeft, Save, Award,
-  Building, CreditCard, Activity, Palette, FileText, Ticket,
-  Target, Radio, Crown, Megaphone, PhoneCall, Home, Map,
-  Settings, LogOut,
-  Briefcase, CheckSquare, BookOpen, ArrowRight,
-} from 'lucide-react'
-
+import { LayoutDashboard, Building2, MapPin, Users, Gift, QrCode, BarChart3, ChevronDown, ChevronRight, Search, Bell, Menu, X, Plus, Edit3, Trash2, Phone, Mail, Calendar, CheckCircle, Clock, Star, User, Shield, Layers, AlertCircle, ChevronLeft, Save, Award, Building, CreditCard, Activity, Palette, FileText, Ticket, Target, Radio, Crown, Megaphone, PhoneCall, Home, Map, Settings, LogOut, Briefcase, CheckSquare, BookOpen, ArrowRight } from 'lucide-react'
 import LoginScreen from './components/Auth/LoginScreen.jsx'
 const AdminPanel = lazy(() => import('./components/Admin/AdminPanel.jsx'))
 import { supabase } from './lib/supabase.js'
 import { dbClearCaches } from './lib/database.js'
 import { redClearCaches } from './lib/red.js'
 import { resetTz } from './network/utils/tz.js'
-import {
-  signOut, isAdmin,
-  canAccessView, defaultViewFor, hasAnyAccess,
-  getAdminNotifs, markNotifRead, markAllNotifsRead,
-} from './lib/auth.js'
-import {
-  dbListAllBrands, dbSaveBrand, dbDeleteBrand,
-  dbGetLocations, dbSaveLocation, dbDeleteLocation,
-  dbListAllInfluencers, dbSaveInfluencer, dbDeleteInfluencer,
-  dbGetCurrentUser,
-  fetchUserById,
-  dbGetCampaigns, dbSaveCampaign, dbDeleteCampaign,
-  dbGetCampaignInfluencers, dbAddInfluencerToCampaign,
-  dbUpdateCampaignInfluencer, dbRemoveInfluencerFromCampaign,
-  dbGetCollaborations, dbSaveCollaboration, dbDeleteCollaboration,
-  dbGetActivationTypes,
-  dbGetMissions,
-} from './lib/database.js'
-
+import { signOut, isAdmin, canAccessView, defaultViewFor, hasAnyAccess, getAdminNotifs } from './lib/auth.js'
+import { dbListAllBrands, dbSaveBrand, dbDeleteBrand, dbGetLocations, dbSaveLocation, dbDeleteLocation, dbListAllInfluencers, dbSaveInfluencer, dbDeleteInfluencer, fetchUserById, dbGetCampaigns, dbSaveCampaign, dbDeleteCampaign, dbGetCampaignInfluencers, dbAddInfluencerToCampaign, dbUpdateCampaignInfluencer, dbRemoveInfluencerFromCampaign, dbGetCollaborations, dbSaveCollaboration, dbDeleteCollaboration, dbGetActivationTypes, dbGetMissions } from './lib/database.js'
 import {
   DEMO_BENEFITS,
   DEMO_CODES, DEMO_CODE_USAGES, DEMO_MEMBERSHIPS, DEMO_USERS,

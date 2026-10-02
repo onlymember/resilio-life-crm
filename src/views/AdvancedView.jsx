@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
-import { CheckSquare, Square, AlertTriangle, Calendar, DollarSign, FileText, Trash2, Check } from 'lucide-react'
-
+import { Trash2, Check } from 'lucide-react'
 const FEATURES = [
   { id:'bulk',      label:'Bulk Operations',    icon:'☑️' },
   { id:'risk',      label:'Risk Scoring',        icon:'🎯' },

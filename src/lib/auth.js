@@ -3,6 +3,7 @@
 // La sesión es gestionada por Supabase Auth (JWT).
 // ═══════════════════════════════════════════════════════════
 import { supabase } from './supabase.js'
+import { NETWORK_LANDING_ROLES } from './roles.js'
 
 export {
   getRolePermsDb as getRolePerms,
@@ -115,7 +116,7 @@ export const canAccessView = (u, viewId) => {
 export const defaultViewFor = (u) => {
   if (!u) return 'dashboard'
   // Roles de Network aterrizan directamente en el módulo Network
-  if (['scouter','network_direction','regional_lead','country_lead','city_lead'].includes(u.rol)) return 'network'
+  if (NETWORK_LANDING_ROLES.includes(u.rol)) return 'network'
   if (canAccessView(u, 'hub')) return 'hub'
   const first = (u.permisos?.ecosistemas || [])
     .map(eco => Object.keys(VIEW_ECOSYSTEM).find(v => VIEW_ECOSYSTEM[v] === eco))

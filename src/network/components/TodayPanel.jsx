@@ -8,6 +8,7 @@ import { Inbox, Heart, CalendarClock, MessageCircle, Target, ChevronRight } from
 import { t } from '../../i18n/index.js'
 import { dbGetTomorrowVisits, dbGetMyWeekGoals } from '../../lib/database.js'
 import { redGetPendingCounts } from '../../lib/red.js'
+import { quiet } from '../../lib/quiet.js'
 
 const label = { fontSize: 9, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 8 }
 const box = { borderRadius: 12, background: 'var(--glass-bg)', border: '1px solid var(--border-violet)' }
@@ -20,9 +21,9 @@ export default function TodayPanel({ isDirection, me }) {
   const [goals, setGoals] = useState([])
 
   useEffect(() => {
-    if (isDirection) redGetPendingCounts().then(setPending).catch(() => {})
-    dbGetTomorrowVisits().then(setVisits).catch(() => {})
-    dbGetMyWeekGoals().then(setGoals).catch(() => {})
+    if (isDirection) redGetPendingCounts().then(setPending).catch(quiet('TodayPanel'))
+    dbGetTomorrowVisits().then(setVisits).catch(quiet('TodayPanel'))
+    dbGetMyWeekGoals().then(setGoals).catch(quiet('TodayPanel'))
   }, [isDirection])
 
   const approvals = pending ? pending.leads + pending.emails : 0

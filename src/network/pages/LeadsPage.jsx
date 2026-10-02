@@ -14,6 +14,7 @@ import { redGetLeads, redApproveLead, redRejectLead, redCreateInvitation, redGet
 import { DIRECTION_ROLES } from '../routes.js'
 import { Sheet, ErrorLine, LinkShare, btn, inputStyle, labelStyle, card } from '../red/ui.jsx'
 import ClubAccessToggle from '../components/ClubAccessToggle.jsx'
+import { quiet } from '../../lib/quiet.js'
 
 const STATUS_TABS = ['pending', 'approved', 'rejected', 'all']
 
@@ -46,9 +47,7 @@ export function InviteSheet({ onClose }) {
               <label style={labelStyle} htmlFor="inv-hint">{t('red.invite.hint')}</label>
               <input id="inv-hint" value={hint} maxLength={120} onChange={e => setHint(e.target.value)} placeholder="@usuario" style={inputStyle}/>
             </div>
-            {isDirection && <EmailRequests/>}
-
-      <ErrorLine error={error}/>
+            <ErrorLine error={error}/>
             <button onClick={create} disabled={busy} style={{ ...btn.primary, opacity: busy ? 0.6 : 1 }}>
               <Link2 size={14}/>{busy ? t('red.common.saving') : t('red.invite.generate')}
             </button>
@@ -231,7 +230,7 @@ export function LeadCard({ lead, isDirection, ownerName, onApprove, onReject }) 
 export function EmailRequests() {
   const [items, setItems] = useState([])
   const [err, setErr] = useState(null)
-  const load = () => redGetEmailRequests().then(setItems)
+  const load = () => redGetEmailRequests().then(setItems).catch(() => setItems([]))
   useEffect(() => { load() }, [])
   const decide = async (id, ok) => {
     setErr(null)
@@ -280,7 +279,7 @@ export default function LeadsPage({ currentUser }) {
     if (!isDirection) return
     dbGetActiveScouters(null)
       .then(list => { const m = {}; list.forEach(s => { m[s.userId] = personName(s) }); setOwners(m) })
-      .catch(() => {})
+      .catch(quiet('LeadsPage'))
   }, [isDirection])
 
   const pendingCount = useMemo(() => leads.filter(l => l.status === 'pending').length, [leads])
@@ -299,6 +298,10 @@ export default function LeadsPage({ currentUser }) {
 
       {/* Prender / apagar el Club para los scouters (solo super_admin, admin, network_direction) */}
       <ClubAccessToggle currentUser={currentUser}/>
+
+      {/* Cambios de email del Club pendientes (solo Dirección). Antes estaba
+          dentro del panel "Invitar" y lo rompía al abrirlo. */}
+      {isDirection && <EmailRequests/>}
 
       <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
         {STATUS_TABS.map(id => (

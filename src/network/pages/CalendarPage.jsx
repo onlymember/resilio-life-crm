@@ -5,6 +5,7 @@ import { dbGetCalendarRange, dbGetCollabCalendar, dbGetGeography } from '../../l
 import CalendarMonthGrid from '../components/CalendarMonthGrid.jsx'
 import CalendarAgendaList from '../components/CalendarAgendaList.jsx'
 import { useNavigate } from 'react-router-dom'
+import { quiet } from '../../lib/quiet.js'
 
 const useIsMobile = () => {
   const [mobile, setMobile] = useState(window.innerWidth < 640)
@@ -55,7 +56,7 @@ export default function CalendarPage() {
   const [mode,    setMode]    = useState('mine')
   const [cityId,  setCityId]  = useState('')
   const [cities,  setCities]  = useState([])
-  useEffect(() => { dbGetGeography().then(g => setCities(g.cities || [])).catch(() => {}) }, [])
+  useEffect(() => { dbGetGeography().then(g => setCities(g.cities || [])).catch(quiet('CalendarPage')) }, [])
 
   const load = useCallback(async (m) => {
     setLoading(true)

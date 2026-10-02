@@ -8,6 +8,7 @@ import { t } from '../../i18n/index.js'
 import { dbGetCollaborations, dbGetActivationTypes } from '../../lib/database.js'
 import { useNavigate } from 'react-router-dom'
 import { COMMAND_ROLES } from '../routes.js'
+import { quiet } from '../../lib/quiet.js'
 
 const PAGE_SIZE = 30
 
@@ -44,7 +45,7 @@ export default function CollaborationsPage({ onOpenCreate, currentUser }) {
     dbGetActivationTypes().then(types => {
       setActTypes(types)
       const m = {}; types.forEach(t => { m[t.id] = t }); setActTypeMap(m)
-    }).catch(() => {})
+    }).catch(quiet('CollaborationsPage'))
   }, [])
 
   const load = useCallback(async (pg = 0, f = filters) => {

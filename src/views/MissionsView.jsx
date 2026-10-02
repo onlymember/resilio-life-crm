@@ -1,10 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import {
-  Target, Plus, Check, X, Clock, Star, Zap, ChevronDown,
-  Filter, Search, Edit3, Trash2, TrendingUp, Users,
-  Eye, AlertCircle, CheckCircle, Calendar, Tag
-} from 'lucide-react'
-
+import { Target, Plus, Check, X, Zap, Search, Edit3, Trash2, TrendingUp, Eye, CheckCircle } from 'lucide-react'
 const STATUS_CFG = {
   active:    { label: 'Activa',      color: '#8B5CF6', bg: 'rgba(139,92,246,0.15)'  },
   pending:   { label: 'Pendiente',   color: '#F59E0B', bg: 'rgba(245,158,11,0.15)'  },

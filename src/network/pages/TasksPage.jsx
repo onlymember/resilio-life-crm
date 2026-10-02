@@ -10,6 +10,7 @@ import { dbGetTasks, dbCompleteTask, dbSaveTask, dbCreateTasks, dbDeleteTask, db
 import { COMMAND_ROLES } from '../routes.js'
 import { getNetworkScouters } from '../../lib/metrics.js'
 import { personLabel, personName, personShort } from '../utils/people.js'
+import { quiet } from '../../lib/quiet.js'
 
 const PAGE_SIZE = 100
 
@@ -76,7 +77,7 @@ export default function TasksPage({ currentUser }) {
 
   useEffect(() => {
     if (!isCommand) return
-    getNetworkScouters().then(setScouters).catch(() => {})
+    getNetworkScouters().then(setScouters).catch(quiet('TasksPage'))
   }, [isCommand])
 
   const load = useCallback(async () => {

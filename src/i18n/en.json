@@ -250,10 +250,6 @@
     "active": "Active",
     "activeF": "Active",
     "today": "Follow-up today",
-    "coverage": "Coverage · next 7 days",
-    "coverageOk": "The week is covered. Keep the rhythm.",
-    "coverageLow": "It is shrinking. Book 3 today instead of 2.",
-    "coverageCritical": "Next week is empty. Everything to booking today.",
     "overdue": "Overdue",
     "noOwner": "No owner",
     "noCity": "No city",
@@ -1654,6 +1650,41 @@
       "brands": "Brands",
       "opportunities": "Opps",
       "collaborations": "Collabs"
+    }
+  },
+  "proposal": {
+    "title": "Proposal",
+    "hint": "Private link to the Resilio Life proposal (no prices). The brand picks a plan and answers 5 questions; it expires after 30 days.",
+    "lang": "Proposal language",
+    "create": "Create proposal link",
+    "again": "Create a new link",
+    "created": "Link created. Send it on WhatsApp or copy it.",
+    "sendWa": "Send on WhatsApp",
+    "shareWa": "Share on WhatsApp",
+    "copy": "Copy",
+    "copied": "Copied",
+    "open": "View",
+    "close": "Close link",
+    "closeConfirm": "Close this link? The brand will no longer be able to open it.",
+    "extend": "Add 30 more days",
+    "extended": "Link extended 30 days",
+    "sentOn": "sent {date}",
+    "answeredOn": "answered {date}",
+    "expires": "expires {date}",
+    "message": "Hi! Here is the Resilio Life proposal for {marca}. Pick the plan that suits you and answer 5 quick questions: {link}",
+    "status": {
+      "sent": "Sent, not opened yet",
+      "viewed": "Opened ({n} times), no choice yet",
+      "answered": "Chose: {plan}",
+      "expired": "Expired without an answer",
+      "closed": "Link closed"
+    },
+    "q": {
+      "goal": "Goal",
+      "start": "Start",
+      "networks": "Platforms",
+      "creators_per_week": "Creators per week",
+      "notes": "Note"
     }
   }
 }

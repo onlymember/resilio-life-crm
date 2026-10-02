@@ -6,6 +6,7 @@ import { t } from '../../i18n/index.js'
 import {
   dbGetMessageTemplates, dbSaveMessageTemplate, dbDeleteMessageTemplate, dbGetGeography,
 } from '../../lib/database.js'
+import { quiet } from '../../lib/quiet.js'
 
 const TARGETS = ['any', 'influencer', 'brand']
 const STAGES  = ['', 'cold', 'warm', 'strong']
@@ -54,7 +55,7 @@ export default function MessageTemplatesPage() {
   }, [])
 
   useEffect(() => { load() }, [load])
-  useEffect(() => { dbGetGeography().then(g => setCities(g.cities || [])).catch(() => {}) }, [])
+  useEffect(() => { dbGetGeography().then(g => setCities(g.cities || [])).catch(quiet('MessageTemplatesPage')) }, [])
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 

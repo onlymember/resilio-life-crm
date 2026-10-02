@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { X, Upload, AlertTriangle } from 'lucide-react'
 import { t } from '../../i18n/index.js'
-import { supabase } from '../../lib/supabase.js'
+
 import { dbGetGeography, dbSaveInfluencersBulk, dbSaveBrandsBulk, dbCheckDuplicates } from '../../lib/database.js'
 
 // ── Normalization ─────────────────────────────────────────
