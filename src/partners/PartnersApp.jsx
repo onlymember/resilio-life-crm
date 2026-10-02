@@ -76,7 +76,7 @@ function Header({ lang, setLang, T }) {
 function Footer({ T }) {
   return (
     <footer className="pt-wrap pt-foot">
-      <img src={IMG.wordmark} alt="Resilio Life" width="120" height="42"/>
+      <img src={IMG.mark} alt="Resilio Life" width="52" height="45"/>
       <div className="pt-foot-links">
         <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
         {CONTACT.whatsapp && <a href={`https://wa.me/${CONTACT.whatsapp}`} target="_blank" rel="noopener noreferrer">WhatsApp</a>}
@@ -184,9 +184,7 @@ function Proposal({ token, p, lang, setLang }) {
       {/* Portada */}
       <section className="pt-wrap pt-hero">
         <img className="pt-wm" src={IMG.watermark} alt="" style={{ right: -60, top: -40, width: 'min(620px,70vw)' }}/>
-        <div className="pt-fi pt-tagrow">
-          <span className="pt-lbl">{T.tag}</span><span className="pt-dash"/><span className="pt-lbl" style={{ color: '#0E0E10' }}>{T.for}</span>
-        </div>
+        <div className="pt-fi pt-hello">{T.hello}</div>
         <div className="pt-fi pt-brand">{brand}</div>
         <h1 className="pt-h1">
           <span className="pt-line pt-l1"><span>{T.h1}</span></span>
@@ -194,13 +192,7 @@ function Proposal({ token, p, lang, setLang }) {
           <span className="pt-line pt-l3"><span style={{ color: '#6E6879' }}>{T.h3}</span></span>
         </h1>
         <div className="pt-rule"/>
-        <div className="pt-hero-foot">
-          <p className="pt-fi pt-d1 pt-intro">{T.intro}</p>
-          <a className="pt-fi pt-d2 pt-scroll" href="#planes">
-            {T.scroll}
-            <svg className="pt-bob" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-          </a>
-        </div>
+        <p className="pt-fi pt-d1 pt-intro">{T.intro}</p>
       </section>
 
       {/* Franja */}
@@ -396,7 +388,7 @@ function Proposal({ token, p, lang, setLang }) {
       <section className="pt-wrap" style={{ paddingBottom: 'clamp(60px,8vw,100px)' }}>
         <div className="pt-end pt-rv">
           <div className="pt-lbl">{T.endLbl}</div>
-          <h2 className="pt-h2" style={{ fontSize: 'clamp(34px,5vw,68px)', maxWidth: '16ch' }}>{T.endTitle} <span style={{ color: '#5B21C9', fontStyle: 'italic' }}>{brand}</span>?</h2>
+          <h2 className="pt-h2" style={{ fontSize: 'clamp(34px,5vw,68px)', maxWidth: '16ch' }}>{T.endTitle}<br/><span style={{ color: '#5B21C9', fontStyle: 'italic' }}>{brand}?</span></h2>
           <p>{endText}</p>
           <a className="pt-cta" href={ready ? '#preguntas' : '#planes'} style={{ marginTop: 8 }}>{endCta}<Arrow/></a>
         </div>

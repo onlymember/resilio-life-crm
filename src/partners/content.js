@@ -36,10 +36,9 @@ export const OPTION_KEYS = {
 const es = {
   htmlLang: 'es',
   docTitle: 'Propuesta · Resilio Life',
-  tag: 'Propuesta privada', for: 'Preparada para',
+  hello: 'Hola,',
   h1: 'Construimos y potenciamos marcas,', h2: 'experiencias e ideas que la gente elige y vive,', h3: 'creando comunidades que las sostienen.',
   intro: 'Somos un ecosistema creativo: agencia, producción de eventos, experiencias, red de creadores y comunidad, todo en un mismo lugar. Conectamos a tu marca con audiencias reales, dentro y fuera de las redes.',
-  scroll: 'Recorrer la propuesta',
   marquee: ['Contenido', 'Creadores', 'Eventos', 'Activaciones', 'Comunidad', 'Estrategia', 'Branding'],
   svcLbl: 'Qué podemos hacer por tu marca', svcTitle: 'Todo lo que tu marca necesita para que la elijan.',
   services: [
@@ -107,7 +106,6 @@ const es = {
     ['¿Por qué no hay precios?', 'Porque cada plan se arma a medida de tu marca y tus objetivos. Con tus respuestas te enviamos la propuesta final con valores, por privado.'],
     ['¿Puedo empezar con una prueba?', 'Sí. Elegí "Una semana de prueba" en las preguntas y lo armamos juntos.'],
     ['¿Puedo cambiar de plan después?', 'Sí. El plan se ajusta según los resultados; lo hablamos antes de cada nuevo ciclo.'],
-    ['¿Apruebo el contenido antes de que se publique?', 'Sí. Cada pieza pasa por tu aprobación antes de salir.'],
     ['¿Trabajan con marcas de otros países?', 'Sí. Contanos dónde está tu público y coordinamos creadores y producción para ese mercado.'],
   ],
   igLbl: 'Algunas de las cosas que hacemos', igTitle: 'Están en nuestro Instagram.',
@@ -126,10 +124,9 @@ const es = {
 const en = {
   htmlLang: 'en',
   docTitle: 'Proposal · Resilio Life',
-  tag: 'Private proposal', for: 'Prepared for',
+  hello: 'Hi,',
   h1: 'We build and grow brands,', h2: 'experiences and ideas people choose and live,', h3: 'creating the communities that keep them alive.',
   intro: 'We are a creative ecosystem: agency, event production, experiences, a creator network and a community, all in one place. We connect your brand with real audiences, on and off social media.',
-  scroll: 'Explore the proposal',
   marquee: ['Content', 'Creators', 'Events', 'Activations', 'Community', 'Strategy', 'Branding'],
   svcLbl: 'What we can do for your brand', svcTitle: 'Everything your brand needs to be chosen.',
   services: [
@@ -197,7 +194,6 @@ const en = {
     ['Why are there no prices?', 'Because every plan is built around your brand and goals. With your answers we send you the final proposal with pricing, privately.'],
     ['Can I start with a trial?', 'Yes. Pick "A one-week trial" in the questions and we will set it up together.'],
     ['Can I change plans later?', 'Yes. The plan adapts to results; we review it before every new cycle.'],
-    ['Do I approve content before it goes live?', 'Yes. Every piece goes through your approval before it is published.'],
     ['Do you work with brands in other countries?', 'Yes. Tell us where your audience is and we coordinate creators and production for that market.'],
   ],
   igLbl: 'Some of what we do', igTitle: 'Lives on our Instagram.',
@@ -216,10 +212,9 @@ const en = {
 const pt = {
   htmlLang: 'pt',
   docTitle: 'Proposta · Resilio Life',
-  tag: 'Proposta privada', for: 'Preparada para',
+  hello: 'Olá,',
   h1: 'Construímos e potencializamos marcas,', h2: 'experiências e ideias que as pessoas escolhem e vivem,', h3: 'criando comunidades que as sustentam.',
   intro: 'Somos um ecossistema criativo: agência, produção de eventos, experiências, rede de criadores e comunidade, tudo em um só lugar. Conectamos sua marca a públicos reais, dentro e fora das redes.',
-  scroll: 'Ver a proposta',
   marquee: ['Conteúdo', 'Criadores', 'Eventos', 'Ativações', 'Comunidade', 'Estratégia', 'Branding'],
   svcLbl: 'O que podemos fazer pela sua marca', svcTitle: 'Tudo o que sua marca precisa para ser escolhida.',
   services: [
@@ -287,7 +282,6 @@ const pt = {
     ['Por que não há preços?', 'Porque cada plano é montado sob medida para sua marca e seus objetivos. Com suas respostas enviamos a proposta final com valores, em privado.'],
     ['Posso começar com um teste?', 'Sim. Escolha "Uma semana de teste" nas perguntas e montamos juntos.'],
     ['Posso mudar de plano depois?', 'Sim. O plano se ajusta aos resultados; revisamos antes de cada novo ciclo.'],
-    ['Aprovo o conteúdo antes de publicar?', 'Sim. Cada peça passa pela sua aprovação antes de sair.'],
     ['Trabalham com marcas de outros países?', 'Sim. Conte onde está seu público e coordenamos criadores e produção para esse mercado.'],
   ],
   igLbl: 'Algumas das coisas que fazemos', igTitle: 'Estão no nosso Instagram.',
