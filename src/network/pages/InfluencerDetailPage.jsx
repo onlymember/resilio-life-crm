@@ -237,7 +237,10 @@ export default function InfluencerDetailPage({ currentUser }) {
           <SectionHeader label={t('influencer.sections.contact')} fields={['whatsapp','instagram','tiktok','email','phone']} dirty={dirty}/>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <Field label={t('influencer.fields.whatsapp')} value={get('whatsapp')} onChange={v => set('whatsapp', v)} placeholder="+54 9 11 1234 5678"/>
-            <Field label={t('influencer.fields.instagram')} value={get('instagram')} onChange={v => set('instagram', v)} placeholder="@usuario"/>
+            {/* Un solo dato: el usuario que se pidió al cargarla. Si la ficha
+                no tiene "instagram" todavía, se muestra ese usuario, y al
+                cambiarlo se guardan los dos iguales. */}
+            <Field label={t('influencer.fields.instagram')} value={get('instagram') ?? entity.username} onChange={v => { set('instagram', v); set('username', v) }} placeholder="@usuario"/>
             <Field label={t('influencer.fields.tiktok')} value={get('tiktok')} onChange={v => set('tiktok', v)} placeholder="@usuario"/>
             <Field label={t('influencer.fields.email')} value={get('email')} onChange={v => set('email', v)} type="email" placeholder="correo@ejemplo.com"/>
             <Field label={t('influencer.fields.phone')} value={get('phone')} onChange={v => set('phone', v)} type="tel" placeholder="+54 11 1234 5678"/>

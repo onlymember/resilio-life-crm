@@ -7,6 +7,7 @@ import QuickTaskForm from './QuickTaskForm.jsx'
 import DuplicateHint from './DuplicateHint.jsx'
 import { toast } from './Toaster.jsx'
 import { quiet } from '../../lib/quiet.js'
+import { parseInstagram } from '../utils/instagram.js'
 
 const CATEGORIES = t('categories') // array desde es.json
 
@@ -286,10 +287,13 @@ export default function CreateSheet({ isOpen, onClose, currentUser, onCreated, i
   const handleSaveInfluencer = useCallback(async (form) => {
     if (!form.name.trim() && !form.username.trim()) { setError(t('form.required')); return }
     setSaving(true); setError(null)
+    const raw  = form.username.trim()
+    const user = raw ? (parseInstagram(raw) || raw.replace(/^@+/, '')) : null
     try {
       const saved = await dbSaveInfluencer({
         name:     form.name.trim(),
-        username: form.username.trim() || null,
+        username: user,
+        instagram: user,   // mismo dato: así la ficha no lo vuelve a pedir
         cityId:   form.cityId || null,
         category: form.category || null,
         whatsapp: form.whatsapp.trim() || null,
