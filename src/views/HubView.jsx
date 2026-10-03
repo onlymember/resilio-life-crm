@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react'
 const NODES = [
   { id:'resilio',     label:'Resilio Life',    icon:'⚡', color:'#8B5CF6', desc:'Marcas, beneficios, códigos y membresías', route:'brands',        x:500, y:105 },
   { id:'creative',   label:'Ag. Creativa',    icon:'🎨', color:'#E879F9', desc:'Proyectos, clientes y equipo creativo',   route:'creative',       x:730, y:222 },
-  { id:'influencers',label:'Ag. Influencers', icon:'⭐', color:'#FCD34D', desc:'Campañas, CRM y colaboraciones',          route:'inf_dashboard',  x:785, y:462 },
+  { id:'influencers',label:'Ag. Influencers', icon:'⭐', color:'#FCD34D', desc:'Campañas, influencers y colaboraciones',          route:'inf_dashboard',  x:785, y:462 },
   { id:'productora', label:'Productora',       icon:'🎉', color:'#4ADE80', desc:'Eventos, tickets y relaciones públicas', route:'events',         x:620, y:660 },
   { id:'elevare',    label:'Elevare',          icon:'💎', color:'#F59E0B', desc:'Luxury network, bienes y leads premium', route:'elevare',        x:380, y:660 },
   { id:'gestion',    label:'Gestión',          icon:'🎯', color:'#60A5FA', desc:'Misiones, team y herramientas avanzadas',route:'team',           x:215, y:462 },

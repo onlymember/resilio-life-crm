@@ -102,7 +102,7 @@ const CommandPalette = ({ isOpen, onClose, onNavigate, currentUser }) => {
     { id: 'creative',       label: 'Agencia Creativa',     icon: Palette,         action: () => onNavigate('creative')       },
     { id: 'inf_dashboard',  label: 'Influencers Dashboard',icon: Star,            action: () => onNavigate('inf_dashboard')  },
     { id: 'inf_campaigns',  label: 'Campañas Influencers', icon: Megaphone,       action: () => onNavigate('inf_campaigns')  },
-    { id: 'inf_crm',        label: 'Influencers CRM',      icon: Users,           action: () => onNavigate('inf_crm')        },
+    { id: 'inf_crm',        label: 'Influencers',          icon: Users,           action: () => onNavigate('inf_crm')        },
     { id: 'events',         label: 'Eventos',              icon: Calendar,        action: () => onNavigate('events')         },
     { id: 'tickets',        label: 'Tickets',              icon: Ticket,          action: () => onNavigate('tickets')        },
     { id: 'only_members',   label: '⭐ Only Members',      icon: Crown,           action: () => onNavigate('only_members')   },
@@ -117,7 +117,7 @@ const CommandPalette = ({ isOpen, onClose, onNavigate, currentUser }) => {
     { id: 'cap_pipeline',    label: '📞 Captación · Pipeline',icon:BarChart3,      action: () => onNavigate('cap_pipeline')    },
     { id: 'cap_speeches',    label: '📞 Captación · Speeches',icon:Megaphone,      action: () => onNavigate('cap_speeches')    },
     { id: 'cap_provincias',  label: '📞 Captación · Provincias',icon:Map,          action: () => onNavigate('cap_provincias')  },
-    { id: 'cap_contactos',   label: '📞 Contactos CRM',    icon: Users,            action: () => onNavigate('cap_contactos')   },
+    { id: 'cap_contactos',   label: '📞 Contactos',        icon: Users,            action: () => onNavigate('cap_contactos')   },
   ]
 
   // Solo comandos que el rol puede abrir (ver auth.js — es UX, no seguridad).
@@ -394,7 +394,7 @@ const Sidebar = ({ currentView, onNavigate, collapsed, onToggle, currentUser }) 
 
 const Header = ({ currentView, onMobileMenu, currentUser, onLogout, onAdmin, adminNotifCount }) => {
   const [avatarOpen, setAvatarOpen] = useState(false)
-  const labels = { dashboard:'Dashboard General',rl_dashboard:'Resilio Life · Dashboard',brands:'Marcas',locations:'Locales',influencers:'Influencers',benefits:'Beneficios',codes:'Códigos',memberships:'Membresías',users:'Usuarios',unregistered:'Usuarios No Registrados',tracking:'Tracking Real-Time',analytics:'Analytics',reports:'Reportes',creative:'Agencia Creativa',creative_projects:'Proyectos',creative_clients:'Clientes Creativos',creative_equipo:'Equipo Creativo',inf_dashboard:'RESILIO NETWORK · Dashboard',inf_campaigns:'Campañas',inf_crm:'Influencers CRM',inf_collabs:'Colaboraciones',prod_dashboard:'Productora · Dashboard',events:'Eventos',tickets:'Tickets',only_members:'⭐ Only Members',rrpp:'Relaciones Públicas',elevare:'💎 Elevare · Dashboard',elevare_bienes:'💎 Elevare · Bienes',elevare_leads:'💎 Elevare · Leads',elevare_contratos:'💎 Elevare · Contratos',elevare_contenido:'💎 Elevare · Contenido',elevare_hosp:'💎 Elevare · Hospitality',missions:'🎯 Misiones',team:'Team Management',advanced:'Features Avanzadas',cap_pipeline:'📞 Captación · Pipeline',cap_busqueda:'📞 Captación · Búsqueda',cap_speeches:'📞 Captación · Speeches',cap_provincias:'📞 Captación · Expansión',cap_seguimiento:'📞 Captación · Seguimiento',cap_contactos:'📞 Captación · Contactos',hub:'Hub Central' }
+  const labels = { dashboard:'Dashboard General',rl_dashboard:'Resilio Life · Dashboard',brands:'Marcas',locations:'Locales',influencers:'Influencers',benefits:'Beneficios',codes:'Códigos',memberships:'Membresías',users:'Usuarios',unregistered:'Usuarios No Registrados',tracking:'Tracking Real-Time',analytics:'Analytics',reports:'Reportes',creative:'Agencia Creativa',creative_projects:'Proyectos',creative_clients:'Clientes Creativos',creative_equipo:'Equipo Creativo',inf_dashboard:'RESILIO NETWORK · Dashboard',inf_campaigns:'Campañas',inf_crm:'Influencers',inf_collabs:'Colaboraciones',prod_dashboard:'Productora · Dashboard',events:'Eventos',tickets:'Tickets',only_members:'⭐ Only Members',rrpp:'Relaciones Públicas',elevare:'💎 Elevare · Dashboard',elevare_bienes:'💎 Elevare · Bienes',elevare_leads:'💎 Elevare · Leads',elevare_contratos:'💎 Elevare · Contratos',elevare_contenido:'💎 Elevare · Contenido',elevare_hosp:'💎 Elevare · Hospitality',missions:'🎯 Misiones',team:'Team Management',advanced:'Features Avanzadas',cap_pipeline:'📞 Captación · Pipeline',cap_busqueda:'📞 Captación · Búsqueda',cap_speeches:'📞 Captación · Speeches',cap_provincias:'📞 Captación · Expansión',cap_seguimiento:'📞 Captación · Seguimiento',cap_contactos:'📞 Captación · Contactos',hub:'Hub Central' }
   const displayName = currentUser?.sobrenombre || currentUser?.nombre || 'Usuario'
   const roleLabel = { super_admin:'Super Admin', admin:'Admin', editor:'Editor', viewer:'Viewer', custom:'Custom' }
 
@@ -723,7 +723,7 @@ const PlaceholderView = ({ title, icon: Icon, description, phase }) => (
 const EMPRESA_NODOS = [
   { id:'creative', icon:'🎨', label:'Creative',    color:'#FF6B6B', view:'creative'      },
   { id:'elevare',  icon:'💎', label:'ELEVARE',     color:'#4ECDC4', view:'elevare'       },
-  { id:'crm',      icon:'👥', label:'CRM',         color:'#95E1D3', view:'inf_crm'       },
+  { id:'crm',      icon:'👥', label:'Influencers', color:'#95E1D3', view:'inf_crm'       },
   { id:'events',   icon:'📋', label:'Events',      color:'#F38181', view:'events'        },
   { id:'red',      icon:'📱', label:'RED',         color:'#AA96DA', view:'rl_dashboard'  },
   { id:'gestion',  icon:'🎯', label:'Gestión',     color:'#FCBAD3', view:'missions'      },

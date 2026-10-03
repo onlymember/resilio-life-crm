@@ -243,7 +243,7 @@ const CampaignModal = ({
               <div style={{ position:'relative',display:'flex',gap:8 }}>
                 <div style={{ flex:1,position:'relative' }}>
                   <Search size={14} style={{ position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'var(--text-secondary)' }}/>
-                  <input className="input-field" style={{ paddingLeft:36 }} value={brandSearch} onChange={e => setBrandSearch(e.target.value)} placeholder="Buscar marca del CRM..."/>
+                  <input className="input-field" style={{ paddingLeft:36 }} value={brandSearch} onChange={e => setBrandSearch(e.target.value)} placeholder="Buscar marca..."/>
                 </div>
                 <button className="btn btn-ghost" style={{ padding:'9px 14px',flexShrink:0 }} onClick={() => setShowBrandAdd(true)}><Plus size={14}/>Nueva</button>
               </div>
@@ -1052,7 +1052,7 @@ export default function InfluencerAgencyView({ campaigns, collaborations, activa
   const TABS = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
     { id: 'campaigns', label: 'Campañas', icon: Star },
-    { id: 'crm', label: 'Influencers CRM', icon: Users },
+    { id: 'crm', label: 'Influencers', icon: Users },
     { id: 'collabs', label: 'Colaboraciones', icon: CheckCircle },
   ]
 

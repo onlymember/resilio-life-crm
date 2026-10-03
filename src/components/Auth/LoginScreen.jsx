@@ -21,7 +21,7 @@ const s = {
   },
   logo:    { display:'flex', flexDirection:'column', alignItems:'center', padding:'32px 32px 20px' },
   logoImg: { width:80, height:80, objectFit:'contain', marginBottom:12, filter:'drop-shadow(0 0 16px rgba(139,92,246,0.6))' },
-  logoTitle: { fontSize:22, fontWeight:800, letterSpacing:2, background:'linear-gradient(135deg,#A78BFA,#E879F9)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' },
+  logoTitle: { fontSize:22, fontWeight:800, letterSpacing:2, textAlign:'center', lineHeight:1.2, background:'linear-gradient(135deg,#A78BFA,#E879F9)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' },
   logoSub: { fontSize:11, color:'var(--text-secondary)', letterSpacing:3, marginTop:4 },
   tabs:   { display:'flex', borderBottom:'1px solid rgba(139,92,246,0.2)', margin:'0 24px' },
   tab:    (a) => ({ flex:1, padding:'12px 0', fontSize:13, fontWeight:600, letterSpacing:0.5, color:a?'#A78BFA':'var(--text-tertiary)', background:'none', border:'none', cursor:'pointer', borderBottom:a?'2px solid #8B5CF6':'2px solid transparent', transition:'all 0.25s', marginBottom:-1 }),
@@ -118,8 +118,8 @@ export default function LoginScreen({ onLogin, passwordResetMode = false }) {
         <div style={s.nebula1}/><div style={s.nebula2}/>
         <div style={s.card}>
           <div style={s.logo}>
-            <img src="/logoresilio.png" alt="Resilio Life" style={s.logoImg} onError={e=>{e.target.style.display='none'}}/>
-            <div style={s.logoTitle}>RESILIO LIFE</div>
+            <img src="/logoresilio.png" alt="Resilio Life Company" style={s.logoImg} onError={e=>{e.target.style.display='none'}}/>
+            <div style={s.logoTitle}>RESILIO LIFE COMPANY</div>
             <div style={s.logoSub}>NUEVA CONTRASEÑA</div>
           </div>
           <form style={s.form} onSubmit={handleUpdatePassword} autoComplete="off">
@@ -215,8 +215,9 @@ export default function LoginScreen({ onLogin, passwordResetMode = false }) {
       <div style={s.card}>
         {/* Logo */}
         <div style={s.logo}>
-          <img src="/logoresilio.png" alt="Resilio Life" style={s.logoImg} onError={e=>{e.target.style.display='none'}}/>
-          <div style={s.logoTitle}>RESILIO LIFE</div>
+          <img src="/logoresilio.png" alt="Resilio Life Company" style={s.logoImg} onError={e=>{e.target.style.display='none'}}/>
+          <div style={s.logoTitle}>RESILIO LIFE COMPANY</div>
+          <div style={s.logoSub}>NETWORK</div>
         </div>
 
         {/* Tabs */}
