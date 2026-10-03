@@ -74,7 +74,7 @@ function NotificationBell({ onNavigate }) {
       </button>
 
       {open && (
-        <div style={{ position:'absolute', top:'calc(100% + 6px)', right:0, width:300, background:'var(--bg-secondary)', border:'1px solid var(--border-violet)', borderRadius:12, boxShadow:'0 8px 32px rgba(0,0,0,0.35)', zIndex:200, overflow:'hidden' }}>
+        <div style={{ position:'absolute', top:'calc(100% + 6px)', right:0, width:300, maxWidth:'calc(100vw - 24px)', background:'var(--bg-secondary)', border:'1px solid var(--border-violet)', borderRadius:12, boxShadow:'0 8px 32px rgba(0,0,0,0.35)', zIndex:200, overflow:'hidden' }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', borderBottom:'1px solid var(--border-violet)' }}>
             <span style={{ fontSize:12, fontWeight:700, color:'var(--text-primary)' }}>{t('notifications.title')}</span>
             <button onClick={() => setOpen(false)} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', padding:2 }}><X size={14}/></button>

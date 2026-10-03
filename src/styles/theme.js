@@ -67,12 +67,23 @@ export const THEME_CSS = `
        escriba de acá en adelante. */
     select option, select optgroup { background-color: var(--bg-tertiary); color: var(--text-primary); }
 
-    /* El ícono del calendario también lo dibuja el navegador, y viene
-       casi negro: invisible sobre el violeta oscuro de los campos. */
-    :root:not([data-theme="light"]) input[type="date"]::-webkit-calendar-picker-indicator,
-    :root:not([data-theme="light"]) input[type="datetime-local"]::-webkit-calendar-picker-indicator,
-    :root:not([data-theme="light"]) input[type="time"]::-webkit-calendar-picker-indicator,
-    :root:not([data-theme="light"]) input[type="month"]::-webkit-calendar-picker-indicator { filter: invert(0.85); }
+    /* Que el navegador dibuje TODO lo nativo en oscuro: desplegables,
+       calendario, autocompletado, sugerencias y barras. Sin esto, en
+       algunos navegadores esas ventanas salen blancas con el texto
+       claro de la app encima (blanco sobre blanco). */
+    :root { color-scheme: dark; }
+    [data-theme="light"] { color-scheme: light; }
+
+    /* Ningún campo más ancho que su caja. En iPhone, fecha y hora
+       tienen un ancho mínimo propio y se salían del margen. */
+    input:not([type="checkbox"]):not([type="radio"]), select, textarea { max-width: 100%; min-width: 0; }
+    input[type="date"], input[type="datetime-local"], input[type="time"], input[type="month"] {
+      -webkit-appearance: none; appearance: none; display: block; min-height: 40px;
+    }
+    input::-webkit-date-and-time-value { text-align: left; }
+
+    /* El ícono del calendario lo dibuja el navegador: con color-scheme
+       (más abajo) ya sale claro en oscuro y oscuro en claro. */
     input[type="date"]::-webkit-calendar-picker-indicator,
     input[type="datetime-local"]::-webkit-calendar-picker-indicator,
     input[type="time"]::-webkit-calendar-picker-indicator,
