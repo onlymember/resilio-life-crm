@@ -4,6 +4,10 @@ html.pt-root body { margin: 0; background: #F4F2F7; -webkit-font-smoothing: anti
 .pt *, .pt *::before, .pt *::after { box-sizing: border-box; }
 
 .pt { font-family: 'Archivo', 'Inter', system-ui, sans-serif; color: #0E0E10; background: #F4F2F7; position: relative; overflow: hidden; min-height: 100vh; min-height: 100dvh; }
+/* "clip" recorta los fondos igual que "hidden", pero no deja que el
+   navegador desplace la caja por dentro al saltar a #planes o
+   #preguntas (eso cortaba la página arriba y dejaba un hueco abajo). */
+@supports (overflow: clip) { .pt { overflow: clip; } }
 .pt a { color: inherit; }
 .pt img { display: block; max-width: 100%; height: auto; }
 .pt button { font-family: inherit; }
