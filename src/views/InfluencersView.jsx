@@ -21,7 +21,7 @@ const CONTRACT_LABELS = {
   per_post: 'Por Post', monthly: 'Mensual', campaign: 'Campaña',
   revenue_share: 'Rev. Share', hybrid: 'Híbrido'
 }
-const CATEGORIES = ['Lifestyle','Fitness','Running','Fashion Sports','Sports Tech','Active Lifestyle','Nutrición','Wellness']
+const CATEGORIES = ['Lifestyle','Fitness','Running','Fashion Sports','Sports Tech','Active Lifestyle','Nutrición','Wellness','Otros']
 
 // ── Copy Button ───────────────────────────────────
 const CopyBtn = ({ text }) => {

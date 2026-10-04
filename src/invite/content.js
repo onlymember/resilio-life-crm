@@ -7,7 +7,7 @@
 export const LANGS = ['es', 'en', 'pt']
 
 export const CATEGORY_KEYS = ['gastronomia', 'moda', 'belleza', 'lifestyle', 'fitness', 'viajes',
-  'musica', 'arte', 'deportes', 'tecnologia', 'maternidad', 'mascotas']
+  'musica', 'arte', 'deportes', 'tecnologia', 'maternidad', 'mascotas', 'otros']
 
 // Claves que Dirección puede editar, en el orden en que aparecen.
 export const EDITABLE = [
@@ -105,7 +105,7 @@ export const COPY = {
     categories: {
       gastronomia: 'Gastronomía', moda: 'Moda', belleza: 'Belleza', lifestyle: 'Lifestyle', fitness: 'Fitness',
       viajes: 'Viajes', musica: 'Música', arte: 'Arte', deportes: 'Deportes', tecnologia: 'Tecnología',
-      maternidad: 'Maternidad', mascotas: 'Mascotas',
+      maternidad: 'Maternidad', mascotas: 'Mascotas', otros: 'Otros',
     },
 
     // Mensajes de WhatsApp (los manda el equipo desde Network). A y B se alternan solos.
@@ -197,7 +197,7 @@ export const COPY = {
     categories: {
       gastronomia: 'Food', moda: 'Fashion', belleza: 'Beauty', lifestyle: 'Lifestyle', fitness: 'Fitness',
       viajes: 'Travel', musica: 'Music', arte: 'Art', deportes: 'Sports', tecnologia: 'Tech',
-      maternidad: 'Parenting', mascotas: 'Pets',
+      maternidad: 'Parenting', mascotas: 'Pets', otros: 'Other',
     },
     waA: 'Hi {nombre}! This is Resilio. We love your content and would like to invite you to our creator network in {ciudad}. Here’s your invitation: {link}',
     waB: 'Hi {nombre}! We’re building the Resilio creator network in {ciudad} and would love for you to be part of it. See your invitation here: {link}',
@@ -287,7 +287,7 @@ export const COPY = {
     categories: {
       gastronomia: 'Gastronomia', moda: 'Moda', belleza: 'Beleza', lifestyle: 'Lifestyle', fitness: 'Fitness',
       viajes: 'Viagens', musica: 'Música', arte: 'Arte', deportes: 'Esportes', tecnologia: 'Tecnologia',
-      maternidad: 'Maternidade', mascotas: 'Pets',
+      maternidad: 'Maternidade', mascotas: 'Pets', otros: 'Outros',
     },
     waA: 'Oi {nombre}! Aqui é a Resilio. Adoramos seu conteúdo e queremos te convidar para a nossa rede de criadores em {ciudad}. Seu convite: {link}',
     waB: 'Oi {nombre}! Estamos montando a rede de criadores da Resilio em {ciudad} e adoraríamos ter você. Veja seu convite: {link}',

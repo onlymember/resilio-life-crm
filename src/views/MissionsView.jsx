@@ -21,7 +21,7 @@ const PRIORITY_CFG = {
 const CATEGORIES = [
   'Agencia Creativa', 'Productora', 'Contenido', 'Elevare',
   'RED', 'Agua', 'Stream', 'Cuenta Resilio', 'Forest',
-  'Scouting', 'Captación'
+  'Scouting', 'Captación', 'Otros'
 ]
 
 const EMPTY_MISSION = {

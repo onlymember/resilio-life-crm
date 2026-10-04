@@ -66,6 +66,23 @@ html.iv-root { color-scheme: dark; scroll-behavior: smooth; }
 .iv-heroin { position: relative; transform: translateY(calc(var(--hy, 0) * -120px)) scale(calc(1 - var(--hy, 0) * .06));
   opacity: calc(1 - var(--hy, 0)); filter: blur(calc(var(--hy, 0) * 6px)); will-change: transform, opacity; }
 
+/* Logo de Resilio arriba del saludo: entra girando, después respira y larga ondas. */
+.iv-logo { position: relative; width: 64px; height: 64px; margin-bottom: 26px; }
+.iv-logo-disc { position: absolute; inset: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 35% 30%, #2A1B57, #110A24 70%); border: 1px solid rgba(216,204,255,.3);
+  box-shadow: 0 0 26px rgba(139,92,246,.45), inset 0 1px 0 rgba(255,255,255,.12); overflow: hidden;
+  opacity: 0; animation: iv-logo-in 1.1s cubic-bezier(.2,.9,.25,1.05) .05s forwards, iv-logo-glow 4s ease-in-out 1.3s infinite; }
+.iv-logo-disc img { width: 30px; height: auto; position: relative; }
+.iv-logo-disc::after { content: ""; position: absolute; top: 0; bottom: 0; width: 26px; left: -40px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); animation: iv-logo-sweep 4s ease-in-out 1.6s infinite; }
+.iv-logo-wave { position: absolute; inset: 0; border-radius: 50%; border: 1px solid rgba(216,204,255,.55); opacity: 0;
+  animation: iv-logo-wave 3.2s cubic-bezier(.2,.6,.3,1) 1s infinite; }
+.iv-logo-wave.w2 { animation-delay: 2.6s; border-color: rgba(231,182,245,.4); }
+@keyframes iv-logo-in { from { opacity: 0; transform: scale(.4) rotate(-360deg); filter: blur(8px) } to { opacity: 1; transform: none; filter: none } }
+@keyframes iv-logo-glow { 50% { box-shadow: 0 0 40px rgba(167,139,250,.6), inset 0 1px 0 rgba(255,255,255,.12) } }
+@keyframes iv-logo-sweep { 0%, 55% { left: -40px } 85%, 100% { left: 110% } }
+@keyframes iv-logo-wave { 0% { transform: scale(1); opacity: .9 } 100% { transform: scale(2.4); opacity: 0 } }
+
 .iv-kick { font-size: 10.5px; font-weight: 600; letter-spacing: 3.2px; text-transform: uppercase; color: #B9AEDA;
   display: inline-flex; align-items: center; gap: 10px; }
 .iv-kick::before { content: ""; width: 22px; height: 1px; background: linear-gradient(90deg, transparent, #B9AEDA); }
@@ -264,5 +281,6 @@ html.iv-root { color-scheme: dark; scroll-behavior: smooth; }
   .iv-rail i { transform: none !important; }
   .iv-hair { transform: none !important; }
   .iv-brand { opacity: 1 !important; }
+  .iv-logo-disc { opacity: 1 !important; }
   .iv-heroin { transform: none !important; opacity: 1 !important; filter: none !important; }
 }

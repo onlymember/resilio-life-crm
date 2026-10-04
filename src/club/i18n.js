@@ -23,7 +23,7 @@ const es = {
   categories: {
     moda: 'Moda', belleza: 'Belleza', gastronomia: 'Gastronomía', viajes: 'Viajes',
     fitness: 'Fitness', lifestyle: 'Lifestyle', musica: 'Música', arte: 'Arte',
-    tecnologia: 'Tecnología', deportes: 'Deportes', maternidad: 'Maternidad', mascotas: 'Mascotas',
+    tecnologia: 'Tecnología', deportes: 'Deportes', maternidad: 'Maternidad', mascotas: 'Mascotas', otros: 'Otros',
   },
   join: {
     invitedBy: 'Te invitó {name}',
@@ -157,7 +157,7 @@ const en = {
   categories: {
     moda: 'Fashion', belleza: 'Beauty', gastronomia: 'Food', viajes: 'Travel',
     fitness: 'Fitness', lifestyle: 'Lifestyle', musica: 'Music', arte: 'Art',
-    tecnologia: 'Tech', deportes: 'Sports', maternidad: 'Parenting', mascotas: 'Pets',
+    tecnologia: 'Tech', deportes: 'Sports', maternidad: 'Parenting', mascotas: 'Pets', otros: 'Other',
   },
   join: {
     invitedBy: '{name} invited you',

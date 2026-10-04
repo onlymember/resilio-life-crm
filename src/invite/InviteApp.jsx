@@ -234,7 +234,11 @@ export default function InviteApp() {
         </div>
         <div className="iv-col">
           <div className="iv-heroin">
-            <div className="iv-kick iv-in" style={{ animationDelay: '.2s' }}>{T.kicker}</div>
+            <div className="iv-logo" aria-hidden="true">
+              <span className="iv-logo-wave"/><span className="iv-logo-wave w2"/>
+              <span className="iv-logo-disc"><img src="/hub-mark.png" alt="" width="30" height="26"/></span>
+            </div>
+            <div className="iv-kick iv-in" style={{ animationDelay: '.45s' }}>{T.kicker}</div>
             <h1 className="iv-h1" aria-label={name ? `${T.hello} ${name}.` : T.hello}>
               {hello}{hello && <br/>}<span className="iv-name iv-lum">{nameChars}<span className="iv-ch" style={{ animationDelay: `${0.8 + (name || '').length * 0.08}s` }}>.</span></span>
             </h1>
