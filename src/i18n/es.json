@@ -255,7 +255,12 @@
     "noCity": "Sin ciudad",
     "noNextAction": "Sin próxima acción",
     "noWhatsapp": "Sin WhatsApp",
-    "noCategory": "Sin categoría"
+    "noCategory": "Sin categoría",
+    "incomplete": "Les falta algo",
+    "noContact": "Sin contacto",
+    "propSent": "Propuesta enviada",
+    "propViewed": "Abrió la propuesta",
+    "propAnswered": "Eligió plan"
   },
   "filter": {
     "title": "Filtros",
@@ -1686,5 +1691,42 @@
       "creators_per_week": "Creadores por semana",
       "notes": "Nota"
     }
+  },
+  "toMove": {
+    "title": "Propuestas para mover hoy ({n})",
+    "stale": "La abrió {n} veces y no eligió · hace {days} días",
+    "expires": "Vence en {n} días sin respuesta",
+    "expiresTomorrow": "Vence mañana sin respuesta",
+    "write": "Escribirle",
+    "message": "Te escribo por la propuesta de Resilio Life para {marca}. ¿Pudiste verla? Te la dejo de nuevo: {link}"
+  },
+  "incomplete": {
+    "title": "Fichas para completar",
+    "one": "Tenés 1 ficha para completar",
+    "many": "Tenés {n} fichas para completar",
+    "influencers": "Influencers sin Instagram, ciudad o WhatsApp: {n}",
+    "brands": "Marcas sin ningún contacto: {n}",
+    "oneAll": "Hay 1 ficha para completar",
+    "manyAll": "Hay {n} fichas para completar"
+  },
+  "proposalTag": {
+    "sent": "Propuesta enviada",
+    "viewed": "Abrió la propuesta",
+    "answered": "Eligió {plan}",
+    "expired": "Propuesta vencida"
+  },
+  "proposalFunnel": {
+    "title": "Propuestas a marcas",
+    "prev": "Mes anterior",
+    "next": "Mes siguiente",
+    "error": "No se pudieron leer las propuestas.",
+    "empty": "No se enviaron propuestas este mes.",
+    "who": "Quién",
+    "step": {
+      "sent": "Enviadas",
+      "viewed": "Abiertas",
+      "answered": "Eligieron plan"
+    },
+    "hint": "Propuestas creadas en el mes. % de abiertas sobre enviadas y de respondidas sobre abiertas."
   }
 }

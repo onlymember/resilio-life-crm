@@ -4,6 +4,7 @@ import { supabase } from '../supabase.js'
 import { friendly, myId } from './core.js'
 import { isUuid } from './users.js'
 import { dbLogActivityFor } from './tasks.js'
+import { dbBrandIdsByProposalState } from './proposals.js'
 import { brandToRow, influencerToRow, locationToRow, rowToBrand, rowToInfluencer, rowToLocation } from './geography.js'
 // ═══════════════════════════════════════════════════════════
 // INFLUENCERS
@@ -46,6 +47,8 @@ export const dbGetInfluencers = async ({
   search, cityId, countryId, ownerId, status, relationshipStatus, category,
   noOwner = false, noCity = false, overdueOnly = false, overdueToday = false,
   noNextAction = false, idsOnly = false,
+  // Les falta algo: sin Instagram, sin ciudad o sin WhatsApp.
+  incomplete = false,
   // Fecha de alta (ISO, "to" excluyente) y quién la cargó.
   createdFrom, createdTo, createdBy,
   // Fichas incompletas: sin WhatsApp / sin categoría.
@@ -80,6 +83,7 @@ export const dbGetInfluencers = async ({
   q = orGroups(q, [
     noWhatsapp && 'whatsapp.is.null,whatsapp.eq.',
     noCategory && 'category.is.null,category.eq.',
+    incomplete && 'instagram.is.null,instagram.eq.,city_id.is.null,whatsapp.is.null,whatsapp.eq.',
     search && `name.ilike.%${safe(search)}%,username.ilike.%${safe(search)}%`,
   ])
   const { data, count, error } = await q
@@ -278,9 +282,18 @@ export const dbGetBrands = async ({
   // Fecha de alta (ISO, "to" excluyente) y quién la cargó.
   createdFrom, createdTo, createdBy,
   noWhatsapp = false, noCategory = false,
+  // Sin ningún dato de contacto (ni WhatsApp, ni teléfono, ni mail, ni Instagram).
+  noContact = false,
+  // Estado de la propuesta (059): 'sent' | 'viewed' | 'answered'.
+  proposalState,
   orderBy = 'created_at', orderDir = 'desc',
 } = {}) => {
   const nullsFirst = !BRAND_NULLS_LAST_COLS.has(orderBy)
+  let proposalIds = null
+  if (proposalState) {
+    proposalIds = await dbBrandIdsByProposalState(proposalState)
+    if (!proposalIds.length) return idsOnly ? { ids: [], total: 0 } : { rows: [], total: 0, hasMore: false }
+  }
   let q = supabase.from('brands')
     .select(idsOnly ? 'id' : '*', { count: 'exact' })
     .order(orderBy, { ascending: orderDir === 'asc', nullsFirst })
@@ -300,8 +313,13 @@ export const dbGetBrands = async ({
   if (createdTo)          q = q.lt('created_at', createdTo)
   if (createdBy)          q = q.eq('created_by', createdBy)
   if (noCategory)         q = q.is('category_id', null)
+  if (proposalIds)        q = q.in('id', proposalIds)
   q = orGroups(q, [
     noWhatsapp && 'whatsapp.is.null,whatsapp.eq.',
+    noContact && 'whatsapp.is.null,whatsapp.eq.',
+    noContact && 'phone.is.null,phone.eq.',
+    noContact && 'email.is.null,email.eq.',
+    noContact && 'instagram.is.null,instagram.eq.',
     search && `name.ilike.%${safe(search)}%`,
   ])
   const { data, count, error } = await q
@@ -476,3 +494,14 @@ export const dbDeleteLocation = async (id) => {
   if (error) throw friendly(error)
 }
 
+
+// Fichas a completar (Dirección y Admin): influencers sin Instagram,
+// ciudad o WhatsApp, y marcas sin ningún contacto. Cuenta todo lo que
+// la persona ve (RLS acota).
+export const dbCountIncomplete = async () => {
+  const [i, b] = await Promise.all([
+    dbGetInfluencers({ incomplete: true, pageSize: 1 }),
+    dbGetBrands({ noContact: true, pageSize: 1 }),
+  ])
+  return { influencers: i.total, brands: b.total }
+}

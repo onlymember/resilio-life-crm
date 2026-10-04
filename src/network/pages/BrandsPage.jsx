@@ -15,11 +15,12 @@ import { toast } from '../components/Toaster.jsx'
 import ViewToggle from '../components/ViewToggle.jsx'
 import { saveList, readList, clearList, restoreScroll } from '../utils/listMemory.js'
 import { t } from '../../i18n/index.js'
-import { dbGetBrands, dbGetGeography, dbGetBrandCategories, dbLogContact, dbGetActiveScouters, dbGetPeopleNames, dbPatchBrand } from '../../lib/database.js'
+import { dbGetBrands, dbGetGeography, dbGetBrandCategories, dbLogContact, dbGetActiveScouters, dbGetPeopleNames, dbPatchBrand, dbGetProposalStatusFor } from '../../lib/database.js'
+import ProposalTag from '../components/ProposalTag.jsx'
 import { personName } from '../utils/people.js'
 import { ADDED_PRESETS, addedRange, rangeToFilters, toDateInput } from '../utils/addedRanges.js'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { COMMAND_ROLES, DIRECTION_ROLES } from '../routes.js'
+import { COMMAND_ROLES, DIRECTION_ROLES, DIRECTION_ADMIN_ROLES } from '../routes.js'
 import { quiet } from '../../lib/quiet.js'
 
 const useIsDesktop = () => {
@@ -44,6 +45,10 @@ const QUICK_CHIPS = [
   { id: 'nonext',  labelKey: 'chips.noNextAction', filters: { noNextAction: true } },
   { id: 'nowa',    labelKey: 'chips.noWhatsapp', filters: { noWhatsapp: true }, fill: 'whatsapp' },
   { id: 'nocat',   labelKey: 'chips.noCategory', filters: { noCategory: true }, fill: 'category' },
+  { id: 'nocontact', labelKey: 'chips.noContact', filters: { noContact: true }, adminOnly: true },
+  { id: 'p_sent',     labelKey: 'chips.propSent',     filters: { proposalState: 'sent' } },
+  { id: 'p_viewed',   labelKey: 'chips.propViewed',   filters: { proposalState: 'viewed' } },
+  { id: 'p_answered', labelKey: 'chips.propAnswered', filters: { proposalState: 'answered' } },
 ]
 
 // El Command Center enlaza con ?noOwner=1 / ?noCity=1. Sin leerlos,
@@ -53,6 +58,8 @@ const chipFromParams = (sp) => {
   if (sp.get('noOwner'))      return QUICK_CHIPS.find(c => c.id === 'noowner')
   if (sp.get('overdue'))      return QUICK_CHIPS.find(c => c.id === 'overdue')
   if (sp.get('noNextAction')) return QUICK_CHIPS.find(c => c.id === 'nonext')
+  if (sp.get('noContact'))    return QUICK_CHIPS.find(c => c.id === 'nocontact')
+  if (sp.get('proposal'))     return QUICK_CHIPS.find(c => c.id === `p_${sp.get('proposal')}`)
   return null
 }
 
@@ -169,6 +176,13 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
     navigate(`/network/brands/${id}`)
   }
 
+  // Estado de la propuesta de cada marca visible (etiqueta chica).
+  const [propStatus, setPropStatus] = useState({})
+  useEffect(() => {
+    const ids = rows.map(r => r.id).filter(id => !(id in propStatus))
+    if (ids.length) dbGetProposalStatusFor(ids).then(m => setPropStatus(p => ({ ...p, ...Object.fromEntries(ids.map(id => [id, m[id] || null])) }))).catch(quiet('BrandsPage'))
+  }, [rows]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Scouters para el filtro de Dirección y nombres de quién tiene cada marca.
   useEffect(() => {
     if (isDirection) dbGetActiveScouters(null).then(setScouters).catch(quiet('BrandsPage'))
@@ -278,7 +292,7 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
 
       {/* Quick filter chips */}
       <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
-        {QUICK_CHIPS.map(chip => (
+        {QUICK_CHIPS.filter(c => !c.adminOnly || DIRECTION_ADMIN_ROLES.includes(currentUser?.rol)).map(chip => (
           <button
             key={chip.id}
             onClick={() => handleChip(chip)}
@@ -393,7 +407,7 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
                     footer={fillField && !batchMode ? (
                       <QuickFill entityType="brand" entity={b} field={fillField} categories={brandCats}
                         onDone={() => { setRows(prev => prev.filter(r => r.id !== b.id)); setTotal(n => n - 1); toast(t('quickFill.saved', { name: b.name || '' })) }}/>
-                    ) : null}
+                    ) : propStatus[b.id] ? <ProposalTag state={propStatus[b.id].state} plan={propStatus[b.id].plan}/> : null}
                   />
                 </SwipeStage>
               </div>

@@ -8,9 +8,11 @@ import TodayPanel from '../components/TodayPanel.jsx'
 import SwipeRow from '../components/SwipeRow.jsx'
 import FocusMode from '../components/FocusMode.jsx'
 import QuickAddBar from '../components/QuickAddBar.jsx'
+import ProposalsToMove from '../components/ProposalsToMove.jsx'
+import IncompleteCard from '../components/IncompleteCard.jsx'
 import { DailyGoal, WeekLine, readGoal } from '../components/DailyProgress.jsx'
 import { toast } from '../components/Toaster.jsx'
-import { DIRECTION_ROLES } from '../routes.js'
+import { DIRECTION_ROLES, DIRECTION_ADMIN_ROLES } from '../routes.js'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { tomorrowAtIso } from '../utils/date.js'
@@ -322,6 +324,9 @@ export default function HomePage({ currentUser, onOpenCreate }) {
         {/* 4 · HOY: aprobaciones (Dirección), visitas de mañana y objetivos */}
         <TodayPanel isDirection={DIRECTION_ROLES.includes(currentUser?.rol)} me={name}/>
 
+        {/* 4b · PROPUESTAS PARA MOVER HOY (solo si hay) */}
+        <ProposalsToMove/>
+
         {/* 5 · AGENDA — separada de verdad: vencido / hoy / próximos */}
         <section style={{ marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
@@ -398,6 +403,9 @@ export default function HomePage({ currentUser, onOpenCreate }) {
 
         {/* 6 · TU NÚMERO DEL DÍA + RACHA */}
         {daily && <DailyGoal days={daily} uid={currentUser?.id} goal={goal} onGoal={setGoal}/>}
+
+        {/* 6b · FICHAS PARA COMPLETAR (Dirección y Admin, solo si hay) */}
+        {DIRECTION_ADMIN_ROLES.includes(currentUser?.rol) && <IncompleteCard/>}
 
         {/* 7 · MISIÓN con ritmo y botón directo */}
         {featuredMission && (

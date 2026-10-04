@@ -15,6 +15,9 @@ export const ROLE_PRECEDENCE = [
 // = app_is_direction()
 export const DIRECTION_ROLES = ['super_admin', 'network_direction']
 
+// Dirección + Admin (herramientas de control de la base: fichas para completar).
+export const DIRECTION_ADMIN_ROLES = ['super_admin', 'network_direction', 'admin']
+
 // = app_can_manage_offers()
 export const OFFERS_ROLES = ['super_admin', 'admin', 'network_direction']
 

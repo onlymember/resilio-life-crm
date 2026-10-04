@@ -1,8 +1,8 @@
 import { useSyncExternalStore } from 'react'
 // Las listas de roles viven en lib/roles.js (una sola fuente, alineada
 // con las funciones de la base). Se re-exportan para no cambiar imports.
-import { COMMAND_ROLES, DIRECTION_ROLES, OFFERS_ROLES } from '../lib/roles.js'
-export { COMMAND_ROLES, DIRECTION_ROLES, OFFERS_ROLES }
+import { COMMAND_ROLES, DIRECTION_ROLES, OFFERS_ROLES, DIRECTION_ADMIN_ROLES } from '../lib/roles.js'
+export { COMMAND_ROLES, DIRECTION_ROLES, OFFERS_ROLES, DIRECTION_ADMIN_ROLES }
 
 // Club (red de influencers) para los scouters: lo prenden o apagan
 // super_admin, admin o network_direction con el interruptor de la sección

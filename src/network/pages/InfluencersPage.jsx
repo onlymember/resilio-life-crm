@@ -19,7 +19,7 @@ import { dbGetInfluencers, dbGetGeography, dbLogContact, dbGetActiveScouters, db
 import { personName } from '../utils/people.js'
 import { ADDED_PRESETS, addedRange, rangeToFilters, toDateInput } from '../utils/addedRanges.js'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { COMMAND_ROLES, DIRECTION_ROLES } from '../routes.js'
+import { COMMAND_ROLES, DIRECTION_ROLES, DIRECTION_ADMIN_ROLES } from '../routes.js'
 import { quiet } from '../../lib/quiet.js'
 
 const useIsDesktop = () => {
@@ -52,6 +52,7 @@ const QUICK_CHIPS = [
   { id: 'nonext',  labelKey: 'chips.noNextAction', filters: { noNextAction: true } },
   { id: 'nowa',    labelKey: 'chips.noWhatsapp', filters: { noWhatsapp: true }, fill: 'whatsapp' },
   { id: 'nocat',   labelKey: 'chips.noCategory', filters: { noCategory: true }, fill: 'category' },
+  { id: 'incomplete', labelKey: 'chips.incomplete', filters: { incomplete: true }, adminOnly: true },
 ]
 
 // El Command Center enlaza con ?noOwner=1 / ?noCity=1 / ?overdue=1.
@@ -62,6 +63,7 @@ const chipFromParams = (sp) => {
   if (sp.get('noOwner'))      return QUICK_CHIPS.find(c => c.id === 'noowner')
   if (sp.get('overdue'))      return QUICK_CHIPS.find(c => c.id === 'overdue')
   if (sp.get('noNextAction')) return QUICK_CHIPS.find(c => c.id === 'nonext')
+  if (sp.get('incomplete'))   return QUICK_CHIPS.find(c => c.id === 'incomplete')
   return null
 }
 
@@ -307,7 +309,7 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
 
       {/* Quick filter chips */}
       <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
-        {QUICK_CHIPS.map(chip => (
+        {QUICK_CHIPS.filter(c => !c.adminOnly || DIRECTION_ADMIN_ROLES.includes(currentUser?.rol)).map(chip => (
           <button
             key={chip.id}
             onClick={() => handleChip(chip)}

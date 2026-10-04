@@ -255,7 +255,12 @@
     "noCity": "No city",
     "noNextAction": "No next action",
     "noWhatsapp": "No WhatsApp",
-    "noCategory": "No category"
+    "noCategory": "No category",
+    "incomplete": "Missing info",
+    "noContact": "No contact",
+    "propSent": "Proposal sent",
+    "propViewed": "Opened proposal",
+    "propAnswered": "Chose a plan"
   },
   "filter": {
     "title": "Filtros",
@@ -1686,5 +1691,42 @@
       "creators_per_week": "Creators per week",
       "notes": "Note"
     }
+  },
+  "toMove": {
+    "title": "Proposals to move today ({n})",
+    "stale": "Opened {n} times, no choice · {days} days ago",
+    "expires": "Expires in {n} days, no answer",
+    "expiresTomorrow": "Expires tomorrow, no answer",
+    "write": "Message them",
+    "message": "Following up on the Resilio Life proposal for {marca}. Did you get a chance to see it? Here it is again: {link}"
+  },
+  "incomplete": {
+    "title": "Profiles to complete",
+    "one": "You have 1 profile to complete",
+    "many": "You have {n} profiles to complete",
+    "influencers": "Influencers missing Instagram, city or WhatsApp: {n}",
+    "brands": "Brands with no contact info: {n}",
+    "oneAll": "1 profile to complete",
+    "manyAll": "{n} profiles to complete"
+  },
+  "proposalTag": {
+    "sent": "Proposal sent",
+    "viewed": "Opened proposal",
+    "answered": "Chose {plan}",
+    "expired": "Proposal expired"
+  },
+  "proposalFunnel": {
+    "title": "Brand proposals",
+    "prev": "Previous month",
+    "next": "Next month",
+    "error": "Could not load proposals.",
+    "empty": "No proposals sent this month.",
+    "who": "Who",
+    "step": {
+      "sent": "Sent",
+      "viewed": "Opened",
+      "answered": "Chose a plan"
+    },
+    "hint": "Proposals created in the month. % opened over sent, answered over opened."
   }
 }

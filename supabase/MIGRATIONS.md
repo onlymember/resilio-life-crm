@@ -23,13 +23,14 @@ Cada archivo trae al final una consulta de verificación que tiene que dar `ok =
 | 059 | Propuestas para marcas (partners.resilio.company): link privado, plan elegido y respuestas | Aplicada |
 | 060 | Scouters ven solo sus marcas e influencers (cargadas, asignadas o en sus colaboraciones) | Aplicada |
 | 061 | Instagram unificado: completa el campo Instagram con el usuario de la carga | **Pendiente** |
+| 062 | Tarea automática "Enviar valores" cuando una marca responde la propuesta | **Pendiente** |
 
 Archivos de solo lectura (no cambian nada): `chequeo_final.sql`, `diag_seguridad.sql`, `diag_esquema.sql`,
 `dump_rbac.sql`, `dump_deriva.sql`, `00-diagnostico.sql`, `000_diagnostico_fase3.sql`.
 
 ## Reglas para lo que venga
 
-1. Número siguiente, sin repetir (`062_...`). Nada fuera de esta carpeta.
+1. Número siguiente, sin repetir (`063_...`). Nada fuera de esta carpeta.
 2. Todo dentro de `BEGIN; ... COMMIT;` y con verificación al final.
 3. Nunca suponer nombres de tipos o columnas que no estén en un archivo: si no está,
    se consulta primero en la base (así nacieron los errores de la 050 y la 054:
