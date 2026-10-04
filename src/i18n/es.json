@@ -143,7 +143,8 @@
       "manual": "MANUAL",
       "club": "CLUB"
     },
-    "approvals": "Aprobaciones"
+    "approvals": "Aprobaciones",
+    "prospects": "Prospectos"
   },
   "loading": {
     "generic": "Cargando…",
@@ -1728,5 +1729,97 @@
       "answered": "Eligieron plan"
     },
     "hint": "Propuestas creadas en el mes. % de abiertas sobre enviadas y de respondidas sobre abiertas."
+  },
+  "prospects": {
+    "kicker": "Dirección y Admin",
+    "title": "Prospectos de marcas",
+    "subtitle": "Buscá comercios en Google Maps y decidí quién los contacta. Las que ya están en Network no aparecen.",
+    "usage": {
+      "today": "Búsquedas hoy",
+      "month": "Este mes",
+      "free": "Te quedan {n} gratis este mes",
+      "paid": "Ya pasaste las 1.000 gratis: cada búsqueda extra cuesta unos USD 0,04"
+    },
+    "newSearch": "Nueva búsqueda",
+    "query": "Rubro",
+    "queryPh": "Ej.: cafeterías, gimnasios, ropa",
+    "city": "Ciudad",
+    "cityPh": "Ej.: Rosario, Córdoba, Madrid",
+    "search": "Buscar",
+    "searching": "Buscando…",
+    "searchHint": "Cada búsqueda trae hasta 20 comercios. Las primeras 1.000 del mes son gratis.",
+    "needBoth": "Completá rubro y ciudad.",
+    "found": "{n} comercios nuevos",
+    "recent": "Búsquedas recientes",
+    "all": "Todas las búsquedas",
+    "resultsFor": "{q} en {c}",
+    "allResults": "Todos los prospectos",
+    "inNetwork": "{n} ya estaban en Network y no se muestran",
+    "sort": "Ordenar:",
+    "sortBy": {
+      "reviews": "Más reseñas",
+      "rating": "Mejor calificación"
+    },
+    "filter": "Filtrar:",
+    "flt": {
+      "r4": "Mínimo 4 ★",
+      "r50": "Mínimo 50 reseñas",
+      "web": "Con web",
+      "ig": "Con Instagram",
+      "phone": "Con teléfono"
+    },
+    "tab": {
+      "new": "Nuevos",
+      "assigned": "Asignados",
+      "contacted": "Contactados",
+      "discarded": "Descartados"
+    },
+    "emptyFirst": "Hacé tu primera búsqueda: elegí un rubro y una ciudad.",
+    "emptyNew": "No quedan comercios nuevos con estos filtros.",
+    "emptyTab": "Todavía no hay comercios en esta pestaña.",
+    "reviews": "{n} reseñas",
+    "has": {
+      "web": "Web"
+    },
+    "no": {
+      "phone": "Sin teléfono",
+      "web": "Sin web",
+      "ig": "Sin Instagram",
+      "email": "Sin email"
+    },
+    "maps": "Ver en Maps",
+    "contact": "Contactar",
+    "assignTo": "Asignar a",
+    "pickScouter": "Elegir scouter…",
+    "discard": "Descartar",
+    "restore": "Restaurar",
+    "assigned": "Asignada a {name}. Ya tiene la ficha y una tarea para contactarla.",
+    "assignedTo": "Ficha creada a cargo de {name}.",
+    "contactedNote": "Ficha creada a tu cargo, con su link de propuesta.",
+    "openBrand": "Ver ficha",
+    "template": "Plantilla",
+    "contactHint": "Al tocar WhatsApp o Copiar se crea la ficha de la marca en Network, a tu cargo, con su link de propuesta.",
+    "openWa": "Abrir WhatsApp",
+    "copy": "Copiar mensaje",
+    "copied": "Mensaje copiado",
+    "copyManual": "Copiá el mensaje:",
+    "close": "Cerrar",
+    "tpl": {
+      "general": "General",
+      "generalBody": "Hola, ¿cómo están? Te escribo de Resilio Life. Vimos {marca} y creemos que podemos ayudarlos a llegar a más gente con creadores de contenido de {ciudad}. Te comparto la propuesta: {link}",
+      "gastro": "Gastronomía",
+      "gastroBody": "Hola, te escribo de Resilio Life. Trabajamos con creadores que visitan locales gastronómicos y muestran la experiencia en Instagram y TikTok. Nos encantaría hacerlo con {marca}. Mirá la propuesta: {link}",
+      "short": "Corto",
+      "shortBody": "Hola, soy {yo} de Resilio Life. Te dejo una propuesta para {marca}, son 2 minutos: {link}"
+    },
+    "err": {
+      "quota": "Google llegó al límite diario de búsquedas de la clave. Probá mañana o subí la cuota en Google Cloud.",
+      "forbidden": "Solo Dirección y Admin pueden buscar prospectos.",
+      "no_key": "Falta la clave de Google en Vercel (GOOGLE_PLACES_API_KEY).",
+      "google": "Google no respondió. Probá de nuevo en un rato.",
+      "auth_unavailable": "No se pudo verificar tu sesión. Probá de nuevo.",
+      "missing": "Completá rubro y ciudad.",
+      "search_failed": "No se pudo buscar. Probá de nuevo."
+    }
   }
 }

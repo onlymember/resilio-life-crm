@@ -2,7 +2,7 @@ import {
   Home, Users, Building2, Briefcase, CheckCircle,
   CheckSquare, Calendar, ArrowRight, FileText,
   Target, Map, Award, BarChart3, BookOpen, Users2, Repeat, MessageSquare,
-  Gift, UserPlus, Inbox,
+  Gift, UserPlus, Inbox, Radar,
 } from 'lucide-react'
 import { COMMAND_ROLES, DIRECTION_ROLES, OFFERS_ROLES } from './routes.js'
 
@@ -23,6 +23,7 @@ export const NAV_SECTIONS = [
     items: [
       { path: '/network/influencers',   labelKey: 'nav.influencers',    icon: Users,       soon: false, roles: null },
       { path: '/network/brands',        labelKey: 'nav.brands',         icon: Building2,   soon: false, roles: null },
+      { path: '/network/prospects',     labelKey: 'nav.prospects',      icon: Radar,       soon: false, roles: OFFERS_ROLES },
       { path: '/network/opportunities', labelKey: 'nav.opportunities',  icon: Briefcase,   soon: false, roles: null },
       { path: '/network/collaborations',labelKey: 'nav.collaborations', icon: CheckCircle, soon: false, roles: null },
     ],

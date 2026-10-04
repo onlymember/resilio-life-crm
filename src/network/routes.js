@@ -35,6 +35,7 @@ export const ROUTES = [
   { path: '/network/influencers/:id',       pageKey: 'influencer-detail',  soon: false, roles: null },
   { path: '/network/brands',                pageKey: 'brands',             soon: false, roles: null },
   { path: '/network/brands/:id',            pageKey: 'brand-detail',       soon: false, roles: null },
+  { path: '/network/prospects',             pageKey: 'prospects',          soon: false, roles: OFFERS_ROLES },
   { path: '/network/opportunities',         pageKey: 'opportunities',      soon: false, roles: null },
   { path: '/network/opportunities/:id',     pageKey: 'opportunity-detail', soon: false, roles: null },
   { path: '/network/collaborations',        pageKey: 'collaborations',     soon: false, roles: null },

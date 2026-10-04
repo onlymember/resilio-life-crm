@@ -35,6 +35,12 @@ export default [
     },
   },
   {
+    // Funciones de Vercel (corren en Node, no en el navegador).
+    files: ['api/**/*.js'],
+    languageOptions: { ecmaVersion: 2023, sourceType: 'module', globals: { ...globals.node } },
+    rules: { 'no-undef': 'error', 'no-unused-vars': ['warn', { caughtErrors: 'none' }] },
+  },
+  {
     files: ['src/**/*.test.{js,jsx}'],
     languageOptions: { globals: { ...globals.node } },
   },

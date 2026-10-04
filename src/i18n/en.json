@@ -143,7 +143,8 @@
       "manual": "MANUAL",
       "club": "CLUB"
     },
-    "approvals": "Approvals"
+    "approvals": "Approvals",
+    "prospects": "Prospects"
   },
   "loading": {
     "generic": "Cargando…",
@@ -1728,5 +1729,97 @@
       "answered": "Chose a plan"
     },
     "hint": "Proposals created in the month. % opened over sent, answered over opened."
+  },
+  "prospects": {
+    "kicker": "Direction & Admin",
+    "title": "Brand prospects",
+    "subtitle": "Find businesses on Google Maps and decide who contacts them. Those already in Network are hidden.",
+    "usage": {
+      "today": "Searches today",
+      "month": "This month",
+      "free": "{n} free searches left this month",
+      "paid": "You passed the 1,000 free searches: each extra one costs about USD 0.04"
+    },
+    "newSearch": "New search",
+    "query": "Category",
+    "queryPh": "E.g. cafés, gyms, clothing",
+    "city": "City",
+    "cityPh": "E.g. Rosario, Madrid, Miami",
+    "search": "Search",
+    "searching": "Searching…",
+    "searchHint": "Each search returns up to 20 businesses. The first 1,000 each month are free.",
+    "needBoth": "Fill in category and city.",
+    "found": "{n} new businesses",
+    "recent": "Recent searches",
+    "all": "All searches",
+    "resultsFor": "{q} in {c}",
+    "allResults": "All prospects",
+    "inNetwork": "{n} were already in Network and are hidden",
+    "sort": "Sort:",
+    "sortBy": {
+      "reviews": "Most reviews",
+      "rating": "Best rating"
+    },
+    "filter": "Filter:",
+    "flt": {
+      "r4": "4 ★ or more",
+      "r50": "50+ reviews",
+      "web": "Has website",
+      "ig": "Has Instagram",
+      "phone": "Has phone"
+    },
+    "tab": {
+      "new": "New",
+      "assigned": "Assigned",
+      "contacted": "Contacted",
+      "discarded": "Discarded"
+    },
+    "emptyFirst": "Run your first search: pick a category and a city.",
+    "emptyNew": "No new businesses left with these filters.",
+    "emptyTab": "Nothing in this tab yet.",
+    "reviews": "{n} reviews",
+    "has": {
+      "web": "Website"
+    },
+    "no": {
+      "phone": "No phone",
+      "web": "No website",
+      "ig": "No Instagram",
+      "email": "No email"
+    },
+    "maps": "View on Maps",
+    "contact": "Contact",
+    "assignTo": "Assign to",
+    "pickScouter": "Pick a scouter…",
+    "discard": "Discard",
+    "restore": "Restore",
+    "assigned": "Assigned to {name}. The profile and a task to contact it are ready.",
+    "assignedTo": "Profile created, owned by {name}.",
+    "contactedNote": "Profile created and owned by you, with its proposal link.",
+    "openBrand": "Open profile",
+    "template": "Template",
+    "contactHint": "Tapping WhatsApp or Copy creates the brand profile in Network, owned by you, with its proposal link.",
+    "openWa": "Open WhatsApp",
+    "copy": "Copy message",
+    "copied": "Message copied",
+    "copyManual": "Copy the message:",
+    "close": "Close",
+    "tpl": {
+      "general": "General",
+      "generalBody": "Hola, ¿cómo están? Te escribo de Resilio Life. Vimos {marca} y creemos que podemos ayudarlos a llegar a más gente con creadores de contenido de {ciudad}. Te comparto la propuesta: {link}",
+      "gastro": "Gastronomía",
+      "gastroBody": "Hola, te escribo de Resilio Life. Trabajamos con creadores que visitan locales gastronómicos y muestran la experiencia en Instagram y TikTok. Nos encantaría hacerlo con {marca}. Mirá la propuesta: {link}",
+      "short": "Corto",
+      "shortBody": "Hola, soy {yo} de Resilio Life. Te dejo una propuesta para {marca}, son 2 minutos: {link}"
+    },
+    "err": {
+      "quota": "Google llegó al límite diario de búsquedas de la clave. Probá mañana o subí la cuota en Google Cloud.",
+      "forbidden": "Solo Dirección y Admin pueden buscar prospectos.",
+      "no_key": "Falta la clave de Google en Vercel (GOOGLE_PLACES_API_KEY).",
+      "google": "Google no respondió. Probá de nuevo en un rato.",
+      "auth_unavailable": "No se pudo verificar tu sesión. Probá de nuevo.",
+      "missing": "Completá rubro y ciudad.",
+      "search_failed": "No se pudo buscar. Probá de nuevo."
+    }
   }
 }

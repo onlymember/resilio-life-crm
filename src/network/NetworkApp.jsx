@@ -39,6 +39,7 @@ const MissionsPage = lazyPage(() => import('./pages/MissionsPage.jsx'))
 const NotesPage = lazyPage(() => import('./pages/NotesPage.jsx'))
 const RewardsPage = lazyPage(() => import('./pages/RewardsPage.jsx'))
 const OffersPage = lazyPage(() => import('./pages/OffersPage.jsx'))
+const ProspectsPage = lazyPage(() => import('./pages/ProspectsPage.jsx'))
 const LeadsPage = lazyPage(() => import('./pages/LeadsPage.jsx'))
 const ApprovalsPage = lazyPage(() => import('./pages/ApprovalsPage.jsx'))
 import CreateSheet from './components/CreateSheet.jsx'
@@ -194,6 +195,11 @@ export default function NetworkApp({ currentUser }) {
           <Route path="messages"    element={
             <RoleGuard user={currentUser} allowedRoles={DIRECTION_ROLES}>
               <MessageTemplatesPage/>
+            </RoleGuard>
+          }/>
+          <Route path="prospects"   element={
+            <RoleGuard user={currentUser} allowedRoles={OFFERS_ROLES}>
+              <ProspectsPage currentUser={currentUser}/>
             </RoleGuard>
           }/>
           <Route path="offers"      element={
