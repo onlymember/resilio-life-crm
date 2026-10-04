@@ -1,9 +1,9 @@
 import React, { Suspense, useState, useEffect } from 'react'
-import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import PageBoundary from './components/PageBoundary.jsx'
-import { Home, CheckSquare, Plus, Users, Menu, X, LogOut, Bell, Search } from 'lucide-react'
+import { Home, CheckSquare, Users, Menu, X, LogOut, Bell, Search } from 'lucide-react'
 import CreateSheet from './components/CreateSheet.jsx'
-import { SPEED_DIAL_ITEMS } from './createOptions.js'
+import RadialHub from './components/RadialHub.jsx'
 import { NAV_SECTIONS } from './nav.js'
 import { canSeeClub, useClubForScouters } from './routes.js'
 import { t } from '../i18n/index.js'
@@ -12,7 +12,6 @@ import { dbGetNotifications } from '../lib/database.js'
 import { signOut } from '../lib/auth.js'
 import { quiet } from '../lib/quiet.js'
 
-const PREFERS_REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 const ENTITY_ROUTE = {
   influencer:    (id) => `/network/influencers/${id}`,
@@ -288,11 +287,6 @@ const NavBtn = ({ to, icon: Icon, label, exactActive }) => (
 
 export default function MobileLayout({ currentUser, onCreated, createOpen, createStep, onOpenCreate, onCloseCreate }) {
   const [drawerOpen,    setDrawerOpen]    = useState(false)
-  const [speedDialOpen, setSpeedDialOpen] = useState(false)
-  const location = useLocation()
-
-  // Close speed-dial when navigating to a different route
-  useEffect(() => { setSpeedDialOpen(false) }, [location.pathname])
 
   const openDrawer = () => {
     setDrawerOpen(true)
@@ -302,11 +296,6 @@ export default function MobileLayout({ currentUser, onCreated, createOpen, creat
   const closeDrawer = () => {
     setDrawerOpen(false)
     document.body.style.overflow = ''
-  }
-
-  const handleSpeedDialSelect = (step) => {
-    setSpeedDialOpen(false)
-    onOpenCreate(step)
   }
 
   useEffect(() => () => { document.body.style.overflow = '' }, [])
@@ -321,89 +310,14 @@ export default function MobileLayout({ currentUser, onCreated, createOpen, creat
         <PageBoundary><Suspense fallback={<div style={{ padding: 20 }}><div style={{ height: 28, width: 180, borderRadius: 8, background: 'rgba(139,92,246,0.08)' }}/></div>}><Outlet/></Suspense></PageBoundary>
       </main>
 
-      {/* Speed-dial backdrop — below nav (z:100), above page */}
-      {speedDialOpen && (
-        <div
-          onClick={() => setSpeedDialOpen(false)}
-          style={{
-            position: 'fixed', top: 0, left: 0, right: 0,
-            bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
-            background: 'rgba(0,0,0,0.5)',
-            backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
-            zIndex: 99,
-            animation: 'backdropIn var(--dur-base) var(--ease-standard)',
-          }}
-        />
-      )}
-
       {/* Bottom Nav */}
       <nav className="nw-bottom-nav" style={{ position: 'fixed', bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', left: 16, right: 16, height: 64, display: 'flex', alignItems: 'center', zIndex: 100 }}>
         <NavBtn to="/network/home"   icon={Home}        label={t('nav.home')}        exactActive/>
         <NavBtn to="/network/tasks"  icon={CheckSquare} label={t('nav.tasks')}/>
 
-        {/* FAB central with speed-dial */}
+        {/* Centro: Resilio Radial Hub (reemplaza al +) */}
         <div style={{ flex: 1, display: 'flex', justifyContent: 'center', position: 'relative' }}>
-          {/* Speed-dial items — fan out upward from FAB */}
-          {SPEED_DIAL_ITEMS.map((item, i) => {
-            const isOpen = speedDialOpen
-            const openDelay   = i * 45
-            const closeDelay  = (SPEED_DIAL_ITEMS.length - 1 - i) * 30
-            const dur = isOpen ? 250 : 150
-            const delay = isOpen ? openDelay : closeDelay
-            const easing = isOpen ? 'var(--ease-spring)' : 'var(--ease-standard)'
-            const scaleTarget = PREFERS_REDUCED ? '' : isOpen ? ' scale(1)' : ' scale(0.6)'
-            return (
-              <button
-                key={item.step}
-                tabIndex={isOpen ? 0 : -1}
-                onClick={() => handleSpeedDialSelect(item.step)}
-                aria-label={t(item.labelKey)}
-                style={{
-                  position: 'absolute',
-                  bottom: `${70 + i * 54}px`,
-                  left: '50%',
-                  transform: `translateX(-50%)${scaleTarget}`,
-                  opacity: isOpen ? 1 : 0,
-                  transition: `opacity ${dur}ms ${easing} ${delay}ms, transform ${dur}ms ${easing} ${delay}ms`,
-                  pointerEvents: isOpen ? 'auto' : 'none',
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '9px 16px 9px 10px',
-                  borderRadius: 24, cursor: 'pointer',
-                  background: 'var(--bg-secondary)',
-                  border: `1px solid ${item.color}45`,
-                  boxShadow: `0 4px 24px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.05)`,
-                  whiteSpace: 'nowrap', zIndex: 2,
-                }}
-              >
-                <div style={{ width: 30, height: 30, borderRadius: 9, background: `${item.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <item.Icon size={15} color={item.color}/>
-                </div>
-                <span style={{ fontSize: 12, fontWeight: 600, color: item.color }}>{t(item.labelKey)}</span>
-              </button>
-            )
-          })}
-
-          {/* FAB button */}
-          <button
-            onClick={() => setSpeedDialOpen(p => !p)}
-            aria-label={t('create.selectType')}
-            aria-expanded={speedDialOpen}
-            style={{
-              width: 48, height: 48, borderRadius: '50%',
-              background: 'linear-gradient(135deg,var(--primary-violet-dark),var(--primary-violet))',
-              border: 'none', color: 'white', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: speedDialOpen ? '0 0 28px rgba(139,92,246,0.7)' : '0 0 20px rgba(139,92,246,0.5)',
-              transform: 'translateY(-8px)',
-              transition: 'box-shadow var(--dur-base)',
-              zIndex: 2,
-            }}
-          >
-            <Plus size={22} style={{
-              transition: `transform var(--dur-base) var(--ease-spring)`,
-              transform: speedDialOpen ? 'rotate(45deg)' : 'rotate(0deg)',
-            }}/>
-          </button>
+          <RadialHub onCreate={(step) => onOpenCreate(step)}/>
         </div>
 
         <NavBtn to="/network/influencers" icon={Users} label={t('nav.influencers')}/>

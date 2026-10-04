@@ -1909,5 +1909,43 @@
         "whatsapp": "Mensajes de WhatsApp"
       }
     }
+  },
+  "hub": {
+    "open": "Abrir Resilio",
+    "close": "Cerrar",
+    "back": "Volver",
+    "title": "Resilio",
+    "mod": {
+      "task": {
+        "title": "Tareas",
+        "sub": "Lo que tenés para hacer",
+        "new": "Nueva tarea",
+        "see": "Ver tareas"
+      },
+      "collaboration": {
+        "title": "Colaboraciones",
+        "sub": "Visitas, contenido y resultados",
+        "new": "Nueva colaboración",
+        "see": "Ver colaboraciones"
+      },
+      "opportunity": {
+        "title": "Oportunidades",
+        "sub": "Negocios en marcha",
+        "new": "Nueva oportunidad",
+        "see": "Ver oportunidades"
+      },
+      "influencer": {
+        "title": "Influencers",
+        "sub": "Tu red de creadores",
+        "new": "Nueva influencer",
+        "see": "Ver influencers"
+      },
+      "brand": {
+        "title": "Marcas",
+        "sub": "Comercios y propuestas",
+        "new": "Nueva marca",
+        "see": "Ver marcas"
+      }
+    }
   }
 }

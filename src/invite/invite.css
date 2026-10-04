@@ -118,7 +118,7 @@ html.iv-root { color-scheme: dark; scroll-behavior: smooth; }
 .iv-cards { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 30px -24px 0;
   padding: 8px 24px 16px; scrollbar-width: none; perspective: 900px; }
 .iv-cards::-webkit-scrollbar { display: none; }
-.iv-card { flex: none; width: 252px; height: 304px; scroll-snap-align: start; padding: 22px; border-radius: 28px; position: relative;
+.iv-card { flex: none; width: 260px; min-height: 320px; scroll-snap-align: start; padding: 86px 22px 22px; border-radius: 28px; position: relative;
   overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; border: 1px solid rgba(255,255,255,.1);
   background: #0E0A1C; transform: rotateY(var(--ry, 0deg)) scale(var(--sc, 1)); transition: transform .15s linear; }
 .iv-card .glow { position: absolute; width: 260px; height: 260px; border-radius: 50%; filter: blur(50px); top: -90px; right: -90px;
@@ -171,6 +171,7 @@ html.iv-root { color-scheme: dark; scroll-behavior: smooth; }
 .iv-ask:last-child { border-bottom: 1px solid rgba(255,255,255,.07); }
 .iv-ask .k { font-family: 'Sora', sans-serif; font-weight: 300; font-size: 12px; color: var(--dim); width: 22px; letter-spacing: 1px; }
 .iv-ask svg { margin-left: auto; color: var(--dim); flex: none; }
+.iv-asknote { margin: 26px 0 0; font-family: 'Sora', sans-serif; font-weight: 300; font-size: 20px; line-height: 1.35; letter-spacing: -.02em; color: var(--ink); }
 
 /* formulario */
 .iv-form { margin-top: 30px; padding: 22px 20px; display: flex; flex-direction: column; gap: 20px; position: relative; }

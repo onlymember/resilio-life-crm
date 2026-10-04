@@ -35,9 +35,7 @@ export async function getInvite(token) {
 
 export async function respondInvite(token, action, data = {}) {
   if (token === DEMO_TOKEN) {
-    const birth = data.birthdate ? new Date(data.birthdate) : null
-    const age = birth ? (Date.now() - birth.getTime()) / 31557600000 : 99
-    return { ok: true, status: action === 'decline' ? 'declined' : age < 18 ? 'underage' : 'joined' }
+    return { ok: true, status: action === 'decline' ? 'declined' : 'joined' }
   }
   const { data: res, error } = await db().rpc('respond_influencer_invite', { p_token: token, p_action: action, p_data: data })
   if (error) {

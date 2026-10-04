@@ -1909,5 +1909,43 @@
         "whatsapp": "WhatsApp messages"
       }
     }
+  },
+  "hub": {
+    "open": "Open Resilio",
+    "close": "Close",
+    "back": "Back",
+    "title": "Resilio",
+    "mod": {
+      "task": {
+        "title": "Tasks",
+        "sub": "What you have to do",
+        "new": "New task",
+        "see": "See tasks"
+      },
+      "collaboration": {
+        "title": "Collaborations",
+        "sub": "Visits, content and results",
+        "new": "New collaboration",
+        "see": "See collaborations"
+      },
+      "opportunity": {
+        "title": "Opportunities",
+        "sub": "Deals in progress",
+        "new": "New opportunity",
+        "see": "See opportunities"
+      },
+      "influencer": {
+        "title": "Influencers",
+        "sub": "Your creator network",
+        "new": "New influencer",
+        "see": "See influencers"
+      },
+      "brand": {
+        "title": "Brands",
+        "sub": "Businesses and proposals",
+        "new": "New brand",
+        "see": "See brands"
+      }
+    }
   }
 }

@@ -113,7 +113,7 @@ export default function InviteApp() {
       const draft = loadDraft(token)
       setF({
         city: d.city || '', cats: d.categories?.length ? d.categories : [], waMode: d.whatsapp_end ? 'keep' : 'edit',
-        wa: '', birth: '', consent: false, igOk: true, ig: '', ...(draft || {}),
+        wa: '', consent: false, igOk: true, ig: '', ...(draft || {}),
       })
       if (['joined', 'declined', 'underage'].includes(d.status)) setPhase(d.status)
     }).catch(() => setData({ ok: false, reason: 'error' }))
@@ -152,7 +152,7 @@ export default function InviteApp() {
 
   const set = (k, v) => setF(p => ({ ...p, [k]: v }))
   const toggleCat = (k) => setF(p => ({ ...p, cats: p.cats.includes(k) ? p.cats.filter(x => x !== k) : [...p.cats, k] }))
-  const ready = f && f.consent && f.birth && f.cats.length > 0 && (f.igOk || f.ig.trim())
+  const ready = f && f.consent && f.cats.length > 0 && (f.igOk || f.ig.trim())
 
   const errText = (e) => {
     const h = String(e?.hint || '')
@@ -164,7 +164,7 @@ export default function InviteApp() {
     setBusy(true); setErr('')
     try {
       const r = await respondInvite(token, 'join', {
-        city: f.city.trim(), categories: f.cats, birthdate: f.birth, consent: true,
+        city: f.city.trim(), categories: f.cats, consent: true, adult: true,
         whatsapp: f.waMode === 'edit' ? f.wa.trim() : '', instagram_ok: f.igOk, instagram: f.igOk ? '' : f.ig.trim(),
       })
       setPhase(r?.status || 'joined')
@@ -299,10 +299,16 @@ export default function InviteApp() {
       {/* ── Qué te pedimos ── */}
       <section className="iv-sec">
         <div className="iv-col">
-          <div className="iv-kick iv-rv">{T.askLbl}</div>
-          <h2 className="iv-h2">
-            <span className="iv-mask"><span>{T.askTitleA} <span className="iv-lum">{T.askTitleB}</span></span></span>
-          </h2>
+          {(T.askTitleA || T.askTitleB) ? (
+            <>
+              <div className="iv-kick iv-rv">{T.askLbl}</div>
+              <h2 className="iv-h2">
+                <span className="iv-mask"><span>{T.askTitleA} <span className="iv-lum">{T.askTitleB}</span></span></span>
+              </h2>
+            </>
+          ) : (
+            <h2 className="iv-h2"><span className="iv-mask"><span className="iv-lum">{T.askLbl}</span></span></h2>
+          )}
           <div className="iv-asks">
             {[1, 2, 3, 4].map(n => (
               <div className="iv-ask iv-rv iv-l" key={n} style={{ transitionDelay: `${(n - 1) * 0.1}s` }}>
@@ -310,6 +316,7 @@ export default function InviteApp() {
               </div>
             ))}
           </div>
+          {T.askNote && <p className="iv-asknote iv-rv">{T.askNote}</p>}
         </div>
       </section>
 
@@ -360,7 +367,7 @@ export default function InviteApp() {
                 </div>
               </div>
 
-              <div className="iv-two">
+              <div>
                 {f.waMode === 'keep' ? (
                   <div>
                     <span className="iv-lbl">{T.wa}</span>
@@ -373,10 +380,6 @@ export default function InviteApp() {
                     <input className="iv-inp" id="iv-wa" type="tel" inputMode="tel" autoComplete="tel" placeholder={T.waPh} value={f.wa} maxLength={30} onChange={e => set('wa', e.target.value)}/>
                   </div>
                 )}
-                <div className="iv-field">
-                  <label className="iv-lbl" htmlFor="iv-bd">{T.birth}</label>
-                  <input className="iv-inp" id="iv-bd" type="date" max={new Date().toISOString().slice(0, 10)} value={f.birth} onChange={e => set('birth', e.target.value)}/>
-                </div>
               </div>
 
               <label className="iv-check">
