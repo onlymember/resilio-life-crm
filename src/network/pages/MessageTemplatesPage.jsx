@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { MessageSquare, Plus, X, Pencil, Trash2, Power } from 'lucide-react'
 import EmptyState from '../components/EmptyState.jsx'
+import InviteTextsEditor from '../components/InviteTextsEditor.jsx'
 import { renderTemplate } from '../components/MessageSheet.jsx'
 import { t } from '../../i18n/index.js'
 import {
@@ -105,6 +106,8 @@ export default function MessageTemplatesPage() {
           {form ? <X size={14}/> : <Plus size={14}/>}{t('messages.new')}
         </button>
       </div>
+
+      <InviteTextsEditor/>
 
       <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, background: 'rgba(139,92,246,0.05)', border: '1px solid var(--border-violet)', borderRadius: 10, padding: '10px 13px' }}>
         {t('messages.explainer')}

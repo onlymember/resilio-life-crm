@@ -13,6 +13,7 @@ import HandoffCard from '../components/HandoffCard.jsx'
 import DuplicateHint from '../components/DuplicateHint.jsx'
 import RelationshipHistory from '../components/RelationshipHistory.jsx'
 import InfluencerRedSection from '../red/InfluencerRedSection.jsx'
+import InviteCard from '../components/InviteCard.jsx'
 import { DIRECTION_ROLES, canSeeClub, useClubForScouters } from '../routes.js'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
@@ -348,6 +349,19 @@ export default function InfluencerDetailPage({ currentUser }) {
               />
             </div>
           </div>
+        </div>
+
+        {/* INVITACIÓN A LA RED (064) */}
+        <div style={sectionStyle}>
+          <SectionHeader label={t('invite.title')} fields={[]} dirty={dirty}/>
+          <InviteCard
+            influencer={{ ...entity, whatsapp: get('whatsapp'), cityId: get('cityId'), instagram: get('instagram') || get('username') }}
+            cityName={cityName || ''}
+            cities={geo.cities || []}
+            onApply={(field, value) => {
+              set(field, value)
+              if (field === 'cityId') { const c = (geo.cities || []).find(x => x.id === value); if (c) set('countryId', c.country_id) }
+            }}/>
         </div>
 
         {/* CLUB: acceso a la app e intereses (red de influencers, 047) */}

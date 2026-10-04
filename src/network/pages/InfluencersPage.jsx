@@ -12,6 +12,7 @@ import StageBoard from '../components/StageBoard.jsx'
 import QuickFill from '../components/QuickFill.jsx'
 import LoadMore from '../components/LoadMore.jsx'
 import BatchMessageSheet from '../components/BatchMessageSheet.jsx'
+import InviteBatchSheet from '../components/InviteBatchSheet.jsx'
 import { toast } from '../components/Toaster.jsx'
 import { saveList, readList, clearList, restoreScroll } from '../utils/listMemory.js'
 import { t } from '../../i18n/index.js'
@@ -127,6 +128,7 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
   const [batchMode,    setBatchMode]    = useState(false)
   const [batchSel,     setBatchSel]     = useState(new Set())
   const [batchOpen,    setBatchOpen]    = useState(false)
+  const [inviteOpen,   setInviteOpen]   = useState(false)
   const [boardKey,     setBoardKey]     = useState(0)
   const fillField = QUICK_CHIPS.find(c => c.id === chipId)?.fill || null
 
@@ -466,8 +468,17 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
           <span style={{ fontSize:12, fontWeight:700, color:'var(--text-primary)', flex:1 }}>{t('batch.selected', { n: batchSel.size })}</span>
           <button onClick={() => setBatchSel(new Set(rows.map(r => r.id)))} style={{ fontSize:11, fontWeight:600, padding:'6px 10px', borderRadius:8, cursor:'pointer', background:'rgba(139,92,246,0.08)', border:'1px solid var(--border-violet)', color:'var(--text-secondary)' }}>{t('batch.all', { n: rows.length })}</button>
           <button onClick={exitBatch} style={{ fontSize:11, fontWeight:600, padding:'6px 10px', borderRadius:8, cursor:'pointer', background:'none', border:'1px solid var(--border-violet)', color:'var(--text-secondary)' }}>{t('batch.cancel')}</button>
+          <button onClick={() => setInviteOpen(true)} disabled={batchSel.size === 0} style={{ fontSize:12, fontWeight:700, padding:'7px 12px', borderRadius:8, cursor: batchSel.size ? 'pointer' : 'default', background:'rgba(139,92,246,0.15)', border:'1px solid var(--border-violet)', color: batchSel.size ? 'var(--text-primary)' : 'var(--text-secondary)' }}>{t('invite.batchBtn')}</button>
           <button onClick={() => setBatchOpen(true)} disabled={batchSel.size === 0} style={{ fontSize:12, fontWeight:800, padding:'7px 14px', borderRadius:8, cursor: batchSel.size ? 'pointer' : 'default', background: batchSel.size ? '#25D366' : 'rgba(37,211,102,0.25)', border:'none', color:'#062b14' }}>{t('batch.start')}</button>
         </div>
+      )}
+      {inviteOpen && (
+        <InviteBatchSheet
+          entities={rows.filter(r => batchSel.has(r.id))}
+          cityMap={cityMap}
+          onContacted={(id) => patchRow(id, { lastContactAt: new Date().toISOString() })}
+          onClose={() => { setInviteOpen(false); exitBatch() }}
+        />
       )}
       {batchOpen && (
         <BatchMessageSheet

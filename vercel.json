@@ -5,6 +5,22 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/i/:token",
+      "has": [
+        {
+          "type": "host",
+          "value": "partners.resilio.company"
+        }
+      ],
+      "missing": [
+        {
+          "type": "query",
+          "key": "v"
+        }
+      ],
+      "destination": "/api/invite-og?t=:token"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
@@ -80,6 +96,9 @@
   "functions": {
     "api/places-search.js": {
       "maxDuration": 30
+    },
+    "api/invite-og.js": {
+      "maxDuration": 10
     }
   }
 }

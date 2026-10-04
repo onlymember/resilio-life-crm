@@ -6,6 +6,7 @@ import ReactDOM from 'react-dom/client'
 // el código del CRM, y al revés.
 //   · club.*            → app de influencers (Resilio Club)
 //   · partners.*        → propuesta privada para marcas (059)
+//   · partners.*/i/...  → invitación a la red para influencers (064)
 //   · cualquier otro    → CRM
 // En desarrollo: `npm run dev:club` / `npm run dev:partners`.
 const isClub =
@@ -24,8 +25,10 @@ const loadCrm     = () => import('./App')
 // CRM clásico: solo el shell de Network.
 const loadNetwork = () => import('./network/NetworkRoot.jsx')
 const loadPartners = () => import('./partners/PartnersApp.jsx')
+const loadInvite   = () => import('./invite/InviteApp.jsx')
+const isInvite = isPartners && window.location.pathname.startsWith('/i/')
 const isNetwork = !isClub && !isPartners && window.location.pathname.startsWith('/network')
-const Root = lazy(isPartners ? loadPartners : isClub ? loadClub : isNetwork ? loadNetwork : loadCrm)
+const Root = lazy(isInvite ? loadInvite : isPartners ? loadPartners : isClub ? loadClub : isNetwork ? loadNetwork : loadCrm)
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
