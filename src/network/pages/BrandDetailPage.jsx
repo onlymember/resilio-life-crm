@@ -168,6 +168,8 @@ export default function BrandDetailPage({ currentUser }) {
   // queda pendiente y se guarda en la próxima vuelta.
   const handleSave = async () => {
     const snap = { ...dirty }
+    // El nombre es obligatorio: mientras esté vacío no se manda (queda pendiente).
+    if ('name' in snap && !String(snap.name || '').trim()) delete snap.name
     if (Object.keys(snap).length === 0) return true
     setSaving(true); setSaveError(null)
     try {

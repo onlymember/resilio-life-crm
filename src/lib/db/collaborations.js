@@ -149,8 +149,11 @@ export const dbPatchCollaboration = async (id, patch) => {
     if (camel in patch) row[snake] = patch[camel]
   }
   if (Object.keys(row).length === 0) return
-  const { error } = await supabase.from('collaborations').update(row).eq('id', id)
+  // .select: si la base no deja editar, no da error, solo no cambia nada.
+  // Así se nota y se avisa en vez de mostrar "Guardado".
+  const { data, error } = await supabase.from('collaborations').update(row).eq('id', id).select('id')
   if (error) throw friendly(error)
+  if (!data?.length) throw new Error('No se guardó: no tenés permiso para editar esta ficha. Pedile a Dirección que la revise.')
 }
 
 // ═══════════════════════════════════════════════════════════
