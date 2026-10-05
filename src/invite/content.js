@@ -109,8 +109,8 @@ export const COPY = {
     },
 
     // Mensajes de WhatsApp (los manda el equipo desde Network). A y B se alternan solos.
-    waA: 'Hola {nombre}! Te escribimos de Resilio. Nos encanta tu contenido y queremos invitarte a nuestra red de creadores en {ciudad}. Acá está tu invitación: {link}',
-    waB: 'Hola {nombre}! Estamos armando la red de creadores de Resilio en {ciudad} y nos encantaría que seas parte. Mirá tu invitación acá: {link}',
+    waA: 'Hola {nombre}! Desde Resilio queremos invitarte a nuestra red de creadores de {ciudad}. Acá está tu invitación: {link}',
+    waB: 'Hola {nombre}! Desde Resilio queremos invitarte a nuestra red de creadores de {ciudad}. Acá está tu invitación: {link}',
   },
 
   en: {
@@ -199,8 +199,8 @@ export const COPY = {
       viajes: 'Travel', musica: 'Music', arte: 'Art', deportes: 'Sports', tecnologia: 'Tech',
       maternidad: 'Parenting', mascotas: 'Pets', otros: 'Other',
     },
-    waA: 'Hi {nombre}! This is Resilio. We love your content and would like to invite you to our creator network in {ciudad}. Here’s your invitation: {link}',
-    waB: 'Hi {nombre}! We’re building the Resilio creator network in {ciudad} and would love for you to be part of it. See your invitation here: {link}',
+    waA: 'Hi {nombre}! Resilio would like to invite you to our creator network in {ciudad}. Here’s your invitation: {link}',
+    waB: 'Hi {nombre}! Resilio would like to invite you to our creator network in {ciudad}. Here’s your invitation: {link}',
   },
 
   pt: {
@@ -289,8 +289,8 @@ export const COPY = {
       viajes: 'Viagens', musica: 'Música', arte: 'Arte', deportes: 'Esportes', tecnologia: 'Tecnologia',
       maternidad: 'Maternidade', mascotas: 'Pets', otros: 'Outros',
     },
-    waA: 'Oi {nombre}! Aqui é a Resilio. Adoramos seu conteúdo e queremos te convidar para a nossa rede de criadores em {ciudad}. Seu convite: {link}',
-    waB: 'Oi {nombre}! Estamos montando a rede de criadores da Resilio em {ciudad} e adoraríamos ter você. Veja seu convite: {link}',
+    waA: 'Oi {nombre}! A Resilio quer te convidar para a nossa rede de criadores de {ciudad}. Aqui está o seu convite: {link}',
+    waB: 'Oi {nombre}! A Resilio quer te convidar para a nossa rede de criadores de {ciudad}. Aqui está o seu convite: {link}',
   },
 }
 
@@ -308,11 +308,11 @@ export function textsFor(lang, overrides) {
 export const fill = (s, vars = {}) => String(s || '').replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m))
 
 // Mensaje de WhatsApp para mandar la invitación (Network).
-// Sin ciudad, saca " en {ciudad}" para que no quede "en ." colgando.
+// Sin ciudad, saca " de {ciudad}" / " en {ciudad}" para que no quede colgando.
 export function inviteMessage({ lang = 'es', variant = 'a', name = '', city = '', link = '', overrides } = {}) {
   const T = textsFor(lang, overrides)
   let s = variant === 'b' ? T.waB : T.waA
-  if (!city) s = s.replace(/\s+(en|in|em)\s+\{ciudad\}/g, '')
+  if (!city) s = s.replace(/\s+(en|de|in|em)\s+\{ciudad\}/g, '')
   const first = String(name || '').trim().split(/\s+/)[0] || ''
   return fill(s, { nombre: first, ciudad: city, link }).replace(/\s+!/g, '!').replace(/^(Hola|Hi|Oi) !/, '$1!')
 }

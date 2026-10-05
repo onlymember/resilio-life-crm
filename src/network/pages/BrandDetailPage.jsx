@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import LogoLoader from '../components/LogoLoader.jsx'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, Building2, ExternalLink, MessageSquare } from 'lucide-react'
 import AutosaveBadge from '../components/AutosaveBadge.jsx'
@@ -207,7 +208,7 @@ export default function BrandDetailPage({ currentUser }) {
     dbGetPeopleNames([entity.ownerScouterId, entity.createdBy]).then(setPeople).catch(quiet('BrandDetailPage'))
   }, [entity?.ownerScouterId, entity?.createdBy])
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>{t('loading.generic')}</div>
+  if (loading) return <LogoLoader/>
   if (!entity)  return <EmptyState icon={Building2} title={t('errors.notFound')} subtitle={t('errors.notFoundAccess')}/>
 
   const cityName = (geo.cities || []).find(c => c.id === get('cityId'))?.name || null

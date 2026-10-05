@@ -1,4 +1,5 @@
 import React, { Suspense, useState, useEffect } from 'react'
+import LogoLoader from './components/LogoLoader.jsx'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import PageBoundary from './components/PageBoundary.jsx'
 import { Home, CheckSquare, Users, Menu, X, LogOut, Bell, Search } from 'lucide-react'
@@ -307,7 +308,7 @@ export default function MobileLayout({ currentUser, onCreated, createOpen, creat
       {drawerOpen && <NavDrawer currentUser={currentUser} onClose={closeDrawer}/>}
 
       <main style={{ flex: 1 }}>
-        <PageBoundary><Suspense fallback={<div style={{ padding: 20 }}><div style={{ height: 28, width: 180, borderRadius: 8, background: 'rgba(139,92,246,0.08)' }}/></div>}><Outlet/></Suspense></PageBoundary>
+        <PageBoundary><Suspense fallback={<LogoLoader/>}><Outlet/></Suspense></PageBoundary>
       </main>
 
       {/* Bottom Nav */}

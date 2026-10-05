@@ -3,6 +3,7 @@
 // clásico completo (App.jsx + datos demo, ~180 KB que Network no usa).
 // Este shell hace solo lo necesario: sesión, perfil y permisos.
 // El login sigue viviendo en "/": sin sesión, se manda ahí.
+import LogoLoader from './components/LogoLoader.jsx'
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { fetchUserById, dbClearCaches } from '../lib/database.js'
@@ -15,13 +16,7 @@ import { quiet } from '../lib/quiet.js'
 
 const toLogin = () => { window.location.replace('/') }
 
-function Splash() {
-  return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
-      <div style={{ width: 52, height: 52, borderRadius: 16, background: 'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))', animation: 'pulse-glow 1.5s ease-in-out infinite' }}/>
-    </div>
-  )
-}
+const Splash = () => <LogoLoader full delay={0}/>
 
 export default function NetworkRoot() {
   const [user, setUser] = useState(null)

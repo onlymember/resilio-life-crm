@@ -7,13 +7,13 @@ describe('invitación a la red · mensajes', () => {
   it('arma el mensaje A con nombre, ciudad y link', () => {
     const m = inviteMessage({ lang: 'es', variant: 'a', name: 'Flor Medina', city: 'Rosario', link: 'https://x/i/t' })
     expect(m).toContain('Hola Flor!')
-    expect(m).toContain('en Rosario')
+    expect(m).toContain('de Rosario')
     expect(m.endsWith('https://x/i/t')).toBe(true)
   })
   it('sin ciudad no deja "en ." colgando, y sin nombre queda "Hola!"', () => {
     const m = inviteMessage({ lang: 'es', variant: 'b', name: '', city: '', link: 'L' })
     expect(m.startsWith('Hola!')).toBe(true)
-    expect(m).not.toMatch(/en\s*\{ciudad\}|en\s+y/)
+    expect(m).not.toMatch(/de\s*\{ciudad\}|de\s+\.|de\s+Acá/)
     expect(m).not.toContain('{')
   })
   it('usa lo que editó Dirección, solo en ese idioma', () => {

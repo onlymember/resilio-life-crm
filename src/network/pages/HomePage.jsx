@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import LogoLoader from '../components/LogoLoader.jsx'
 import { useNavigate } from 'react-router-dom'
 import { Sparkles, Play, Hourglass, ChevronRight, Plus } from 'lucide-react'
 import AgendaItem from '../components/AgendaItem.jsx'
@@ -246,16 +247,7 @@ export default function HomePage({ currentUser, onOpenCreate }) {
   const pace = featuredMission ? missionPace(featuredMission, tz) : null
   const missionCreate = featuredMission ? MISSION_CREATE[featuredMission.metric] : null
 
-  if (loading) {
-    return (
-      <div style={{ padding: 20 }}>
-        <div style={{ height: 28, width: 180, borderRadius: 8, background: 'rgba(139,92,246,0.08)', marginBottom: 20 }}/>
-        {[0,1,2].map(i => (
-          <div key={i} style={{ height: 80, borderRadius: 12, background: 'rgba(139,92,246,0.06)', border: '1px solid var(--border-violet)', marginBottom: 10 }}/>
-        ))}
-      </div>
-    )
-  }
+  if (loading) return <LogoLoader/>
 
   const tabBtn = (k) => {
     const on = k === activeTab

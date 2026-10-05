@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react'
+import LogoLoader from './network/components/LogoLoader.jsx'
 import { THEME_CSS } from './styles/theme.js'
 
 // Persists across renders — prevents re-showing splash on internal navigation
@@ -960,16 +961,7 @@ const RoccoChat = ({ show, onClose }) => {
 // SPLASH LOADING
 // ═══════════════════════════════════════════════
 
-const SplashLoading = () => (
-  <div style={{ minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg-primary)' }}>
-    <div style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:16 }}>
-      <div style={{ width:52,height:52,borderRadius:16,background:'linear-gradient(135deg,var(--primary-violet),var(--accent-magenta))',display:'flex',alignItems:'center',justifyContent:'center',animation:'pulse-glow 1.5s ease-in-out infinite' }}>
-        <img src="/logoresilio.png" alt="" style={{ width:32,height:32,filter:'brightness(0) invert(1)' }}/>
-      </div>
-      <div style={{ fontSize:13,color:'var(--text-secondary)' }}>Cargando...</div>
-    </div>
-  </div>
-)
+const SplashLoading = () => <LogoLoader full delay={0}/>
 
 // ═══════════════════════════════════════════════
 // APP ROOT

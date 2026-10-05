@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import LogoLoader from '../components/LogoLoader.jsx'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, Users, MessageSquare } from 'lucide-react'
 import AutosaveBadge from '../components/AutosaveBadge.jsx'
@@ -161,7 +162,7 @@ export default function InfluencerDetailPage({ currentUser }) {
   const autosave = useAutosave({ dirty, save: handleSave, enabled: true })
 
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>{t('loading.generic')}</div>
+  if (loading) return <LogoLoader/>
   if (!entity) return <EmptyState icon={Users} title={t('errors.notFound')} subtitle={t('errors.notFoundAccess')}/>
 
   const cityName = (geo.cities || []).find(c => c.id === get('cityId'))?.name || null

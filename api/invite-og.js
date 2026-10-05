@@ -36,7 +36,7 @@ export default async function handler(req, res) {
   if (!html) { res.setHeader('Location', `/i/${encodeURIComponent(token)}?v=1`); res.status(302).end(); return }
 
   const p = await preview(token)
-  const tags = ogTags({ firstName: p?.first_name, city: p?.city, lang: p?.lang, url: `${base}/i/${token}`, image: `${base}/partners/invite-og.jpg` })
+  const tags = ogTags({ firstName: p?.first_name, city: p?.city, lang: p?.lang, url: `${base}/i/${token}`, image: `${base}/partners/invite-og-2.jpg` })
   html = html.replace(/<title>[\s\S]*?<\/title>/i, '').replace(/<meta name="description"[^>]*>/i, '').replace('</head>', `${tags}\n</head>`)
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8')

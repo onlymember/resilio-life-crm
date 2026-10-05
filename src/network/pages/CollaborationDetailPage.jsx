@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import LogoLoader from '../components/LogoLoader.jsx'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, CheckCircle, Plus, Trash2, ExternalLink, Check, Copy } from 'lucide-react'
 import AutosaveBadge from '../components/AutosaveBadge.jsx'
@@ -222,7 +223,7 @@ export default function CollaborationDetailPage({ currentUser }) {
     } catch(e) { console.error('deleteDeliverable:', e.message) }
   }
 
-  if (loading) return <div style={{ padding:40, textAlign:'center', color:'var(--text-secondary)' }}>{t('loading.generic')}</div>
+  if (loading) return <LogoLoader/>
   if (!entity)  return <EmptyState icon={CheckCircle} title={t('errors.notFound')}/>
 
   const actType = actTypes.find(a => a.id === get('activationTypeId'))

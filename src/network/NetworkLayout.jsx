@@ -1,4 +1,5 @@
 import React, { Suspense, useState, useEffect, useRef } from 'react'
+import LogoLoader from './components/LogoLoader.jsx'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import PageBoundary from './components/PageBoundary.jsx'
 import { ChevronLeft, ChevronRight, LogOut, Bell, X, Plus, Search } from 'lucide-react'
@@ -350,7 +351,7 @@ export default function NetworkLayout({ currentUser, railContent, onOpenCreate }
           </button>
           <NotificationBell onNavigate={navigate}/>
         </div>
-        <PageBoundary><Suspense fallback={<div style={{ padding: 20 }}><div style={{ height: 28, width: 180, borderRadius: 8, background: 'rgba(139,92,246,0.08)' }}/></div>}><Outlet/></Suspense></PageBoundary>
+        <PageBoundary><Suspense fallback={<LogoLoader/>}><Outlet/></Suspense></PageBoundary>
       </div>
 
       {/* Context Rail — el contenido lo inyecta cada página vía outlet context */}
