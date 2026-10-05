@@ -1656,6 +1656,12 @@
       "brands": "Brands",
       "opportunities": "Opps",
       "collaborations": "Collabs"
+    },
+    "igAdd": {
+      "label": "Add influencer by Instagram",
+      "placeholder": "Instagram link or @username",
+      "button": "Add",
+      "invalid": "That username doesn’t look right. Paste the profile link or type @username."
     }
   },
   "proposal": {

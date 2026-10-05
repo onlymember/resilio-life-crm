@@ -15,6 +15,8 @@ import DuplicateHint from '../components/DuplicateHint.jsx'
 import BrandCollabs from '../components/BrandCollabs.jsx'
 import RelationshipHistory from '../components/RelationshipHistory.jsx'
 import ProposalCard from '../components/ProposalCard.jsx'
+import ContactBar from '../components/ContactBar.jsx'
+import { formatPhone, dialForCity } from '../utils/phone.js'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { isoToDatetimeLocal, datetimeLocalToIso } from '../utils/date.js'
@@ -67,7 +69,7 @@ const SectionHeader = ({ label, fields, dirty }) => {
   )
 }
 
-const Field = ({ label, value, onChange, type = 'text', placeholder = '' }) => (
+const Field = ({ label, value, onChange, type = 'text', placeholder = '', onCommit }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
     <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</label>
     <input
@@ -81,7 +83,7 @@ const Field = ({ label, value, onChange, type = 'text', placeholder = '' }) => (
         color: 'var(--text-primary)', fontSize: 16, transition: 'border-color 0.15s',
       }}
       onFocus={e => e.target.style.borderColor = 'var(--primary-violet)'}
-      onBlur={e => e.target.style.borderColor = 'rgba(139,92,246,0.25)'}
+      onBlur={e => { e.target.style.borderColor = 'rgba(139,92,246,0.25)'; onCommit?.(e.target.value) }}
     />
   </div>
 )
@@ -252,6 +254,8 @@ export default function BrandDetailPage({ currentUser }) {
         )}
       </div>
 
+      <ContactBar entityType="brand" entityId={entity.id} whatsapp={get('whatsapp')} instagram={get('instagram')} phone={get('phone')}/>
+
       <MessageSheet
         open={msgOpen}
         onClose={() => setMsgOpen(false)}
@@ -296,9 +300,9 @@ export default function BrandDetailPage({ currentUser }) {
             </div>
           )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <Field label={t('brand.fields.whatsapp')} value={get('whatsapp')} onChange={v => set('whatsapp', v)} placeholder="+54 9 11 1234 5678"/>
+            <Field label={t('brand.fields.whatsapp')} value={'whatsapp' in dirty ? dirty.whatsapp : formatPhone(entity.whatsapp)} onChange={v => set('whatsapp', v)} onCommit={v => { const f = formatPhone(v, dialForCity(get('cityId'), geo)); if (v && f !== v) set('whatsapp', f) }} placeholder="+54 9 11 1234 5678"/>
             <Field label={t('brand.fields.instagram')} value={get('instagram')} onChange={v => set('instagram', v)} placeholder="@marca"/>
-            <Field label={t('brand.fields.phone')} value={get('phone')} onChange={v => set('phone', v)} type="tel" placeholder="+54 11 1234 5678"/>
+            <Field label={t('brand.fields.phone')} value={'phone' in dirty ? dirty.phone : formatPhone(entity.phone)} onChange={v => set('phone', v)} onCommit={v => { const f = formatPhone(v, dialForCity(get('cityId'), geo)); if (v && f !== v) set('phone', f) }} type="tel" placeholder="+54 11 1234 5678"/>
             <Field label={t('brand.fields.email')} value={get('email')} onChange={v => set('email', v)} type="email" placeholder="contacto@marca.com"/>
           </div>
           {/* Solo mira lo que se está cambiando ahora, no lo ya guardado. */}

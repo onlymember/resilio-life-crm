@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import './invite.css'
 import { COPY, LANGS, CATEGORY_KEYS, textsFor, fill, guessLang } from './content.js'
 import { readInviteToken, getInvite, respondInvite } from './api.js'
+import { formatPhone } from '../network/utils/phone.js'
 
 const PRIVACY_URL = 'https://club.resilio.company/privacidad'
 const IG_DM = 'https://ig.me/m/resilio.life'
@@ -381,7 +382,7 @@ export default function InviteApp() {
                 ) : (
                   <div className="iv-field">
                     <label className="iv-lbl" htmlFor="iv-wa">{T.wa}</label>
-                    <input className="iv-inp" id="iv-wa" type="tel" inputMode="tel" autoComplete="tel" placeholder={T.waPh} value={f.wa} maxLength={30} onChange={e => set('wa', e.target.value)}/>
+                    <input className="iv-inp" id="iv-wa" type="tel" inputMode="tel" autoComplete="tel" placeholder={T.waPh} value={f.wa} maxLength={30} onChange={e => set('wa', e.target.value)} onBlur={e => set('wa', formatPhone(e.target.value))}/>
                   </div>
                 )}
               </div>

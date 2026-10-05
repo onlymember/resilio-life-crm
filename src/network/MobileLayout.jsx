@@ -285,7 +285,7 @@ const NavBtn = ({ to, icon: Icon, label, exactActive }) => (
   </NavLink>
 )
 
-export default function MobileLayout({ currentUser, onCreated, createOpen, createStep, onOpenCreate, onCloseCreate }) {
+export default function MobileLayout({ currentUser, onCreated, createOpen, createStep, createPrefill, onOpenCreate, onCloseCreate }) {
   const [drawerOpen,    setDrawerOpen]    = useState(false)
 
   const openDrawer = () => {
@@ -330,6 +330,7 @@ export default function MobileLayout({ currentUser, onCreated, createOpen, creat
         currentUser={currentUser}
         onCreated={onCreated}
         initialStep={createStep}
+        initialData={createPrefill}
       />
     </div>
   )

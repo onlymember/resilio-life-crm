@@ -1656,6 +1656,12 @@
       "brands": "Marcas",
       "opportunities": "Oport.",
       "collaborations": "Colab."
+    },
+    "igAdd": {
+      "label": "Agregar influencer por Instagram",
+      "placeholder": "Link o @usuario de Instagram",
+      "button": "Agregar",
+      "invalid": "No reconozco ese usuario. Pegá el link del perfil o escribí @usuario."
     }
   },
   "proposal": {

@@ -15,6 +15,8 @@ import RelationshipHistory from '../components/RelationshipHistory.jsx'
 import InfluencerRedSection from '../red/InfluencerRedSection.jsx'
 import InviteCard from '../components/InviteCard.jsx'
 import { DIRECTION_ROLES, canSeeClub, useClubForScouters } from '../routes.js'
+import ContactBar from '../components/ContactBar.jsx'
+import { formatPhone, dialForCity } from '../utils/phone.js'
 import { t } from '../../i18n/index.js'
 import { useTz } from '../utils/tz.js'
 import { isoToDatetimeLocal, datetimeLocalToIso } from '../utils/date.js'
@@ -56,7 +58,7 @@ const SectionHeader = ({ label, fields, dirty }) => {
   )
 }
 
-const Field = ({ label, value, onChange, type = 'text', placeholder = '' }) => (
+const Field = ({ label, value, onChange, type = 'text', placeholder = '', onCommit }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
     <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</label>
     <input
@@ -70,7 +72,7 @@ const Field = ({ label, value, onChange, type = 'text', placeholder = '' }) => (
         color: 'var(--text-primary)', fontSize: 16, transition: 'border-color 0.15s',
       }}
       onFocus={e => e.target.style.borderColor = 'var(--primary-violet)'}
-      onBlur={e => e.target.style.borderColor = 'rgba(139,92,246,0.25)'}
+      onBlur={e => { e.target.style.borderColor = 'rgba(139,92,246,0.25)'; onCommit?.(e.target.value) }}
     />
   </div>
 )
@@ -212,6 +214,8 @@ export default function InfluencerDetailPage({ currentUser }) {
         )}
       </div>
 
+      <ContactBar entityType="influencer" entityId={entity.id} whatsapp={get('whatsapp')} instagram={get('instagram') || get('username')} phone={get('phone')}/>
+
       <MessageSheet
         open={msgOpen}
         onClose={() => setMsgOpen(false)}
@@ -237,14 +241,14 @@ export default function InfluencerDetailPage({ currentUser }) {
         <div style={sectionStyle}>
           <SectionHeader label={t('influencer.sections.contact')} fields={['whatsapp','instagram','tiktok','email','phone']} dirty={dirty}/>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <Field label={t('influencer.fields.whatsapp')} value={get('whatsapp')} onChange={v => set('whatsapp', v)} placeholder="+54 9 11 1234 5678"/>
+            <Field label={t('influencer.fields.whatsapp')} value={'whatsapp' in dirty ? dirty.whatsapp : formatPhone(entity.whatsapp)} onChange={v => set('whatsapp', v)} onCommit={v => { const f = formatPhone(v, dialForCity(get('cityId'), geo)); if (v && f !== v) set('whatsapp', f) }} placeholder="+54 9 11 1234 5678"/>
             {/* Un solo dato: el usuario que se pidió al cargarla. Si la ficha
                 no tiene "instagram" todavía, se muestra ese usuario, y al
                 cambiarlo se guardan los dos iguales. */}
             <Field label={t('influencer.fields.instagram')} value={get('instagram') ?? entity.username} onChange={v => { set('instagram', v); set('username', v) }} placeholder="@usuario"/>
             <Field label={t('influencer.fields.tiktok')} value={get('tiktok')} onChange={v => set('tiktok', v)} placeholder="@usuario"/>
             <Field label={t('influencer.fields.email')} value={get('email')} onChange={v => set('email', v)} type="email" placeholder="correo@ejemplo.com"/>
-            <Field label={t('influencer.fields.phone')} value={get('phone')} onChange={v => set('phone', v)} type="tel" placeholder="+54 11 1234 5678"/>
+            <Field label={t('influencer.fields.phone')} value={'phone' in dirty ? dirty.phone : formatPhone(entity.phone)} onChange={v => set('phone', v)} onCommit={v => { const f = formatPhone(v, dialForCity(get('cityId'), geo)); if (v && f !== v) set('phone', f) }} type="tel" placeholder="+54 11 1234 5678"/>
           </div>
           {/* Solo mira lo que se está cambiando ahora, no lo ya guardado. */}
           <div style={{ marginTop: 10 }}>

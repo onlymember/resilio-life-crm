@@ -4,6 +4,7 @@
 import React, { useState } from 'react'
 import { Check } from 'lucide-react'
 import { t } from '../../i18n/index.js'
+import { formatPhone } from '../utils/phone.js'
 import { dbPatchInfluencer, dbPatchBrand } from '../../lib/database.js'
 
 const input = { flex: 1, minWidth: 0, padding: '7px 10px', borderRadius: 8, background: 'rgba(139,92,246,0.07)', border: '1px solid var(--border-violet)', color: 'var(--text-primary)', fontSize: 14, outline: 'none' }
@@ -17,7 +18,7 @@ export default function QuickFill({ entityType, entity, field, categories = [], 
     const val = v.trim()
     if (!val || busy) return
     setBusy(true); setErr(null)
-    const patch = field === 'whatsapp' ? { whatsapp: val }
+    const patch = field === 'whatsapp' ? { whatsapp: formatPhone(val) }
       : entityType === 'brand' ? { categoryId: val } : { category: val }
     try {
       await (entityType === 'brand' ? dbPatchBrand : dbPatchInfluencer)(entity.id, patch)
@@ -30,7 +31,7 @@ export default function QuickFill({ entityType, entity, field, categories = [], 
     <div style={{ padding: '0 16px 12px', display: 'flex', flexDirection: 'column', gap: 4 }} onClick={e => e.stopPropagation()}>
       <div style={{ display: 'flex', gap: 6 }}>
         {field === 'whatsapp' ? (
-          <input type="tel" inputMode="tel" value={v} onChange={e => setV(e.target.value)} placeholder={t('quickFill.whatsapp')}
+          <input type="tel" inputMode="tel" value={v} onChange={e => setV(e.target.value)} onBlur={e => setV(formatPhone(e.target.value))} placeholder={t('quickFill.whatsapp')}
             onKeyDown={e => e.key === 'Enter' && save()} style={input} aria-label={t('quickFill.whatsapp')}/>
         ) : (
           <select value={v} onChange={e => setV(e.target.value)} style={input} aria-label={t('quickFill.category')}>

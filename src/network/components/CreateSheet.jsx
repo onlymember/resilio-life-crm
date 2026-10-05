@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { X, Users, Building2, Briefcase, Handshake, ChevronLeft, AlertCircle, CheckSquare } from 'lucide-react'
 import { t } from '../../i18n/index.js'
+import { formatPhone, dialForCity } from '../utils/phone.js'
 import { dbGetGeography, dbSaveInfluencer, dbSaveBrand, dbSaveOpportunity, dbSaveCollaboration, dbGetActivationTypes } from '../../lib/database.js'
 import EntityPicker from './EntityPicker.jsx'
 import QuickTaskForm from './QuickTaskForm.jsx'
@@ -35,8 +36,8 @@ const Field = ({ label, required, children }) => (
 
 // ─── Formulario Influencer ────────────────────────────────────────────────────
 
-function InfluencerForm({ cities, onSave, saving, error, onClose }) {
-  const [form, setForm] = useState({ username: '', name: '', cityId: '', category: '', whatsapp: '', email: '' })
+function InfluencerForm({ initial, cities, geo, onSave, saving, error, onClose }) {
+  const [form, setForm] = useState({ username: initial?.username || '', name: '', cityId: '', category: '', whatsapp: '', email: '' })
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
   return (
@@ -61,7 +62,7 @@ function InfluencerForm({ cities, onSave, saving, error, onClose }) {
       </Field>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <Field label={t('dup.whatsappLabel')}>
-          <input type="tel" inputMode="tel" value={form.whatsapp} onChange={e => set('whatsapp', e.target.value)} placeholder="+54 9 11 1234 5678" style={INPUT_STYLE}/>
+          <input type="tel" inputMode="tel" value={form.whatsapp} onChange={e => set('whatsapp', e.target.value)} onBlur={e => set('whatsapp', formatPhone(e.target.value, dialForCity(form.cityId, geo)))} placeholder="+54 9 11 1234 5678" style={INPUT_STYLE}/>
         </Field>
         <Field label={t('dup.emailLabel')}>
           <input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="mail@ejemplo.com" style={INPUT_STYLE}/>
@@ -87,7 +88,7 @@ function InfluencerForm({ cities, onSave, saving, error, onClose }) {
 
 // ─── Formulario Marca ─────────────────────────────────────────────────────────
 
-function BrandForm({ cities, onSave, saving, error, onClose }) {
+function BrandForm({ cities, geo, onSave, saving, error, onClose }) {
   const [form, setForm] = useState({ name: '', category: '', cityId: '', whatsapp: '', email: '' })
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
@@ -104,7 +105,7 @@ function BrandForm({ cities, onSave, saving, error, onClose }) {
       </Field>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <Field label={t('dup.whatsappLabel')}>
-          <input type="tel" inputMode="tel" value={form.whatsapp} onChange={e => set('whatsapp', e.target.value)} placeholder="+54 9 11 1234 5678" style={INPUT_STYLE}/>
+          <input type="tel" inputMode="tel" value={form.whatsapp} onChange={e => set('whatsapp', e.target.value)} onBlur={e => set('whatsapp', formatPhone(e.target.value, dialForCity(form.cityId, geo)))} placeholder="+54 9 11 1234 5678" style={INPUT_STYLE}/>
         </Field>
         <Field label={t('dup.emailLabel')}>
           <input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="mail@ejemplo.com" style={INPUT_STYLE}/>
@@ -270,17 +271,19 @@ function TypeButton({ icon: Icon, label, color, onClick }) {
 
 // ─── Sheet principal ──────────────────────────────────────────────────────────
 
-export default function CreateSheet({ isOpen, onClose, currentUser, onCreated, initialStep = 'select' }) {
+export default function CreateSheet({ isOpen, onClose, currentUser, onCreated, initialStep = 'select', initialData = null }) {
+  const [openKey, setOpenKey] = useState(0)
   const [step,           setStep]           = useState(initialStep) // 'select' | 'influencer' | 'brand' | 'opportunity' | 'collaboration'
   const [saving,         setSaving]         = useState(false)
   const [error,          setError]          = useState(null)
   const [cities,         setCities]         = useState([])
+  const [geo,            setGeo]            = useState(null)
   const [activationTypes,setActivationTypes]= useState([])
 
   useEffect(() => {
     if (!isOpen) return
-    setStep(initialStep || 'select'); setError(null)
-    dbGetGeography().then(g => setCities(g.cities || [])).catch(quiet('CreateSheet'))
+    setStep(initialStep || 'select'); setError(null); setOpenKey(k => k + 1)
+    dbGetGeography().then(g => { setCities(g.cities || []); setGeo(g) }).catch(quiet('CreateSheet'))
     dbGetActivationTypes().then(a => setActivationTypes(a)).catch(quiet('CreateSheet'))
   }, [isOpen])
 
@@ -418,8 +421,8 @@ export default function CreateSheet({ isOpen, onClose, currentUser, onCreated, i
           </div>
         )}
 
-        {step === 'influencer'    && <InfluencerForm    cities={cities}                        onSave={handleSaveInfluencer}    saving={saving} error={error} onClose={onClose}/>}
-        {step === 'brand'         && <BrandForm          cities={cities}                        onSave={handleSaveBrand}          saving={saving} error={error} onClose={onClose}/>}
+        {step === 'influencer'    && <InfluencerForm    key={`inf-${openKey}`} initial={initialData} cities={cities} geo={geo}                        onSave={handleSaveInfluencer}    saving={saving} error={error} onClose={onClose}/>}
+        {step === 'brand'         && <BrandForm          cities={cities} geo={geo}                        onSave={handleSaveBrand}          saving={saving} error={error} onClose={onClose}/>}
         {step === 'opportunity'   && <OpportunityForm                                           onSave={handleSaveOpportunity}    saving={saving} error={error}/>}
         {step === 'task'          && <QuickTaskForm currentUser={currentUser} onDone={() => { onCreated?.('task', null); toast(t('quickTask.saved')); onClose() }}/>}
         {step === 'collaboration' && <CollaborationForm  activationTypes={activationTypes}      onSave={handleSaveCollaboration} saving={saving} error={error}/>}

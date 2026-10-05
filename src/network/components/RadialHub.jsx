@@ -1,13 +1,12 @@
 // Resilio Radial Hub: reemplaza al "+" de la barra de abajo (celular).
 // Al tocar el logo, sube al centro de la pantalla dando una vuelta
 // completa, larga una onda, se dibuja la órbita y salen los 5 módulos.
-// Al elegir uno, ese círculo crece hasta llenar la pantalla y muestra
-// "Nueva …" (lo mismo que hacía el +) y "Ver …" (la lista).
+// Al elegir uno, ese círculo crece un instante y se abre directo el alta
+// (nueva influencer, marca, tarea…), igual que hacía el +.
 // Tocar el centro, afuera o Escape cierra.
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { ChevronLeft, Plus, ArrowRight } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
 import { t } from '../../i18n/index.js'
 import { SPEED_DIAL_ITEMS } from '../createOptions.js'
 import './radialHub.css'
@@ -33,7 +32,6 @@ const rgb = (hex) => {
 }
 
 export default function RadialHub({ onCreate }) {
-  const navigate = useNavigate()
   const location = useLocation()
   const btnRef = useRef(null)
   const firstRef = useRef(null)
@@ -85,9 +83,12 @@ export default function RadialHub({ onCreate }) {
     return { x: Math.round(Math.cos(rad) * o.r * k), y: Math.round(Math.sin(rad) * o.r * k) }
   }
 
-  const pick = (item) => { setSel(item); setPhase('module') }
-  const create = (item) => { close(); onCreate?.(item.step) }
-  const see = (item) => { close(); navigate(ORBIT[item.step].route) }
+  // Crece el elegido y se abre el alta. El hub se cierra por debajo.
+  const pick = (item) => {
+    setSel(item); setPhase('module')
+    clearTimeout(timer.current)
+    timer.current = setTimeout(() => { setPhase('closed'); setSel(null); onCreate?.(item.step) }, 280)
+  }
 
   const hubT = !geo ? '' : (phase === 'opening' || phase === 'closing')
     ? `translate(${geo.fromX}px, ${geo.fromY}px) scale(.78)`
@@ -120,12 +121,12 @@ export default function RadialHub({ onCreate }) {
             const p = posOf(item.step)
             const chosen = inModule && sel?.step === item.step
             const delay = isOpen ? 260 + i * 55 : 0
-            const tf = isOpen ? `translate(${p.x}px, ${p.y}px) scale(1)` : chosen ? `translate(${p.x}px, ${p.y}px) scale(1.9)` : 'translate(0px, 0px) scale(.25)'
+            const tf = isOpen ? `translate(${p.x}px, ${p.y}px) scale(1)` : chosen ? `translate(${p.x}px, ${p.y}px) scale(1.6)` : 'translate(0px, 0px) scale(.25)'
             const c = rgb(item.color)
             return (
               <button key={item.step} ref={i === 0 ? firstRef : undefined} className="rh-mod" onClick={() => pick(item)}
                 tabIndex={isOpen ? 0 : -1} aria-label={t(item.labelKey)}
-                style={{ left: geo.cx, top: geo.cy, transform: tf, opacity: isOpen || chosen ? 1 : 0, transitionDelay: `${delay}ms`, pointerEvents: isOpen ? 'auto' : 'none' }}>
+                style={{ left: geo.cx, top: geo.cy, transform: tf, opacity: isOpen ? 1 : chosen ? 0.0001 : 0, transition: chosen ? 'transform .28s cubic-bezier(.2,.9,.25,1.05), opacity .28s ease-in' : undefined, transitionDelay: `${delay}ms`, pointerEvents: isOpen ? 'auto' : 'none' }}>
                 <span className="rh-float" style={{ animationDuration: `${4.6 + i * 0.7}s`, animationDelay: `-${i}s` }}>
                   <span className="rh-out"/>
                   <span className="rh-in" style={{ background: `radial-gradient(circle at 35% 30%, rgba(${c},.55), rgba(${c},.16) 75%)`, border: `1px solid rgba(${c},.45)`, boxShadow: `0 0 18px rgba(${c},.25)` }}>
@@ -142,32 +143,6 @@ export default function RadialHub({ onCreate }) {
             <img src={MARK} alt="" width="33" height="29" style={{ transform: `rotate(${spin}deg)` }}/>
           </button>
 
-          {inModule && sel && (() => {
-            const p = posOf(sel.step), c = rgb(sel.color)
-            return (
-              <div className="rh-panel" style={{ '--cx': `${geo.cx + p.x}px`, '--cy': `${geo.cy + p.y}px`,
-                background: `radial-gradient(120% 60% at 50% 0%, rgba(${c},.22), rgba(7,5,15,0) 60%), var(--bg-primary, #0A0716)` }}>
-                <div className="rh-up" style={{ animationDelay: '.25s', display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <button className="rh-back" onClick={() => { setSel(null); setPhase('open') }} aria-label={t('hub.back')}><ChevronLeft size={20}/></button>
-                </div>
-                <div className="rh-up" style={{ animationDelay: '.3s', marginTop: 34, maxWidth: 520, width: '100%', alignSelf: 'center' }}>
-                  <div style={{ width: 56, height: 56, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-                    background: `radial-gradient(circle at 35% 30%, rgba(${c},.6), rgba(${c},.15) 75%)`, border: `1px solid rgba(${c},.5)`, boxShadow: `0 0 30px rgba(${c},.35)` }}>
-                    <sel.Icon size={24} strokeWidth={1.7}/>
-                  </div>
-                  <h2 style={{ margin: '18px 0 0', fontSize: 34, fontWeight: 300, letterSpacing: '-1px', lineHeight: 1.05 }}>{t(`hub.mod.${sel.step}.title`)}</h2>
-                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 6 }}>{t(`hub.mod.${sel.step}.sub`)}</div>
-                </div>
-                <div className="rh-up" style={{ animationDelay: '.36s', marginTop: 28, display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 520, width: '100%', alignSelf: 'center' }}>
-                  <button className="rh-big" onClick={() => create(sel)}
-                    style={{ background: `linear-gradient(135deg, #F4F0FF, rgba(${c},.6))`, boxShadow: `0 10px 30px rgba(${c},.25)` }}>
-                    <Plus size={18} strokeWidth={2.2}/>{t(`hub.mod.${sel.step}.new`)}
-                  </button>
-                  <button className="rh-see" onClick={() => see(sel)}>{t(`hub.mod.${sel.step}.see`)}<ArrowRight size={16}/></button>
-                </div>
-              </div>
-            )
-          })()}
         </div>,
         document.body,
       )}

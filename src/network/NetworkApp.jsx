@@ -101,9 +101,11 @@ export default function NetworkApp({ currentUser }) {
   useEffect(() => { dbGetSetting('club_for_scouters').then(v => setClubForScouters(v === true)).catch(quiet('NetworkApp')) }, [])
   const [createOpen, setCreateOpen] = useState(false)
   const [createStep, setCreateStep] = useState('select')
+  const [createPrefill, setCreatePrefill] = useState(null)   // ej. { username } desde "Agregar por Instagram"
 
-  const handleOpenCreate = useCallback((step = 'select') => {
+  const handleOpenCreate = useCallback((step = 'select', prefill = null) => {
     setCreateStep(step)
+    setCreatePrefill(prefill)
     setCreateOpen(true)
   }, [])
 
@@ -156,6 +158,7 @@ export default function NetworkApp({ currentUser }) {
                   onCreated={handleCreated}
                   createOpen={createOpen}
                   createStep={createStep}
+                  createPrefill={createPrefill}
                   onOpenCreate={handleOpenCreate}
                   onCloseCreate={() => setCreateOpen(false)}
                 />
@@ -237,6 +240,7 @@ export default function NetworkApp({ currentUser }) {
           currentUser={currentUser}
           onCreated={handleCreated}
           initialStep={createStep}
+          initialData={createPrefill}
         />
       )}
     </BrowserRouter>
