@@ -35,7 +35,16 @@ async function fetchBrand(id) {
   const { data, error } = await supabase.from('brands').select('*').eq('id', id).maybeSingle()
   if (error) throw error
   if (!data) return null
+  // `data` (jsonb) trae datos viejos de la carga original (nombre, contacto…).
+  // Va PRIMERO para que nunca pise las columnas: antes iba al final y la
+  // ficha mostraba el nombre viejo aunque el nuevo ya estuviera guardado.
+  const legacy = data.data || {}
   return {
+    ...legacy,
+    whatsapp: data.whatsapp ?? legacy.whatsapp ?? null,
+    instagram: data.instagram ?? legacy.instagram ?? null,
+    phone: data.phone ?? legacy.phone ?? null,
+    email: data.email ?? legacy.email ?? null,
     id: data.id, name: data.name,
     category: data.category, categoryId: data.category_id ?? null,
     cityId: data.city_id, countryId: data.country_id, status: data.status,
@@ -46,7 +55,6 @@ async function fetchBrand(id) {
     potentialValue: data.potential_value ?? null,
     nextAction: data.next_action ?? null, nextActionAt: data.next_action_at ?? null,
     lastContactAt: data.last_contact_at ?? null,
-    ...(data.data || {}),
   }
 }
 
