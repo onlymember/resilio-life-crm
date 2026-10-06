@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Building2, Search, SlidersHorizontal, Upload, ChevronDown, X, MessageCircle } from 'lucide-react'
+import { Building2, Search, SlidersHorizontal, Upload, ChevronDown, X, MessageCircle, Plus } from 'lucide-react'
 import NetworkCard from '../components/NetworkCard.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import FilterSheet from '../components/FilterSheet.jsx'
@@ -281,6 +281,11 @@ export default function BrandsPage({ onOpenCreate, currentUser }) {
           </button>
           <button onClick={() => setFilterOpen(true)} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:10, background:'rgba(139,92,246,0.08)', border:'1px solid var(--border-violet)', color:'var(--text-secondary)', cursor:'pointer', fontSize:12 }}>
             <SlidersHorizontal size={14}/>{isDesktop && t('filter.title')}
+          </button>
+          <button onClick={() => onOpenCreate?.('brand')} aria-label={t('create.brand.label')} title={t('create.brand.label')}
+            style={{ display:'flex', alignItems:'center', justifyContent:'center', width:38, height:38, borderRadius:10, border:'none', cursor:'pointer', color:'white',
+              background:'linear-gradient(135deg,var(--primary-violet-dark),var(--primary-violet))', boxShadow:'0 0 14px rgba(139,92,246,0.35)', flexShrink:0 }}>
+            <Plus size={18}/>
           </button>
         </div>
       </div>

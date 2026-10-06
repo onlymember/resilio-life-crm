@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Users, Search, SlidersHorizontal, ChevronDown, Upload, X, MessageCircle } from 'lucide-react'
+import { Users, Search, SlidersHorizontal, ChevronDown, Upload, X, MessageCircle, Plus } from 'lucide-react'
 import NetworkCard from '../components/NetworkCard.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import FilterSheet from '../components/FilterSheet.jsx'
@@ -299,6 +299,11 @@ export default function InfluencersPage({ onOpenCreate, currentUser }) {
           </button>
           <button onClick={() => setFilterOpen(true)} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:10, background:'rgba(139,92,246,0.08)', border:'1px solid var(--border-violet)', color:'var(--text-secondary)', cursor:'pointer', fontSize:12 }}>
             <SlidersHorizontal size={14}/>{isDesktop && t('filter.title')}
+          </button>
+          <button onClick={() => onOpenCreate?.('influencer')} aria-label={t('create.influencer.label')} title={t('create.influencer.label')}
+            style={{ display:'flex', alignItems:'center', justifyContent:'center', width:38, height:38, borderRadius:10, border:'none', cursor:'pointer', color:'white',
+              background:'linear-gradient(135deg,var(--primary-violet-dark),var(--primary-violet))', boxShadow:'0 0 14px rgba(139,92,246,0.35)', flexShrink:0 }}>
+            <Plus size={18}/>
           </button>
         </div>
       </div>
