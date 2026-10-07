@@ -131,6 +131,8 @@ export const THEME_CSS = `
     .nw-page > * > :nth-child(6) { animation-delay: 200ms; }
     .nw-page > * > :nth-child(7) { animation-delay: 240ms; }
     .nw-page > * > :nth-child(n+8) { animation-delay: 280ms; }
+    /* Pantallas con scroll propio y barras fijas (Manual): solo el fundido. */
+    .nw-page > .nw-norise > * { animation: none !important; }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;

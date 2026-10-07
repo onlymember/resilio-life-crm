@@ -15,6 +15,14 @@ const readTab = () => { try { return localStorage.getItem(TAB_KEY) } catch { ret
 const saveTab = (v) => { try { localStorage.setItem(TAB_KEY, v) } catch { /* sin storage */ } }
 
 const TABS_CSS = `
+/* Alto exacto del área visible: así la página de afuera no scrollea y no
+   esconde la parte de arriba del Manual debajo del encabezado.
+   Computadora: barra de 44 px. Celular: encabezado de 52 px arriba y la
+   barra flotante de abajo (96 px + zona segura del iPhone). */
+.mn-scroll { height: calc(100dvh - 44px); }
+@media (max-width: 639px) {
+  .mn-scroll { height: calc(100dvh - 52px - 96px - env(safe-area-inset-bottom, 0px)); }
+}
 .mn-tabs { position: sticky; top: 0; z-index: 25; display: flex; justify-content: center; padding: 8px 12px;
   background: rgba(10,6,24,.86); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid rgba(139,92,246,.15); }
 .mn-seg { position: relative; display: grid; grid-template-columns: 1fr 1fr; width: min(440px, 100%); padding: 3px; border-radius: 12px; background: rgba(139,92,246,.1); border: 1px solid rgba(139,92,246,.2); }
@@ -56,6 +64,9 @@ export default function ManualPage({ currentUser }) {
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
   }, [])
+
+  // Al terminar de cargar, arriba de todo.
+  useEffect(() => { if (!loading) scrollRef.current?.scrollTo({ top: 0 }) }, [loading])
 
   const guideSecs   = useMemo(() => sections.filter(s => isGuide(s.category)), [sections])
   const guideCats   = useMemo(() => categories.filter(c => isGuide(c.code)), [categories])
@@ -147,10 +158,12 @@ export default function ManualPage({ currentUser }) {
   return (
     <div
       ref={scrollRef}
+      className="nw-norise mn-scroll"
       style={{
-        height: 'calc(100dvh - 44px)',
         overflowY: 'auto',
-        scrollSnapType: 'y proximity',
+        // Sin "scroll snap": al cargar, el celular saltaba solo al primer
+        // tema y la barra fija tapaba el encabezado.
+        overscrollBehavior: 'contain',
         background: 'var(--bg-primary)',
       }}
     >
@@ -190,7 +203,7 @@ export default function ManualPage({ currentUser }) {
       />
 
       {byCategory.map(group => (
-        <div key={group.code} style={{ scrollSnapAlign: 'start' }}>
+        <div key={group.code}>
 
           {/* Category header */}
           <div style={{
