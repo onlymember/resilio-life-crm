@@ -117,12 +117,27 @@ export const THEME_CSS = `
     @keyframes backdropIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes badgePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.45); } }
     @keyframes slideInDrawer { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+    /* Network: cada pantalla entra con un fundido corto y sus bloques suben
+       en cascada (máx. 0,3 s). "backwards" = al terminar no queda ningún
+       transform puesto (no afecta a paneles fijos ni al deslizar). */
+    @keyframes nwPageIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes nwRise   { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .nw-page { animation: nwPageIn .22s ease-out backwards; }
+    .nw-page > * > *:not([style*="fixed"]) { animation: nwRise .38s cubic-bezier(.2,.8,.2,1) backwards; }
+    .nw-page > * > :nth-child(2) { animation-delay: 40ms; }
+    .nw-page > * > :nth-child(3) { animation-delay: 80ms; }
+    .nw-page > * > :nth-child(4) { animation-delay: 120ms; }
+    .nw-page > * > :nth-child(5) { animation-delay: 160ms; }
+    .nw-page > * > :nth-child(6) { animation-delay: 200ms; }
+    .nw-page > * > :nth-child(7) { animation-delay: 240ms; }
+    .nw-page > * > :nth-child(n+8) { animation-delay: 280ms; }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
       }
+      .nw-page, .nw-page > * > *:not([style*="fixed"]) { animation: none !important; }
       @keyframes cardIn      { from { opacity: 0; } to { opacity: 1; } }
       @keyframes backdropIn  { from { opacity: 0; } to { opacity: 1; } }
       @keyframes slideInDrawer { from { opacity: 0; } to { opacity: 1; } }

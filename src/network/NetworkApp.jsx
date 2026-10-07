@@ -45,6 +45,8 @@ const ApprovalsPage = lazyPage(() => import('./pages/ApprovalsPage.jsx'))
 import CreateSheet from './components/CreateSheet.jsx'
 import Toaster from './components/Toaster.jsx'
 import GlobalSearch from './components/GlobalSearch.jsx'
+// Se importa acá para escuchar a tiempo el aviso de "instalar app".
+import './guide/guideActions.js'
 
 import { Shield } from 'lucide-react'
 import { getDefaultRoute, COMMAND_ROLES, DIRECTION_ROLES, OFFERS_ROLES, clubRoles, setClubForScouters, useClubForScouters } from './routes.js'
@@ -108,6 +110,13 @@ export default function NetworkApp({ currentUser }) {
     setCreatePrefill(prefill)
     setCreateOpen(true)
   }, [])
+
+  // Abrir el alta desde cualquier pantalla (ej. "Llevame ahí" del Manual).
+  useEffect(() => {
+    const onCreate = (e) => handleOpenCreate(e.detail?.step || 'select', e.detail?.prefill || null)
+    window.addEventListener('network:create', onCreate)
+    return () => window.removeEventListener('network:create', onCreate)
+  }, [handleOpenCreate])
 
   const handleCreated = useCallback((type, entity) => {
     window.dispatchEvent(new CustomEvent('network:created', { detail: { type, entity } }))

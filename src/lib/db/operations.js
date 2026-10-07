@@ -1,7 +1,7 @@
 // Parte de la capa de datos (antes todo en lib/database.js, que hoy
 // re-exporta estos módulos). Sección: operations.
 import { supabase } from '../supabase.js'
-import { friendly } from './core.js'
+import { friendly, myId } from './core.js'
 import { dbLogActivityFor } from './tasks.js'
 
 // ═══════════════════════════════════════════════════════════
@@ -175,8 +175,32 @@ export const dbPatchManual = async (id, patch) => {
   if ('subtitle' in patch) row.subtitle = patch.subtitle
   if ('body'     in patch) row.body     = patch.body
   if (Object.keys(row).length === 0) return
-  const { error } = await supabase.from('manual_sections').update(row).eq('id', id)
+  row.updated_at = new Date().toISOString()
+  // Si no hay permiso, la base ignora el cambio sin error: se avisa.
+  const { data, error } = await supabase.from('manual_sections').update(row).eq('id', id).select('id')
   if (error) throw friendly(error)
+  if (!data?.length) throw new Error('No se guardó: solo Dirección puede editar el manual.')
+}
+
+// ── Primeros pasos (pestaña "Cómo usar Network") ──────────────
+// Cinco preguntas de sí/no sobre lo que hizo la persona con sesión.
+// Cada una por separado: si una falla (permiso, tabla), queda en false
+// y el resto sigue.
+export const dbGetFirstSteps = async () => {
+  const uid = await myId()
+  if (!uid) return {}
+  const has = async (q) => {
+    try { const { count, error } = await q; return !error && (count || 0) > 0 } catch { return false }
+  }
+  const head = { count: 'exact', head: true }
+  const [influencer, whatsapp, contact, task, invite] = await Promise.all([
+    has(supabase.from('influencers').select('id', head).eq('created_by', uid)),
+    has(supabase.from('influencers').select('id', head).eq('created_by', uid).not('whatsapp', 'is', null).neq('whatsapp', '')),
+    has(supabase.from('activities').select('id', head).eq('actor_id', uid).in('type', ['whatsapp', 'dm', 'call'])),
+    has(supabase.from('tasks').select('id', head).eq('created_by', uid)),
+    has(supabase.from('influencer_invites').select('id', head).eq('created_by', uid)),
+  ])
+  return { influencer, whatsapp, contact, task, invite }
 }
 
 // ═══════════════════════════════════════════════════════════

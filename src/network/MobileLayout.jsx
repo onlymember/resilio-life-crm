@@ -1,6 +1,6 @@
 import React, { Suspense, useState, useEffect } from 'react'
 import LogoLoader from './components/LogoLoader.jsx'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import PageBoundary from './components/PageBoundary.jsx'
 import { Home, CheckSquare, Users, Menu, X, LogOut, Bell, Search } from 'lucide-react'
 import CreateSheet from './components/CreateSheet.jsx'
@@ -287,6 +287,7 @@ const NavBtn = ({ to, icon: Icon, label, exactActive }) => (
 )
 
 export default function MobileLayout({ currentUser, onCreated, createOpen, createStep, createPrefill, onOpenCreate, onCloseCreate }) {
+  const { pathname } = useLocation()
   const [drawerOpen,    setDrawerOpen]    = useState(false)
 
   const openDrawer = () => {
@@ -308,7 +309,7 @@ export default function MobileLayout({ currentUser, onCreated, createOpen, creat
       {drawerOpen && <NavDrawer currentUser={currentUser} onClose={closeDrawer}/>}
 
       <main style={{ flex: 1 }}>
-        <PageBoundary><Suspense fallback={<LogoLoader/>}><Outlet/></Suspense></PageBoundary>
+        <PageBoundary><div key={pathname} className="nw-page"><Suspense fallback={<LogoLoader/>}><Outlet/></Suspense></div></PageBoundary>
       </main>
 
       {/* Bottom Nav */}

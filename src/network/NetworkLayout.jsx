@@ -327,6 +327,7 @@ function NetworkSidebar({ currentUser, collapsed, onToggle }) {
 }
 
 export default function NetworkLayout({ currentUser, railContent, onOpenCreate }) {
+  const { pathname } = useLocation()
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('nw_sidebar_collapsed') === 'true')
   const navigate = useNavigate()
 
@@ -351,7 +352,7 @@ export default function NetworkLayout({ currentUser, railContent, onOpenCreate }
           </button>
           <NotificationBell onNavigate={navigate}/>
         </div>
-        <PageBoundary><Suspense fallback={<LogoLoader/>}><Outlet/></Suspense></PageBoundary>
+        <PageBoundary><div key={pathname} className="nw-page"><Suspense fallback={<LogoLoader/>}><Outlet/></Suspense></div></PageBoundary>
       </div>
 
       {/* Context Rail — el contenido lo inyecta cada página vía outlet context */}

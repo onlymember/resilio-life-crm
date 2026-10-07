@@ -3,7 +3,7 @@ import React from 'react'
 const escape = (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
 
 // ── Inline: **bold** y *italic*, sin dejar asteriscos sueltos ──────────────
-function renderInline(text) {
+export function renderInline(text) {
   const boldSplit = text.split(/(\*\*[^*]+\*\*)/)
   return boldSplit.flatMap((chunk, bi) => {
     if (chunk.startsWith('**') && chunk.endsWith('**') && chunk.length > 4) {
@@ -23,7 +23,7 @@ function renderInline(text) {
 // Cualquier línea que empiece con #, ##, ###, >, -, •, "1." o | se procesa
 // como su propio tipo — nunca queda un símbolo de markdown suelto en pantalla,
 // pase lo que pase con los saltos de línea del texto original.
-function tokenize(body) {
+export function tokenize(body) {
   const rawLines = body.replace(/\r\n/g, '\n').split('\n')
   const tokens = []
   let i = 0
@@ -102,7 +102,7 @@ const HEAD_STYLE = {
   h3: { fontSize: 13, fontWeight: 700, color: '#6B2FB3', marginTop: 16, marginBottom: 8, letterSpacing: 0.3, textTransform: 'uppercase' },
 }
 
-function parseTable(lines) {
+export function parseTable(lines) {
   const isSep = (l) => /^\|[\s\-:|]+\|$/.test(l)
   const dataLines = lines.filter(l => !isSep(l))
   if (dataLines.length === 0) return null

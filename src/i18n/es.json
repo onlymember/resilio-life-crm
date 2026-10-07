@@ -1953,5 +1953,47 @@
         "see": "Ver marcas"
       }
     }
+  },
+  "guide": {
+    "tab": "Cómo usar Network",
+    "manualTab": "Manual de Red",
+    "eyebrow": "Guía para scouters",
+    "title": "Cómo usar Network",
+    "sub": "Respuestas cortas, paso a paso. Tocá «Llevame ahí» y hacelo en el momento.",
+    "searchLabel": "Buscar en la guía",
+    "searchPlaceholder": "Buscar: invitar, WhatsApp, tarea…",
+    "results": "{n} guías",
+    "oneResult": "1 guía",
+    "clear": "Borrar búsqueda",
+    "topics": "Temas",
+    "all": "Todas",
+    "noResults": "No encontré nada con «{q}».",
+    "noResultsHint": "Probá con otra palabra: influencer, WhatsApp, tarea, invitación, marca…",
+    "goThere": "Llevame ahí",
+    "updated": "Actualizada el {date}",
+    "editTitle": "Título de la guía",
+    "editBody": "Texto de la guía",
+    "editHelp": "Pasos con «1.», viñetas con «-», negrita con **así**. «@ir acción | texto» arma el botón y «@claves …» suma palabras al buscador.",
+    "nothingToday": "Hoy no tenés pendientes para arrancar. ¡Al día!",
+    "install": {
+      "already": "Ya estás usando Network como app.",
+      "manual": "Seguí los pasos de la guía desde el menú del navegador."
+    },
+    "first": {
+      "title": "Primeros pasos",
+      "sub": "Cinco cosas para arrancar. Se tildan solas cuando las hacés.",
+      "allDone": "¡Listo! Ya sabés lo básico de Network.",
+      "hide": "Ocultar",
+      "show": "Ver pasos",
+      "how": "Cómo",
+      "doneSr": "(hecho)",
+      "steps": {
+        "influencer": "Cargá tu primera influencer",
+        "whatsapp": "Completá el WhatsApp de una influencer",
+        "contact": "Contactá a alguien desde su ficha",
+        "task": "Creá una tarea",
+        "invite": "Mandá tu primera invitación a la red"
+      }
+    }
   }
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import LogoLoader from '../components/LogoLoader.jsx'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Sparkles, Play, Hourglass, ChevronRight, Plus } from 'lucide-react'
 import AgendaItem from '../components/AgendaItem.jsx'
 import MissionProgress from '../components/MissionProgress.jsx'
@@ -113,6 +113,7 @@ export default function HomePage({ currentUser, onOpenCreate }) {
 
   useEffect(() => { load() }, [load])
 
+
   const dropFromAgenda = useCallback((item) => {
     setAgenda(prev => prev.filter(a => !(a.entityId === item.entityId && a.entityType === item.entityType && a.kind === item.kind)))
     setStats(prev => prev ? {
@@ -212,6 +213,17 @@ export default function HomePage({ currentUser, onOpenCreate }) {
   }, [agenda])
   const hero = buckets.overdue[0] || buckets.today[0] || buckets.upcoming[0] || null
   const focusItems = [...buckets.overdue, ...buckets.today]
+
+  // /network/home?focus=1 (guía "¿Cómo arranco el día?"): abre
+  // "Arrancar el día" apenas carga la agenda, o avisa si no hay nada.
+  const [params, setParams] = useSearchParams()
+  const wantsFocus = params.get('focus') === '1'
+  useEffect(() => {
+    if (!wantsFocus || loading) return
+    setParams({}, { replace: true })
+    if (focusItems.length) setFocus(true)
+    else toast(t('guide.nothingToday'))
+  }, [wantsFocus, loading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const rest = (k) => buckets[k].filter(a => a !== hero)
   const activeTab = tab && buckets[tab] ? tab
