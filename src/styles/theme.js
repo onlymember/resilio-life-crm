@@ -122,7 +122,7 @@ export const THEME_CSS = `
        transform puesto (no afecta a paneles fijos ni al deslizar). */
     @keyframes nwPageIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes nwRise   { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-    .nw-page { animation: nwPageIn .22s ease-out backwards; }
+    .nw-page { animation: nwPageIn .22s ease-out backwards; overflow-x: clip; }
     .nw-page > * > *:not([style*="fixed"]) { animation: nwRise .38s cubic-bezier(.2,.8,.2,1) backwards; }
     .nw-page > * > :nth-child(2) { animation-delay: 40ms; }
     .nw-page > * > :nth-child(3) { animation-delay: 80ms; }
