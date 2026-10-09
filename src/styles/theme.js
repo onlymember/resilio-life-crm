@@ -178,8 +178,11 @@ export const THEME_CSS = `
     .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 64px 32px; text-align: center; }
     @media (max-width: 640px) { .hide-mobile { display: none !important; } }
     @media (min-width: 641px) { .show-mobile-only { display: none !important; } }
-    .nw-home-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
-    @media (min-width: 768px) { .nw-home-grid { grid-template-columns: 1fr 1fr; align-items: start; } }
+    /* minmax(0,1fr): con "1fr" solo, un texto largo con "…" (títulos de la
+       agenda) estiraba la columna más allá de la pantalla en el celular. */
+    .nw-home-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+    .nw-home-grid > * { min-width: 0; }
+    @media (min-width: 768px) { .nw-home-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
     .nw-stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
     .nw-bottom-nav { background: var(--glass-bg); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); border: 1px solid var(--border-violet); border-top: 1px solid rgba(255,255,255,0.08); border-radius: 24px; box-shadow: var(--glow-violet-sm), 0 12px 32px rgba(0,0,0,0.45), 0 -4px 16px rgba(139,92,246,0.08); }
     @supports not (backdrop-filter: blur(1px)) { .nw-bottom-nav { background: var(--bg-secondary); } }
